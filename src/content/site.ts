@@ -2,6 +2,7 @@
 // these defaults at build time, so a new phone number changes in one place.
 
 import { LIVE_SITE } from "./live";
+import { PAGES } from "./pages";
 
 export const SITE_MODE: "preview" | "production" =
   process.env.NEXT_PUBLIC_SITE_MODE === "production" ? "production" : "preview";
@@ -13,10 +14,9 @@ const phone = LIVE_SITE.phone || "+1 (617) 642-6344";
 export const SITE = {
   name: "RT Law Services",
   shortName: "RT Law",
-  tagline: "Committed to helping our clients succeed",
+  tagline: PAGES.firm.tagline,
   url: "https://rtlawservice.web.app",
-  description:
-    "RT Law Services is a Maryland immigration law firm serving families, professionals and employers across the United States, with clear guidance for first-time applicants and exacting work on employment and extraordinary ability petitions.",
+  description: PAGES.firm.description,
   phone,
   phoneHref: `tel:${phone.replace(/[^\d+]/g, "")}`,
   email: LIVE_SITE.email || "clientservice@rtlawservices.com",

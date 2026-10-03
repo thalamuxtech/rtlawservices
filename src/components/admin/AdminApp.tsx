@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import {
-  BookOpen, CalendarClock, ClipboardCheck, ExternalLink, Eye, EyeOff, FileBadge, Gauge, Globe2, KeyRound, LayoutDashboard, Loader2, Lock, LogOut, Mail, Menu, MessagesSquare, Rocket, Settings, ShieldAlert, Star, Users, UserSquare2, Wand2, X,
+  BookOpen, CalendarClock, ClipboardCheck, ExternalLink, Eye, EyeOff, FileBadge, FileText, Gauge, Globe2, KeyRound, LayoutDashboard, Loader2, Lock, LogOut, Mail, Menu, MessagesSquare, PanelLeftClose, PanelLeftOpen, Rocket, Settings, ShieldAlert, Star, Users, UserSquare2, Wand2, X,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { LoginArt } from "./LoginArt";
@@ -17,6 +17,7 @@ import { Overview } from "./sections/Overview";
 import { BOOKINGS, EVALUATIONS, MESSAGES, Requests } from "./sections/Requests";
 import { ContentManager } from "./sections/Content";
 import { Publishing, SiteSettings, Staff } from "./sections/Settings";
+import { PagesEditor } from "./sections/Pages";
 
 type StaffDoc = { role: string; name?: string; email?: string };
 
@@ -282,6 +283,7 @@ const SECTIONS = [
   { id: "reviews", label: "Reviews", icon: Star, group: "Website" },
   { id: "posts", label: "Blog", icon: BookOpen, group: "Website" },
   { id: "attorneys", label: "Attorneys", icon: UserSquare2, group: "Website" },
+  { id: "pages", label: "Page text", icon: FileText, group: "Website" },
   { id: "settings", label: "Website details", icon: Settings, group: "Website" },
   { id: "publishing", label: "Publishing", icon: Rocket, group: "System" },
   { id: "staff", label: "Staff", icon: Users, group: "System" },
@@ -298,6 +300,21 @@ const initialSection = (): SectionId => {
 function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
   const [section, setSection] = useState<SectionId>(initialSection);
   const [nav, setNav] = useState(false);
+  // The desktop sidebar can shrink to an icon rail. The choice is remembered per browser.
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("rt-admin-collapsed") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleCollapsed = () =>
+    setCollapsed((c) => {
+      try {
+        localStorage.setItem("rt-admin-collapsed", c ? "0" : "1");
+      } catch {}
+      return !c;
+    });
   const [today] = useState(() => new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }));
   const evaluations = useCollection("evaluations");
   const bookings = useCollection("bookings");
@@ -321,15 +338,15 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
     messages: messages.rows?.filter((r) => r.status === "new").length,
   };
 
-  const sidebar = (
+  const sidebar = (compact: boolean) => (
     <nav aria-label="Back office" className="flex h-full flex-col">
-      <div className="px-6 pb-6 pt-7">
-        <Logo tone="dark" className="w-44" />
+      <div className={cn("pb-6 pt-7", compact ? "flex justify-center px-2" : "px-6")}>
+        {compact ? <Logo tone="dark" variant="mark" className="w-11" /> : <Logo tone="dark" className="w-44" />}
       </div>
-      <div className="flex-1 overflow-y-auto px-3">
+      <div className={cn("flex-1 overflow-y-auto overflow-x-hidden", compact ? "px-2" : "px-3")}>
         {["Dashboard", "Requests", "Website", "System"].map((g) => (
           <div key={g} className="mb-5">
-            <p className="px-3 pb-2 text-xs font-bold text-stone-dark">{g}</p>
+            {compact ? <span aria-hidden className="mx-auto mb-2 block h-px w-8 bg-line-dark" /> : <p className="px-3 pb-2 text-xs font-bold text-stone-dark">{g}</p>}
             <ul className="grid gap-0.5">
               {SECTIONS.filter((s) => s.group === g).map((s) => (
                 <li key={s.id}>
@@ -337,12 +354,23 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
                     type="button"
                     onClick={() => go(s.id)}
                     aria-current={section === s.id ? "page" : undefined}
-                    className={cn("relative flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-bold transition-colors", section === s.id ? "text-ink" : "text-stone-dark hover:bg-ink-raised hover:text-paper")}
+                    aria-label={compact ? `${s.label}${badge[s.id] ? `, ${badge[s.id]} new` : ""}` : undefined}
+                    title={compact ? s.label : undefined}
+                    className={cn(
+                      "relative flex min-h-11 w-full items-center gap-3 rounded-xl text-sm font-bold transition-colors",
+                      compact ? "justify-center" : "px-3",
+                      section === s.id ? "text-ink" : "text-stone-dark hover:bg-paper hover:text-ink",
+                    )}
                   >
-                    {section === s.id && <motion.span layoutId="side-active" className="absolute inset-0 rounded-xl bg-brass" transition={{ type: "spring", stiffness: 380, damping: 32 }} />}
+                    {section === s.id && <motion.span layoutId={compact ? "side-active-rail" : "side-active"} className="absolute inset-0 rounded-xl bg-brass" transition={{ type: "spring", stiffness: 380, damping: 32 }} />}
                     <s.icon aria-hidden className="relative size-[18px]" />
-                    <span className="relative flex-1 text-left">{s.label}</span>
-                    {!!badge[s.id] && <span className={cn("relative rounded-full px-2 py-0.5 text-xs", section === s.id ? "bg-ink text-paper" : "bg-brass text-ink")}>{badge[s.id]}</span>}
+                    {!compact && <span className="relative flex-1 text-left">{s.label}</span>}
+                    {!!badge[s.id] &&
+                      (compact ? (
+                        <span aria-hidden className={cn("absolute right-2 top-2 size-2 rounded-full", section === s.id ? "bg-ink" : "bg-brass")} />
+                      ) : (
+                        <span className={cn("relative rounded-full px-2 py-0.5 text-xs", section === s.id ? "bg-ink text-paper" : "bg-brass text-ink")}>{badge[s.id]}</span>
+                      ))}
                   </button>
                 </li>
               ))}
@@ -350,19 +378,29 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
           </div>
         ))}
       </div>
-      <div className="border-t border-line-dark p-4">
-        <div className="flex items-center gap-3 rounded-xl px-2 py-2">
-          <span className="grid size-9 place-items-center rounded-full bg-brass text-sm font-bold text-ink">{(staff.name || user.email || "?").slice(0, 1).toUpperCase()}</span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-bold text-paper">{staff.name || "Staff"}</span>
-            <span className="block truncate text-xs capitalize text-stone-dark">{staff.role}</span>
+      <div className={cn("border-t border-line-dark", compact ? "grid justify-items-center gap-1 px-2 py-4" : "p-4")}>
+        <div className={cn("flex items-center rounded-xl", compact ? "flex-col gap-1" : "gap-3 px-2 py-2")}>
+          <span title={compact ? `${staff.name || "Staff"}, ${staff.role}` : undefined} className="grid size-9 place-items-center rounded-full bg-brass text-sm font-bold text-ink">
+            {(staff.name || user.email || "?").slice(0, 1).toUpperCase()}
           </span>
-          <button type="button" onClick={() => signOut(auth())} aria-label="Sign out" className="grid size-10 place-items-center rounded-full text-stone-dark hover:bg-ink-raised hover:text-paper">
+          {!compact && (
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-bold text-paper">{staff.name || "Staff"}</span>
+              <span className="block truncate text-xs capitalize text-stone-dark">{staff.role}</span>
+            </span>
+          )}
+          <button type="button" onClick={() => signOut(auth())} aria-label="Sign out" title="Sign out" className="grid size-11 place-items-center rounded-full text-stone-dark transition-colors hover:bg-paper hover:text-ink">
             <LogOut aria-hidden className="size-4" />
           </button>
         </div>
-        <Link href="/" target="_blank" className="mt-1 flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-stone-dark hover:bg-ink-raised hover:text-paper">
-          <ExternalLink aria-hidden className="size-4" /> View website
+        <Link
+          href="/"
+          target="_blank"
+          aria-label={compact ? "View website" : undefined}
+          title={compact ? "View website" : undefined}
+          className={cn("mt-1 flex min-h-11 items-center gap-2 rounded-xl text-sm font-bold text-stone-dark transition-colors hover:bg-paper hover:text-ink", compact ? "w-11 justify-center" : "px-3")}
+        >
+          <ExternalLink aria-hidden className="size-4" /> {!compact && "View website"}
         </Link>
       </div>
     </nav>
@@ -370,22 +408,32 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
 
   return (
     <div className="min-h-dvh bg-mist">
-      <aside className="on-dark fixed inset-y-0 left-0 z-40 hidden w-72 bg-ink lg:block">{sidebar}</aside>
+      <aside className={cn("on-dark fixed inset-y-0 left-0 z-40 hidden bg-ink transition-[width] duration-300 ease-out lg:block", collapsed ? "w-20" : "w-72")}>{sidebar(collapsed)}</aside>
       <AnimatePresence>
         {nav && (
           <div className="fixed inset-0 z-50 lg:hidden">
             <motion.button type="button" aria-label="Close menu" className="absolute inset-0 bg-ink/50" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setNav(false)} />
             <motion.aside initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", stiffness: 300, damping: 34 }} className="on-dark absolute inset-y-0 left-0 w-72 bg-ink">
-              {sidebar}
+              {sidebar(false)}
             </motion.aside>
           </div>
         )}
       </AnimatePresence>
 
-      <div className="lg:pl-72">
+      <div className={cn("transition-[padding] duration-300 ease-out", collapsed ? "lg:pl-20" : "lg:pl-72")}>
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-paper/90 px-4 backdrop-blur-xl sm:px-8">
           <button type="button" className="grid size-11 place-items-center rounded-full hover:bg-mist lg:hidden" aria-label="Open menu" onClick={() => setNav(true)}>
             {nav ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!collapsed}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="hidden size-11 place-items-center rounded-full text-ink transition-colors duration-300 hover:bg-ink hover:text-paper lg:grid"
+          >
+            {collapsed ? <PanelLeftOpen aria-hidden className="size-5" /> : <PanelLeftClose aria-hidden className="size-5" />}
           </button>
           <Gauge aria-hidden className="hidden size-5 text-brass-ink sm:block" />
           <p className="font-bold text-ink">{SECTIONS.find((s) => s.id === section)?.label}</p>
@@ -396,7 +444,16 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
         <main className="px-4 py-8 sm:px-8">
           <AnimatePresence mode="wait">
             <motion.div key={section} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>
-              {section === "overview" && <Overview evaluations={evaluations.rows} bookings={bookings.rows} messages={messages.rows} go={go} />}
+              {section === "overview" && (
+                <Overview
+                  evaluations={evaluations.rows}
+                  bookings={bookings.rows}
+                  messages={messages.rows}
+                  content={{ cases: cases.rows, reviews: reviews.rows, posts: posts.rows, attorneys: attorneys.rows }}
+                  name={staff.name || user.email || ""}
+                  go={go}
+                />
+              )}
               {section === "evaluations" && <Requests cfg={EVALUATIONS} rows={evaluations.rows} uid={user.uid} />}
               {section === "bookings" && <Requests cfg={BOOKINGS} rows={bookings.rows} uid={user.uid} />}
               {section === "messages" && <Requests cfg={MESSAGES} rows={messages.rows} uid={user.uid} />}
@@ -404,6 +461,7 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
               {section === "reviews" && <ContentManager kind="reviews" rows={reviews.rows} uid={user.uid} />}
               {section === "posts" && <ContentManager kind="posts" rows={posts.rows} uid={user.uid} />}
               {section === "attorneys" && <ContentManager kind="attorneys" rows={attorneys.rows} uid={user.uid} />}
+              {section === "pages" && <PagesEditor uid={user.uid} />}
               {section === "settings" && <SiteSettings uid={user.uid} />}
               {section === "publishing" && <Publishing />}
               {section === "staff" && <Staff rows={staffRows.rows} uid={user.uid} role={staff.role} />}

@@ -4,9 +4,10 @@ import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring 
 import { Logo } from "@/components/brand/Logo";
 import { ButtonLink } from "@/components/ui/primitives";
 import { CTA } from "@/content/site";
+import { PAGES } from "@/content/pages";
 
 const ease = [0.22, 1, 0.36, 1] as const;
-const words = "Your immigration matter, handled by an attorney who knows your name.".split(" ");
+const words = PAGES.home.headline.split(/\s+/);
 
 export function Hero() {
   const reduce = useReducedMotion();
@@ -32,9 +33,7 @@ export function Hero() {
 
       <div className="container-luxe grid items-center gap-14 pb-20 pt-16 sm:pt-24 lg:min-h-[calc(100dvh-7.25rem)] lg:grid-cols-[1.15fr_0.85fr] lg:pb-28">
         <div>
-          <p className="rise eyebrow text-brass-light">
-            RT Law Services, immigration counsel
-          </p>
+          <p className="rise eyebrow text-brass-light">{PAGES.home.eyebrow}</p>
 
           <h1 className="font-serif-display mt-7 text-[2.65rem] leading-[1.04] text-balance sm:text-6xl lg:text-[4.6rem]">
             {words.map((w, i) => (
@@ -48,14 +47,13 @@ export function Hero() {
             style={{ ["--d" as string]: "750ms" }}
             className="rise mt-7 max-w-xl text-lg leading-relaxed text-stone-dark sm:text-xl"
           >
-            From a first green card to an extraordinary ability petition. Clear guidance for first-time applicants and
-            exacting work for professionals, founders and employers.
+            {PAGES.home.lede}
           </p>
 
           <div style={{ ["--d" as string]: "900ms" }} className="rise mt-10 flex flex-wrap gap-3">
-            <ButtonLink href={CTA.evaluation.href}>Request a free evaluation</ButtonLink>
+            <ButtonLink href={CTA.evaluation.href}>{PAGES.home.primaryCta}</ButtonLink>
             <ButtonLink href={CTA.consultation.href} variant="outline-light">
-              Book a consultation
+              {PAGES.home.secondaryCta}
             </ButtonLink>
           </div>
 

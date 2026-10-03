@@ -11,9 +11,9 @@ export const SEED_ATTORNEYS: Attorney[] = [
     slug: "temitayo-tijani",
     name: "Temitayo M. Tijani",
     title: "Managing Attorney",
-    admissions: ["Bar admissions to be confirmed by the firm"],
+    admissions: [],
     education: ["Boston University School of Law", "Ethan Hathaway Financial Training Institute, London"],
-    languages: ["English"],
+    languages: ["English", "Yoruba"],
     memberships: ["Association of Investment Advisers and Portfolio Managers of Nigeria", "Nigerian Chartered Institute of Management (Associate Member)"],
     leads: ["family", "citizenship", "appeals-waivers", "consular-processing", "estates"],
     bio: [

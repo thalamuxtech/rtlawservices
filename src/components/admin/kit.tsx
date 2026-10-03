@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, setDoc, type DocumentData, type Timestamp,
 } from "firebase/firestore";
-import { CheckCircle2, Loader2, Plus, Trash2, X, XCircle } from "lucide-react";
+import { ArrowDown, ArrowUp, CheckCircle2, Loader2, Plus, Trash2, X, XCircle } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 
@@ -330,5 +330,90 @@ export function Search({ value, onChange, placeholder = "Search" }: { value: str
       <span className="sr-only">{placeholder}</span>
       <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="min-h-11 w-full rounded-full border border-line bg-white px-4 text-sm outline-none focus:border-ink sm:w-64" />
     </label>
+  );
+}
+
+/* ---------- repeatable items ---------- */
+
+export type ItemField = { key: string; label: string; type?: "text" | "area" | "lines"; rows?: number; hint?: string };
+
+/** Edits a list of objects as cards that can be added, removed and reordered. */
+export function ItemsIn({
+  label, items, onChange, fields, blank, itemLabel = "item", children,
+}: {
+  label: string;
+  items: Record<string, unknown>[] | undefined;
+  onChange: (v: Record<string, unknown>[]) => void;
+  fields: ItemField[];
+  blank: Record<string, unknown>;
+  itemLabel?: string;
+  /** Renders extra editors inside each card, such as a nested list. */
+  children?: (item: Record<string, unknown>, set: (patch: Record<string, unknown>) => void) => ReactNode;
+}) {
+  const list = items ?? [];
+  const setAt = (i: number, patch: Record<string, unknown>) => onChange(list.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  const move = (i: number, d: number) => {
+    const j = i + d;
+    if (j < 0 || j >= list.length) return;
+    const next = [...list];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+  return (
+    <div>
+      <p className="text-sm font-bold text-ink">{label}</p>
+      <ol className="mt-2 grid gap-3">
+        {list.map((it, i) => (
+          <li key={i} className="rounded-2xl border border-line bg-white p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <span className="text-sm font-bold capitalize text-stone">
+                {itemLabel} {i + 1}
+              </span>
+              <span className="flex gap-1">
+                <IconBtn label={`Move ${itemLabel} ${i + 1} up`} disabled={i === 0} onClick={() => move(i, -1)}>
+                  <ArrowUp aria-hidden className="size-4" />
+                </IconBtn>
+                <IconBtn label={`Move ${itemLabel} ${i + 1} down`} disabled={i === list.length - 1} onClick={() => move(i, 1)}>
+                  <ArrowDown aria-hidden className="size-4" />
+                </IconBtn>
+                <IconBtn label={`Remove ${itemLabel} ${i + 1}`} danger onClick={() => onChange(list.filter((_, j) => j !== i))}>
+                  <Trash2 aria-hidden className="size-4" />
+                </IconBtn>
+              </span>
+            </div>
+            <div className="grid gap-3">
+              {fields.map((f) =>
+                f.type === "area" ? (
+                  <AreaIn key={f.key} label={f.label} hint={f.hint} rows={f.rows ?? 3} value={String(it[f.key] ?? "")} onChange={(v) => setAt(i, { [f.key]: v })} />
+                ) : f.type === "lines" ? (
+                  <LinesIn key={f.key} label={f.label} hint={f.hint} rows={f.rows} value={(it[f.key] as string[]) ?? []} onChange={(v) => setAt(i, { [f.key]: v })} />
+                ) : (
+                  <TextIn key={f.key} label={f.label} hint={f.hint} value={String(it[f.key] ?? "")} onChange={(v) => setAt(i, { [f.key]: v })} />
+                ),
+              )}
+              {children?.(it, (patch) => setAt(i, patch))}
+            </div>
+          </li>
+        ))}
+      </ol>
+      <button type="button" onClick={() => onChange([...list, structuredClone(blank)])} className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border border-dashed border-ink/25 px-4 text-sm font-bold text-ink transition-colors hover:border-ink hover:bg-ink hover:text-paper">
+        <Plus aria-hidden className="size-4" /> Add {itemLabel}
+      </button>
+    </div>
+  );
+}
+
+function IconBtn({ label, onClick, disabled, danger, children }: { label: string; onClick: () => void; disabled?: boolean; danger?: boolean; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={onClick}
+      className={cn("grid size-11 place-items-center rounded-full text-stone transition-colors disabled:opacity-30", danger ? "hover:bg-danger/10 hover:text-danger" : "hover:bg-mist hover:text-ink")}
+    >
+      {children}
+    </button>
   );
 }

@@ -60,8 +60,8 @@ function ReviewTile({ r, i }: { r: Review; i: number }) {
 export function ReviewsMarquee({ reviews, illustrative = false }: { reviews: Review[]; illustrative?: boolean }) {
   if (!reviews.length) return null;
   const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
-  const half = Math.ceil(reviews.length / 2);
-  const rows = [reviews.slice(0, half), reviews.slice(half).length ? reviews.slice(half) : reviews.slice(0, half)];
+  // One row of every review. Speed scales with the count, so each card moves at the same pace.
+  const rows = [reviews];
   const fromGoogle = reviews.some((r) => r.source === "google");
 
   return (
@@ -91,13 +91,13 @@ export function ReviewsMarquee({ reviews, illustrative = false }: { reviews: Rev
         </Link>
       </div>
 
-      <div className="marquee-mask mt-14 grid gap-5" aria-label="Client reviews">
+      <div className="marquee-mask mt-14" aria-label="Client reviews">
         {rows.map((row, ri) => (
           <div key={ri} className="marquee-row group/row flex overflow-hidden">
-            <div className={cn("marquee-track flex w-max gap-5 pr-5", ri === 1 && "marquee-reverse")}>
+            <div className="marquee-track flex w-max gap-5 pr-5" style={{ animationDuration: `${Math.max(40, row.length * 9)}s` }}>
               {[...row, ...row].map((r, i) => (
                 <div key={`${r.id}-${i}`} aria-hidden={i >= row.length || undefined}>
-                  <ReviewTile r={r} i={i + ri * 3} />
+                  <ReviewTile r={r} i={i} />
                 </div>
               ))}
             </div>

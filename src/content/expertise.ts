@@ -1,6 +1,8 @@
 // Practice content. Every page spells out acronyms at first use, because each
 // page can be a visitor's first entry point. Timelines are hedged ranges, not promises.
 
+import { withOverrides } from "./pages";
+
 export type Track = "individuals" | "professionals" | "other";
 
 export type Faq = { q: string; a: string };
@@ -23,7 +25,7 @@ export type Expertise = {
   icon: "users" | "flag" | "briefcase" | "scale" | "globe" | "star" | "award" | "building" | "plane" | "trending" | "factory" | "landmark";
 };
 
-export const EXPERTISE: Expertise[] = [
+export const BASE_EXPERTISE: Expertise[] = [
   {
     slug: "family",
     track: "individuals",
@@ -600,6 +602,9 @@ export const EXPERTISE: Expertise[] = [
     ],
   },
 ];
+
+// Published back office edits replace the wording field by field.
+export const EXPERTISE: Expertise[] = BASE_EXPERTISE.map(withOverrides);
 
 export const byTrack = (track: Track) => EXPERTISE.filter((e) => e.track === track);
 export const getExpertise = (slug: string) => EXPERTISE.find((e) => e.slug === slug);

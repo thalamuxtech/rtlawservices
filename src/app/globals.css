@@ -165,7 +165,7 @@
   :root.js-ready [data-reveal].reveal-line.is-in { transform: scaleX(1); }
 }
 
-/* Reviews marquee: two rows drift in opposite directions, pause on hover or focus. */
+/* Reviews marquee: one row drifts left and pauses on hover or focus. */
 .marquee-mask {
   mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
 }

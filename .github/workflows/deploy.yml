@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   # Content published from the back office goes live on the next run.
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/10 * * * *"
 
 permissions:
   contents: read

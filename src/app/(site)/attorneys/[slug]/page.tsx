@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHero } from "@/components/site/PageHero";
-import { CaseCard } from "@/components/site/cards";
+import { admissionsOf, CaseCard } from "@/components/site/cards";
 import { BookingBand } from "@/components/home/Sections";
 import { ButtonLink, Container } from "@/components/ui/primitives";
 import { getExpertise } from "@/content/expertise";
@@ -32,7 +32,7 @@ export default async function AttorneyPage({ params }: PageProps<"/attorneys/[sl
     worksFor: { "@type": "LegalService", name: SITE.name },
   };
   const panels = [
-    { label: "Bar admissions", items: [...a.admissions, ...(a.practiceLimitation ? [a.practiceLimitation] : [])] },
+    { label: "Bar admissions", items: [...admissionsOf(a), ...(a.practiceLimitation ? [a.practiceLimitation] : [])] },
     { label: "Education", items: a.education },
     { label: "Languages", items: a.languages },
     { label: "Memberships", items: a.memberships },
@@ -75,7 +75,7 @@ export default async function AttorneyPage({ params }: PageProps<"/attorneys/[sl
           </ul>
         </div>
         <aside className="grid content-start gap-4">
-          {panels.map((p) => (
+          {panels.filter((p) => p.items?.length).map((p) => (
             <div key={p.label} className="rounded-2xl border border-line bg-white p-6">
               <p className="eyebrow text-brass-ink">{p.label}</p>
               <ul className="mt-3 grid gap-1.5 text-ink-soft">

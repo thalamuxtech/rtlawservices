@@ -1,28 +1,19 @@
 import type { Faq } from "./expertise";
+import { PAGES } from "./pages";
 
-export const PROCESS = [
-  { n: "01", title: "Assess", text: "We review your goals, history and documents, then explain which paths fit and what each involves. You leave the consultation with a clear next step." },
-  { n: "02", title: "Prepare", text: "We build the filing: forms, evidence and, where needed, a written legal argument. You receive a checklist and we review each document you send." },
-  { n: "03", title: "Represent", text: "We file, track the case and answer government requests. We prepare you for interviews and attend where the rules allow." },
-  { n: "04", title: "Plan ahead", text: "Approval is often one step in a longer path. We map the route from visa to green card to citizenship and flag dates to watch." },
-  { n: "05", title: "Stay compliant", text: "We help you and your employer keep status, renew on time and avoid errors that could affect future applications." },
-] as const;
+// Process steps and pillars are edited in the back office (Page text).
+export const PROCESS = PAGES.process.map((p, i) => ({ n: String(i + 1).padStart(2, "0"), ...p }));
 
-export const PILLARS = [
-  { title: "Personal attention", text: "One case at a time. A named attorney leads your matter, and you can book directly with that attorney." },
-  { title: "Demonstrated results", text: "We publish anonymised outcomes with client consent, so you can judge our work on the record." },
-  { title: "Global families", text: "Video consultations scheduled in your own time zone, for clients across the United States and abroad." },
-  { title: "Long-term planning", text: "From a first visa to citizenship and estate planning, we think in years, not single filings." },
-] as const;
+export const PILLARS = PAGES.pillars;
 
-export const GENERAL_FAQS: { group: string; items: Faq[] }[] = [
+export const DEFAULT_GENERAL_FAQS: { group: string; items: Faq[] }[] = [
   {
     group: "Consultations",
     items: [
       { q: "How do I book a consultation?", a: "Choose a time on our booking page. You pick the matter type, the format (video, phone or office) and a time shown in your own time zone. You receive a confirmation email with the details." },
       { q: "What should I prepare?", a: "Bring your passport, any immigration documents and notices you have received, and a short list of questions. We send a checklist for your case after you book." },
       { q: "Do you work with clients outside Maryland?", a: "Yes. Immigration law is federal, so we represent clients across the United States and abroad. Estate planning matters are limited to Maryland law." },
-      { q: "Do you offer consultations in other languages?", a: "Consultations take place in English. If you are more comfortable in another language, tell us when you book and we will arrange an interpreter." },
+      { q: "Do you offer consultations in other languages?", a: "Consultations are available in English and Yoruba. If you are more comfortable in another language, tell us when you book and we will arrange an interpreter." },
     ],
   },
   {
@@ -44,6 +35,8 @@ export const GENERAL_FAQS: { group: string; items: Faq[] }[] = [
     ],
   },
 ];
+
+export const GENERAL_FAQS = PAGES.faqs?.length ? PAGES.faqs : DEFAULT_GENERAL_FAQS;
 
 export const GLOSSARY: { term: string; def: string }[] = [
   { term: "Adjustment of status", def: "Applying for a green card from inside the United States, without leaving for an embassy interview." },

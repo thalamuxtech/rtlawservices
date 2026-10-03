@@ -82,8 +82,9 @@ const strip = (row) => Object.fromEntries(Object.entries(row).filter(([k]) => !I
 async function main() {
   let live = { source: "none" };
   try {
-    const [site, attorneys, cases, reviews, posts] = await Promise.all([
+    const [site, pages, attorneys, cases, reviews, posts] = await Promise.all([
       doc("settings/site"),
+      doc("settings/pages"),
       published("attorneys"),
       published("cases"),
       published("reviews"),
@@ -94,6 +95,7 @@ async function main() {
     live = {
       source: "firestore",
       site: site ? strip(site) : undefined,
+      pages: pages ? strip(pages) : undefined,
       attorneys: attorneys.map((a) => ({ ...strip(a), slug: a.slug || a._id, photoUrl: saveImage(a.photo, `attorney-${a._id}`) })),
       cases: cases.map((c) => ({ ...strip(c), slug: c.slug || c._id, documentUrl: saveImage(c.documentImage, `approval-${c._id}`) })),
       reviews: reviews.map((r) => ({ ...strip(r), id: r._id })),

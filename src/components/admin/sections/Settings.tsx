@@ -234,8 +234,8 @@ export function Publishing() {
       </div>
       <ol className="grid gap-4">
         {[
-          { icon: CheckCircle2, t: "Save", d: "Saving a story, review, post, attorney or setting records the change in the database instantly." },
-          { icon: GitBranch, t: "Automatic build", d: "Every 30 minutes, an automated job checks for changes. If there are any, it rebuilds the website with the latest published content." },
+          { icon: CheckCircle2, t: "Save", d: "Saving a story, review, post, attorney, page text or setting records the change in the database instantly." },
+          { icon: GitBranch, t: "Automatic build", d: "About every 10 minutes, an automated job checks for changes. If there are any, it rebuilds the website with the latest published content." },
           { icon: Globe2, t: "Live", d: "The new version replaces the old one in a few minutes. Visitors always see a complete, fast, static website." },
         ].map(({ icon: Icon, t, d }) => (
           <li key={t} className="flex gap-4 rounded-2xl border border-line bg-white p-5">
