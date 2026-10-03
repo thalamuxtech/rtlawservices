@@ -76,7 +76,7 @@ export function Header() {
       >
         <div className={cn("container-luxe flex items-center justify-between gap-4 transition-[height] duration-500", scrolled ? "h-16" : "h-20")}>
           <Link href="/" aria-label="RT Law Services, home" className="shrink-0">
-            <Logo className={cn("transition-[width] duration-500", scrolled ? "w-[188px] xl:w-[190px]" : "w-[200px] xl:w-[206px] 2xl:w-[236px]")} />
+            <Logo className={cn("transition-[width] duration-500", scrolled ? "w-[196px] xl:w-[200px]" : "w-[208px] xl:w-[218px] 2xl:w-[250px]")} />
           </Link>
 
           <nav aria-label="Main" className="hidden items-center xl:flex">
