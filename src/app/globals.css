@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+/*
+ * RT Law Services design tokens.
+ * Gold (brass) never sets body text on a light ground: 2.6:1 fails WCAG AA.
+ * Use brass-ink on light grounds and brass-light on dark grounds.
+ */
+@theme {
+  --color-ink: #14181f;
+  --color-ink-soft: #1a1a1a;
+  --color-ink-raised: #1d232c;
+  --color-paper: #fbfbfa;
+  --color-white: #ffffff;
+  --color-mist: #eff1f1;
+  --color-line: #e1e4e6;
+  --color-line-dark: #2c333d;
+  --color-stone: #51565c;
+  --color-stone-dark: #a9afb6;
+  --color-sand: #d6d0c8;
+  --color-brass: #b1976b;
+  --color-brass-ink: #7d6638;
+  --color-brass-light: #c9b48a;
+  --color-brass-pale: #f1eadc;
+  --color-success: #2f6b4f;
+  --color-danger: #9b2c2c;
+
+  --font-serif: var(--font-garamond), "Georgia", serif;
+  --font-sans: var(--font-lato), ui-sans-serif, system-ui, sans-serif;
+
+  --ease-luxe: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-ping-soft: ping-soft 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-beep: beep 2.4s ease-in-out infinite;
+
+  @keyframes ping-soft {
+    0% { transform: scale(1); opacity: 0.75; }
+    70%, 100% { transform: scale(3.2); opacity: 0; }
+  }
+  @keyframes beep {
+    0%, 100% { opacity: 1; }
+    45% { opacity: 0.35; }
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink-soft);
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: var(--color-brass);
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  .on-dark :focus-visible,
+  .on-dark:focus-visible {
+    outline-color: var(--color-brass-light);
+  }
+  a, button, [role="button"], summary, label[for], select {
+    cursor: pointer;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility font-serif-display {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.08;
+}
+
+@utility eyebrow {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}
+
+@utility container-luxe {
+  width: 100%;
+  max-width: 76rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  @media (min-width: 640px) { padding-inline: 1.5rem; }
+  @media (min-width: 1024px) { padding-inline: 2rem; }
+}
+
+@utility hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-brass), transparent);
+}
+
+@utility grain {
+  background-image: radial-gradient(rgba(201, 180, 138, 0.07) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Prose for long-form content */
+@utility prose-luxe {
+  & p { margin-block: 1em; color: var(--color-ink-soft); }
+  & h2 { font-family: var(--font-serif); font-weight: 500; font-size: 1.875rem; line-height: 1.15; margin-top: 2.2em; margin-bottom: 0.6em; color: var(--color-ink); }
+  & h3 { font-weight: 700; font-size: 1.15rem; margin-top: 1.8em; margin-bottom: 0.4em; color: var(--color-ink); }
+  & ul { list-style: none; padding: 0; margin-block: 1em; }
+  & ul > li { position: relative; padding-left: 1.5em; margin-block: 0.5em; }
+  & ul > li::before { content: ""; position: absolute; left: 0.2em; top: 0.72em; width: 0.45em; height: 0.45em; border-radius: 9999px; background: var(--color-brass); }
+  & a:not([class]) { color: var(--color-brass-ink); text-decoration: underline; text-underline-offset: 3px; }
+  & strong { color: var(--color-ink); }
+}
+
+/*
+ * Fail-safe reveal: content is visible by default. The hidden start state
+ * applies only after a script marks the document ready, so crawlers and
+ * visitors without JavaScript always see the page.
+ */
+/* Scroll-linked motion is reserved for the process timeline, which draws as
+   it enters view. Everything else stays still until a visitor acts. */
+
+/* Logo motion: the dot on the R beeps like a signal light. */
+.rt-logo .rt-logo-dot,
+.rt-logo .rt-logo-ping,
+.rt-logo .rt-logo-disc,
+.rt-logo .rt-logo-bar {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.rt-logo .rt-logo-ping { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .rt-logo .rt-logo-dot.is-beeping { animation: beep 2.4s ease-in-out infinite; }
+  .rt-logo .rt-logo-ping { animation: ping-soft 2.4s cubic-bezier(0, 0, 0.2, 1) infinite; }
+  .rt-logo-intro .rt-logo-letters { animation: logo-rise 0.9s var(--ease-luxe) both; }
+  .rt-logo-intro .rt-logo-disc { animation: logo-pop 0.8s var(--ease-luxe) 0.25s both; }
+  .rt-logo-intro .rt-logo-disc-b { animation-delay: 0.4s; }
+  .rt-logo-intro .rt-logo-bar { transform-origin: left center; animation: logo-draw 1s var(--ease-luxe) 0.35s both; }
+  .rt-logo-intro .rt-logo-word path { animation: logo-fade 0.9s var(--ease-luxe) 0.55s both; }
+}
+@keyframes logo-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes logo-pop { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: none; } }
+@keyframes logo-draw { from { transform: scaleX(0); } to { transform: none; } }
+@keyframes logo-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* CSS-only entrance for above-the-fold text: runs without JavaScript. */
+@media (prefers-reduced-motion: no-preference) {
+  .rise { animation: rise 0.85s var(--ease-luxe) both; animation-delay: var(--d, 0ms); }
+  .rise-word { display: inline-block; animation: rise-word 0.9s var(--ease-luxe) both; animation-delay: var(--d, 0ms); }
+}
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes rise-word { from { opacity: 0; transform: translateY(0.45em); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  :root.js-ready [data-reveal].reveal-line { opacity: 1; transform: scaleX(0); transition: transform 1.8s var(--ease-luxe) 0.2s; }
+  :root.js-ready [data-reveal].reveal-line.is-in { transform: scaleX(1); }
+}

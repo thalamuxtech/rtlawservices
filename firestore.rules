@@ -1,0 +1,95 @@
+rules_version = '2';
+
+// Default deny. Public visitors may only create bookings, slot locks and
+// messages, and may never read them back. Staff access requires a document
+// at /staff/{uid}, which only project owners can create (console or Admin SDK).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isStaff() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/staff/$(request.auth.uid));
+    }
+
+    function str(v, min, max) {
+      return v is string && v.size() >= min && v.size() <= max;
+    }
+
+    function inBookingWindow(t) {
+      return t is timestamp
+        && t > request.time
+        && t < request.time + duration.value(35, 'd');
+    }
+
+    // Slot locks carry no personal data, so anyone may read them to grey out
+    // taken times. A slot can be created once and never overwritten, which
+    // prevents double booking.
+    match /slots/{slotId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['attorney', 'day', 'start', 'createdAt'])
+        && str(request.resource.data.attorney, 1, 64)
+        && str(request.resource.data.day, 10, 10)
+        && inBookingWindow(request.resource.data.start)
+        && request.resource.data.createdAt == request.time;
+      allow update: if false;
+      allow delete: if isStaff();
+    }
+
+    match /bookings/{bookingId} {
+      allow create: if request.resource.data.keys().hasOnly([
+            'matter', 'matterLabel', 'mode', 'attorney', 'start', 'day', 'durationMin', 'visitorTz',
+            'name', 'email', 'phone', 'country', 'language', 'otherParties', 'notes', 'source',
+            'consents', 'slotId', 'status', 'createdAt'])
+        && str(request.resource.data.matter, 1, 64)
+        && str(request.resource.data.matterLabel, 1, 120)
+        && request.resource.data.mode in ['video', 'phone', 'office']
+        && str(request.resource.data.attorney, 1, 64)
+        && inBookingWindow(request.resource.data.start)
+        && request.resource.data.durationMin in [30, 60]
+        && str(request.resource.data.visitorTz, 1, 64)
+        && str(request.resource.data.name, 2, 200)
+        && str(request.resource.data.email, 5, 200)
+        && request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$')
+        && str(request.resource.data.phone, 7, 200)
+        && str(request.resource.data.country, 1, 200)
+        && str(request.resource.data.language, 0, 200)
+        && str(request.resource.data.otherParties, 0, 200)
+        && str(request.resource.data.notes, 0, 1200)
+        && str(request.resource.data.source, 0, 200)
+        && request.resource.data.consents == {'noRelationship': true, 'privacy': true}
+        && request.resource.data.status == 'new'
+        && request.resource.data.createdAt == request.time
+        // The matching slot lock must be written in the same batch.
+        && existsAfter(/databases/$(database)/documents/slots/$(request.resource.data.slotId))
+        && getAfter(/databases/$(database)/documents/slots/$(request.resource.data.slotId)).data.start == request.resource.data.start;
+      allow read: if isStaff();
+      allow update: if isStaff()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'updatedBy', 'staffNote']);
+      allow delete: if false;
+    }
+
+    match /messages/{messageId} {
+      allow create: if request.resource.data.keys().hasOnly(['name', 'email', 'phone', 'topic', 'message', 'status', 'createdAt'])
+        && str(request.resource.data.name, 2, 120)
+        && str(request.resource.data.email, 5, 160)
+        && str(request.resource.data.phone, 0, 40)
+        && str(request.resource.data.topic, 1, 60)
+        && str(request.resource.data.message, 10, 2000)
+        && request.resource.data.status == 'new'
+        && request.resource.data.createdAt == request.time;
+      allow read: if isStaff();
+      allow update: if isStaff()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'updatedBy']);
+      allow delete: if false;
+    }
+
+    match /staff/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
