@@ -75,9 +75,7 @@ export function PathFinder() {
                       Read about it
                     </ButtonLink>
                   )}
-                  <ButtonLink href={`/book/${result!.slug ? `?matter=${result!.slug}` : ""}`}>
-                    Book a consultation
-                  </ButtonLink>
+                  <ButtonLink href={`/free-evaluation/${result!.slug ? `?matter=${result!.slug}` : ""}`}>Request a free evaluation</ButtonLink>
                   <button
                     type="button"
                     onClick={() => {

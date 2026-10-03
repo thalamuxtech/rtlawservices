@@ -39,19 +39,32 @@ export function Logo({
     >
       <title>{title}</title>
       <path className="rt-logo-letters" d={LOGO_PATHS.rt} fill={gold} />
-      <circle className="rt-logo-disc" cx={tc.cx} cy={tc.cy} r={tc.r} fill={disc} />
       {beep && (
         <circle
           className="rt-logo-ping"
-          cx={dot.cx}
-          cy={dot.cy}
-          r={dot.r}
+          cx={tc.cx}
+          cy={tc.cy}
+          r={tc.r}
           fill="none"
-          stroke={gold}
-          strokeWidth={2.5}
+          stroke={dark ? "#C9B48A" : gold}
+          strokeWidth={5}
         />
       )}
-      <circle className={cn("rt-logo-dot", beep && "is-beeping")} cx={dot.cx} cy={dot.cy} r={dot.r} fill={dotFill} />
+      {beep && (
+        <circle
+          className="rt-logo-ping rt-logo-ping-2"
+          cx={tc.cx}
+          cy={tc.cy}
+          r={tc.r}
+          fill="none"
+          stroke={dark ? "#C9B48A" : gold}
+          strokeWidth={3}
+        />
+      )}
+      <g className={cn("rt-logo-beat", beep && "is-beeping")}>
+        <circle className="rt-logo-disc" cx={tc.cx} cy={tc.cy} r={tc.r} fill={disc} />
+        <circle className="rt-logo-dot" cx={dot.cx} cy={dot.cy} r={dot.r} fill={dotFill} />
+      </g>
       <circle className="rt-logo-disc rt-logo-disc-b" cx={bc.cx} cy={bc.cy} r={bc.r} fill={disc} />
       {variant === "full" && (
         <g className="rt-logo-word">

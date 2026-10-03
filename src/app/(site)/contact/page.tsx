@@ -23,9 +23,12 @@ export default function ContactPage() {
         lede="The fastest way to get advice is to book a consultation. For anything else, call, email or send a message below."
         crumbs={[{ label: "Contact" }]}
       >
-        <ButtonLink href="/book/">
-          Book a consultation
-        </ButtonLink>
+        <div className="flex flex-wrap gap-3">
+          <ButtonLink href="/free-evaluation/">Request a free evaluation</ButtonLink>
+          <ButtonLink href="/book/" variant="outline-light">
+            Book a consultation
+          </ButtonLink>
+        </div>
       </PageHero>
       <section className="py-20">
         <Container className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">

@@ -70,7 +70,7 @@ export function SectionHeading({
   as?: "h1" | "h2";
 }) {
   return (
-    <div className={cn("max-w-3xl", center && "mx-auto text-center", className)}>
+    <div className={cn("max-w-3xl", center && "mx-auto text-center", className)} data-reveal>
       {eyebrow && <Eyebrow dark={dark} className={cn("mb-5", center && "justify-center")}>{eyebrow}</Eyebrow>}
       <As
         className={cn(

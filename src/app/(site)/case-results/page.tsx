@@ -3,11 +3,11 @@ import { PageHero } from "@/components/site/PageHero";
 import { CaseLibrary } from "@/components/proof/CaseLibrary";
 import { BookingBand } from "@/components/home/Sections";
 import { Container } from "@/components/ui/primitives";
-import { CASES } from "@/content/proof";
+import { CASES } from "@/content/live";
 import { RESULTS_CAVEAT } from "@/content/site";
 
 export const metadata: Metadata = {
-  title: "Case results",
+  title: "Success stories",
   description: "Anonymised outcomes from family, citizenship, extraordinary ability, National Interest Waiver and employer matters, published with client consent.",
 };
 
@@ -15,9 +15,9 @@ export default function CaseResultsPage() {
   return (
     <>
       <PageHero
-        title="Outcomes, documented"
+        title="Success stories, documented"
         lede="Each summary shows the client's situation, the obstacle, our approach and how long the matter took. Names and identifying details are removed, and every result is published with the client's consent."
-        crumbs={[{ label: "Case results" }]}
+        crumbs={[{ label: "Success stories" }]}
       />
       <section className="py-20">
         <Container>

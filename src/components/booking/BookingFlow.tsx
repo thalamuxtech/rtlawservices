@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { collection, doc, getDocs, query, serverTimestamp, Timestamp, where, writeBatch } from "firebase/firestore";
 import { ArrowLeft, CalendarCheck, CalendarPlus, Check, Loader2, Phone, Video, Building2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/primitives";
-import { ATTORNEYS } from "@/content/proof";
+import { ATTORNEYS } from "@/content/live";
 import { NO_RELATIONSHIP, SITE } from "@/content/site";
 import { db } from "@/lib/firebase";
 import {

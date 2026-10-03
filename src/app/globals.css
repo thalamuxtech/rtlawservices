@@ -33,12 +33,12 @@
   --animate-beep: beep 2.4s ease-in-out infinite;
 
   @keyframes ping-soft {
-    0% { transform: scale(1); opacity: 0.75; }
-    70%, 100% { transform: scale(3.2); opacity: 0; }
+    0% { transform: scale(1); opacity: 0.9; }
+    70%, 100% { transform: scale(2.6); opacity: 0; }
   }
   @keyframes beep {
-    0%, 100% { opacity: 1; }
-    45% { opacity: 0.35; }
+    0%, 100% { opacity: 1; transform: scale(1); }
+    45% { opacity: 0.55; transform: scale(0.82); }
   }
 }
 
@@ -138,6 +138,7 @@
 /* Logo motion: the dot on the R beeps like a signal light. */
 .rt-logo .rt-logo-dot,
 .rt-logo .rt-logo-ping,
+.rt-logo .rt-logo-beat,
 .rt-logo .rt-logo-disc,
 .rt-logo .rt-logo-bar {
   transform-box: fill-box;
@@ -145,14 +146,18 @@
 }
 .rt-logo .rt-logo-ping { opacity: 0; }
 @media (prefers-reduced-motion: no-preference) {
-  .rt-logo .rt-logo-dot.is-beeping { animation: beep 2.4s ease-in-out infinite; }
-  .rt-logo .rt-logo-ping { animation: ping-soft 2.4s cubic-bezier(0, 0, 0.2, 1) infinite; }
+  /* The whole disc on the R beeps: a heartbeat pulse with two ripples. */
+  .rt-logo .rt-logo-beat.is-beeping { animation: disc-beep 2.4s ease-in-out infinite; }
+  .rt-logo .rt-logo-ping { animation: ping-ring 2.4s cubic-bezier(0, 0, 0.2, 1) infinite; }
+  .rt-logo .rt-logo-ping-2 { animation-delay: 0.35s; }
   .rt-logo-intro .rt-logo-letters { animation: logo-rise 0.9s var(--ease-luxe) both; }
   .rt-logo-intro .rt-logo-disc { animation: logo-pop 0.8s var(--ease-luxe) 0.25s both; }
   .rt-logo-intro .rt-logo-disc-b { animation-delay: 0.4s; }
   .rt-logo-intro .rt-logo-bar { transform-origin: left center; animation: logo-draw 1s var(--ease-luxe) 0.35s both; }
   .rt-logo-intro .rt-logo-word path { animation: logo-fade 0.9s var(--ease-luxe) 0.55s both; }
 }
+@keyframes disc-beep { 0%, 100% { transform: scale(1); } 12% { transform: scale(1.1); } 24% { transform: scale(0.97); } 36% { transform: scale(1.05); } 50% { transform: scale(1); } }
+@keyframes ping-ring { 0% { transform: scale(1); opacity: 0.85; } 75%, 100% { transform: scale(1.9); opacity: 0; } }
 @keyframes logo-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes logo-pop { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: none; } }
 @keyframes logo-draw { from { transform: scaleX(0); } to { transform: none; } }
@@ -170,3 +175,34 @@
   :root.js-ready [data-reveal].reveal-line { opacity: 1; transform: scaleX(0); transition: transform 1.8s var(--ease-luxe) 0.2s; }
   :root.js-ready [data-reveal].reveal-line.is-in { transform: scaleX(1); }
 }
+
+/* Reviews marquee: two rows drift in opposite directions, pause on hover or focus. */
+.marquee-mask {
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .marquee-track { animation: marquee-x 70s linear infinite; }
+  .marquee-reverse { animation-direction: reverse; animation-duration: 80s; }
+  .marquee-row:hover .marquee-track,
+  .marquee-row:focus-within .marquee-track { animation-play-state: paused; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-row { overflow-x: auto; }
+}
+@keyframes marquee-x { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* Gentle scroll reveal for section content. Visible by default without JavaScript. */
+@media (prefers-reduced-motion: no-preference) {
+  :root.js-ready [data-reveal]:not(.reveal-line) {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity 0.9s var(--ease-luxe), transform 0.9s var(--ease-luxe);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  :root.js-ready [data-reveal].is-in:not(.reveal-line) { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gauge-sweep { animation: gauge-sweep 3.2s var(--ease-luxe) infinite alternate; }
+}
+@keyframes gauge-sweep { from { stroke-dashoffset: 327; } to { stroke-dashoffset: 98; } }

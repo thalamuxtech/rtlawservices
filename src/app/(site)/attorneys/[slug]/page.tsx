@@ -6,7 +6,7 @@ import { CaseCard } from "@/components/site/cards";
 import { BookingBand } from "@/components/home/Sections";
 import { ButtonLink, Container, SampleBadge } from "@/components/ui/primitives";
 import { getExpertise } from "@/content/expertise";
-import { ATTORNEYS, casesByAttorney, getAttorney } from "@/content/proof";
+import { ATTORNEYS, casesByAttorney, getAttorney } from "@/content/live";
 import { SITE } from "@/content/site";
 
 export function generateStaticParams() {

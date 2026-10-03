@@ -1,7 +1,7 @@
 import { TZDate } from "@date-fns/tz";
 import { addDays, format } from "date-fns";
 import { EXPERTISE } from "@/content/expertise";
-import { ATTORNEYS } from "@/content/proof";
+import { ATTORNEYS } from "@/content/live";
 
 export const FIRM_TZ = "America/New_York";
 export const MIN_NOTICE_HOURS = 24;

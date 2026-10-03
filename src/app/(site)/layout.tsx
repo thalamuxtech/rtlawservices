@@ -1,6 +1,6 @@
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
-import { MobileActionBar, PreviewBanner } from "@/components/site/Chrome";
+import { MobileActionBar } from "@/components/site/Chrome";
 import { RevealObserver } from "@/components/ui/RevealObserver";
 import { SITE } from "@/content/site";
 
@@ -26,7 +26,6 @@ export default function SiteLayout({ children }: LayoutProps<"/">) {
       >
         Skip to content
       </a>
-      <PreviewBanner />
       <Header />
       <main id="main" className="pb-20 sm:pb-0">
         {children}

@@ -3,7 +3,7 @@ import { PageHero } from "@/components/site/PageHero";
 import { ReviewCard } from "@/components/site/cards";
 import { BookingBand } from "@/components/home/Sections";
 import { Container, SampleBadge, Stars } from "@/components/ui/primitives";
-import { REVIEWS } from "@/content/proof";
+import { REVIEWS } from "@/content/live";
 
 export const metadata: Metadata = {
   title: "Client reviews",

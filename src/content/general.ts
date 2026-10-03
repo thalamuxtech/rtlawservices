@@ -20,7 +20,7 @@ export const GENERAL_FAQS: { group: string; items: Faq[] }[] = [
     group: "Consultations",
     items: [
       { q: "How do I book a consultation?", a: "Choose a time on our booking page. You pick the matter type, the format (video, phone or office) and a time shown in your own time zone. You receive a confirmation email with the details." },
-      { q: "What should I prepare?", a: "Bring your passport, any immigration documents and notices you have received, and a short list of questions. We send a tailored checklist after you book." },
+      { q: "What should I prepare?", a: "Bring your passport, any immigration documents and notices you have received, and a short list of questions. We send a checklist for your case after you book." },
       { q: "Do you work with clients outside Maryland?", a: "Yes. Immigration law is federal, so we represent clients across the United States and abroad. Estate planning matters are limited to Maryland law." },
       { q: "Do you offer consultations in other languages?", a: "Consultations take place in English. If you are more comfortable in another language, tell us when you book and we will arrange an interpreter." },
     ],

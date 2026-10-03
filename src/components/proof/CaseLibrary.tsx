@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { CaseCard } from "@/components/site/cards";
-import type { CaseResult } from "@/content/proof";
+import type { CaseResult } from "@/content/types";
 import { cn } from "@/lib/utils";
 
 type Filter = "all" | "individuals" | "professionals";

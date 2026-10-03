@@ -3,7 +3,7 @@
 import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring } from "motion/react";
 import { Logo } from "@/components/brand/Logo";
 import { ButtonLink } from "@/components/ui/primitives";
-import { SITE } from "@/content/site";
+import { CTA } from "@/content/site";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const words = "Your immigration matter, handled by an attorney who knows your name.".split(" ");
@@ -53,11 +53,9 @@ export function Hero() {
           </p>
 
           <div style={{ ["--d" as string]: "900ms" }} className="rise mt-10 flex flex-wrap gap-3">
-            <ButtonLink href="/book/">
+            <ButtonLink href={CTA.evaluation.href}>Request a free evaluation</ButtonLink>
+            <ButtonLink href={CTA.consultation.href} variant="outline-light">
               Book a consultation
-            </ButtonLink>
-            <ButtonLink href={SITE.phoneHref} variant="outline-light">
-              Call {SITE.phone}
             </ButtonLink>
           </div>
 

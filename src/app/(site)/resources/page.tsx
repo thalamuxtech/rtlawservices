@@ -3,7 +3,7 @@ import Link from "next/link";
 import { PageHero } from "@/components/site/PageHero";
 import { BookingBand } from "@/components/home/Sections";
 import { Container } from "@/components/ui/primitives";
-import { ARTICLES } from "@/content/articles";
+import { POSTS } from "@/content/live";
 
 export const metadata: Metadata = {
   title: "Resources",
@@ -45,9 +45,9 @@ export default function ResourcesPage() {
           <div className="grid gap-10 lg:grid-cols-[0.7fr_1.3fr]">
             <h2 className="font-serif-display text-4xl text-ink">Guides</h2>
             <ul className="border-t border-ink/15">
-              {ARTICLES.map((a) => (
+              {POSTS.map((a) => (
                 <li key={a.slug}>
-                  <Link href={`/resources/${a.slug}/`} className="group grid gap-2 border-b border-ink/15 py-7 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-10">
+                  <Link href={`/blog/${a.slug}/`} className="group grid gap-2 border-b border-ink/15 py-7 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-10">
                     <span>
                       <span className="font-serif-display block text-[1.75rem] leading-tight text-ink decoration-1 underline-offset-[6px] group-hover:underline">{a.title}</span>
                       <span className="mt-2 block max-w-[62ch] leading-relaxed text-stone">{a.dek}</span>

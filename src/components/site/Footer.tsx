@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Lock, Mail, MapPin, Phone } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { byTrack } from "@/content/expertise";
-import { NO_RELATIONSHIP, SITE, SITE_MODE } from "@/content/site";
+import { NO_RELATIONSHIP, SITE } from "@/content/site";
 
 const cols = [
   { title: "Individuals", links: byTrack("individuals").map((e) => ({ label: e.title, href: `/expertise/${e.slug}/` })) },
@@ -12,11 +12,14 @@ const cols = [
     links: [
       { label: "About", href: "/about/" },
       { label: "Attorneys", href: "/attorneys/" },
-      { label: "Case results", href: "/case-results/" },
+      { label: "Success stories", href: "/case-results/" },
+      { label: "Free evaluation", href: "/free-evaluation/" },
+      { label: "Check eligibility", href: "/check-eligibility/" },
+      { label: "Knowledge center", href: "/knowledge/" },
+      { label: "Blog", href: "/blog/" },
       { label: "Client reviews", href: "/reviews/" },
       { label: "How we work", href: "/how-we-work/" },
       { label: "Diaspora clients", href: "/diaspora/" },
-      { label: "Resources", href: "/resources/" },
       { label: "FAQ", href: "/faq/" },
     ],
   },
@@ -30,7 +33,7 @@ export function Footer() {
       <div className="container-luxe relative">
         <div className="grid gap-12 border-b border-line-dark py-16 lg:grid-cols-[1.2fr_2fr]">
           <div>
-            <Logo tone="dark" className="w-[230px]" />
+            <Logo tone="dark" className="w-[260px]" />
             <p className="mt-6 max-w-sm leading-relaxed">
               Immigration counsel from Maryland for families, professionals and employers across the United States.
             </p>
@@ -82,19 +85,20 @@ export function Footer() {
               )}
               . Office: {SITE.region}.
             </p>
-            {SITE_MODE === "preview" && (
-              <p className="text-brass-light">
-                Preview site. Reviews, case results and attorney profiles marked &ldquo;Sample&rdquo; are fictional and
-                shown for design review only.
-              </p>
-            )}
           </div>
           <div className="flex flex-wrap items-start gap-x-6 gap-y-2 lg:justify-end">
             <Link href="/legal/disclaimer/" className="inline-flex min-h-11 items-center hover:text-paper">Disclaimer</Link>
             <Link href="/legal/privacy/" className="inline-flex min-h-11 items-center hover:text-paper">Privacy</Link>
             <Link href="/legal/terms/" className="inline-flex min-h-11 items-center hover:text-paper">Terms</Link>
             <Link href="/accessibility/" className="inline-flex min-h-11 items-center hover:text-paper">Accessibility</Link>
-            <Link href="/admin/" className="inline-flex min-h-11 items-center hover:text-paper">Staff</Link>
+            <Link
+              href="/admin/"
+              aria-label="Staff sign-in"
+              title="Staff sign-in"
+              className="grid size-11 place-items-center rounded-full border border-line-dark text-stone-dark transition-colors hover:border-brass-light hover:text-brass-light"
+            >
+              <Lock aria-hidden className="size-4" />
+            </Link>
             <p className="w-full lg:text-right">© {year} {SITE.name}</p>
           </div>
         </div>

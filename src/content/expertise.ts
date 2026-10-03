@@ -401,7 +401,7 @@ export const EXPERTISE: Expertise[] = [
     howWeHelp: [
       { title: "Specialty occupation analysis", text: "We align the job duties and degree requirements so the position meets the legal standard." },
       { title: "Labor Condition Application", text: "We prepare the Labor Condition Application (LCA) with the Department of Labor, including the prevailing wage." },
-      { title: "Petition and policy review", text: "We check each case against current rules, including the September 2025 proclamation on new petitions." },
+      { title: "Petition and policy review", text: "We check each case against current rules, including the weighted cap selection and the H-1B proclamations of 2025 and 2026." },
     ],
     forms: [
       { code: "LCA", name: "Labor Condition Application (ETA-9035)" },
@@ -409,7 +409,7 @@ export const EXPERTISE: Expertise[] = [
       { code: "I-907", name: "Request for Premium Processing Service" },
     ],
     timeline:
-      "Cap registration takes place each spring, and selected cases may file from 1 April for an October start. Transfers and extensions can be filed year-round. Premium processing gives a decision window set by U.S. Citizenship and Immigration Services (USCIS).",
+      "Cap registration takes place each spring, and selected cases may file from 1 April for an October start. Since the fiscal year 2027 season, selection is weighted toward higher-paid positions under a rule effective 27 February 2026. Transfers and extensions can be filed year-round, and premium processing gives a decision window set by U.S. Citizenship and Immigration Services (USCIS).",
     checklist: [
       "Degree certificates and transcripts, with evaluations for foreign degrees",
       "Detailed job description and offer letter",
@@ -418,7 +418,7 @@ export const EXPERTISE: Expertise[] = [
     ],
     faqs: [
       { q: "What counts as a specialty occupation?", a: "A role that normally requires at least a bachelor's degree, or its equivalent, in a specific specialty related to the job." },
-      { q: "Does the $100,000 payment apply to my case?", a: "A presidential proclamation from September 2025 requires a $100,000 payment for certain new H-1B petitions filed on or after 21 September 2025. USCIS guidance from October 2025 indicates it applies mainly to beneficiaries outside the United States without a valid H-1B visa, and not to extensions, amendments or changes of status approved inside the country. We review each case against the current guidance." },
+      { q: "Does the $100,000 payment apply to my case?", a: "The position is unsettled. A September 2025 proclamation added a $100,000 payment for certain new H-1B petitions, mainly for workers outside the United States. On 8 June 2026 a federal court vacated the guidance that applied it, and on 24 July 2026 the appeals court declined to pause that order, so USCIS states it is complying with the court while the government considers next steps. A new proclamation of 18 September 2026 extends the policy to 21 September 2027. We check the current USCIS alert before every filing. See our blog post on the payment for the sources." },
       { q: "Can I change employers?", a: "Yes. A new employer files a petition, and in many cases the worker can start once it is filed, under the portability rules." },
       { q: "What happens after six years?", a: "Workers with a pending labor certification or an approved immigrant petition can often extend beyond six years under the American Competitiveness in the 21st Century Act (AC21)." },
       { q: "Which employers are cap-exempt?", a: "Institutions of higher education, their affiliated nonprofits, and nonprofit or government research organizations are generally exempt from the annual cap." },

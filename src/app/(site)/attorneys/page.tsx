@@ -3,7 +3,7 @@ import { PageHero } from "@/components/site/PageHero";
 import { AttorneyCard } from "@/components/site/cards";
 import { BookingBand } from "@/components/home/Sections";
 import { Container } from "@/components/ui/primitives";
-import { ATTORNEYS } from "@/content/proof";
+import { ATTORNEYS } from "@/content/live";
 
 export const metadata: Metadata = {
   title: "Our attorneys",

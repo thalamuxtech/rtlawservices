@@ -4,7 +4,7 @@ import { ExpertiseIndex } from "@/components/site/ExpertiseIndex";
 import { BookingBand } from "@/components/home/Sections";
 import { ButtonLink, Container } from "@/components/ui/primitives";
 import { byTrack, type Expertise } from "@/content/expertise";
-import { ATTORNEYS, CASES } from "@/content/proof";
+import { ATTORNEYS, CASES } from "@/content/live";
 
 export const metadata: Metadata = {
   title: "Areas of expertise",
@@ -23,7 +23,7 @@ export default function ExpertisePage() {
   return (
     <>
       <PageHero
-        title="Immigration counsel for every stage of the journey"
+        title="Immigration counsel for every stage of the process"
         lede="Two tracks share one standard of care. Choose the situation that matches yours, or answer three questions to find your path."
         crumbs={[{ label: "Expertise" }]}
       >

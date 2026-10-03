@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SampleBadge, Stars } from "@/components/ui/primitives";
-import type { Attorney, CaseResult, Review } from "@/content/proof";
+import { DocumentPreview } from "@/components/proof/ApprovalDocument";
+import type { Attorney, CaseResult, Review } from "@/content/types";
 import { cn } from "@/lib/utils";
 
 /**
@@ -9,7 +10,9 @@ import { cn } from "@/lib/utils";
  */
 export function CaseCard({ c, dark }: { c: CaseResult; dark?: boolean; index?: number }) {
   return (
-    <Link href={`/case-results/${c.slug}/`} className="group flex h-full flex-col border-t-2 border-brass pt-6">
+    <Link href={`/case-results/${c.slug}/`} className="group flex h-full flex-col">
+      <DocumentPreview c={c} />
+      <div className="mt-6 flex flex-1 flex-col border-t-2 border-brass pt-5">
       <div className="flex items-center justify-between gap-3">
         <p className={cn("text-sm font-bold", dark ? "text-stone-dark" : "text-stone")}>
           {c.category}, {c.year}
@@ -28,6 +31,7 @@ export function CaseCard({ c, dark }: { c: CaseResult; dark?: boolean; index?: n
       <p className={cn("mt-auto pt-6 text-sm", dark ? "text-stone-dark" : "text-stone")}>
         Time to decision: <span className={cn("font-bold", dark ? "text-paper" : "text-ink")}>{c.timeline}</span>
       </p>
+      </div>
     </Link>
   );
 }

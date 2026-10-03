@@ -53,6 +53,21 @@
         "source": "/video-blog{,/**}",
         "destination": "/resources/",
         "type": 301
+      },
+      {
+        "source": "/resources/marriage-green-card-what-to-expect{,/**}",
+        "destination": "/blog/marriage-green-card-what-to-expect/",
+        "type": 301
+      },
+      {
+        "source": "/resources/eb1a-or-national-interest-waiver{,/**}",
+        "destination": "/blog/eb1a-or-national-interest-waiver/",
+        "type": 301
+      },
+      {
+        "source": "/resources/avoiding-notario-fraud{,/**}",
+        "destination": "/blog/avoiding-notario-fraud/",
+        "type": 301
       }
     ],
     "headers": [

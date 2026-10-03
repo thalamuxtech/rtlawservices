@@ -11,6 +11,11 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/staff/$(request.auth.uid));
     }
 
+    function isOwner() {
+      return isStaff()
+        && get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.role == 'owner';
+    }
+
     function str(v, min, max) {
       return v is string && v.size() >= min && v.size() <= max;
     }
@@ -65,7 +70,7 @@ service cloud.firestore {
       allow read: if isStaff();
       allow update: if isStaff()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'updatedBy', 'staffNote']);
-      allow delete: if false;
+      allow delete: if isOwner();
     }
 
     match /messages/{messageId} {
@@ -79,13 +84,77 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time;
       allow read: if isStaff();
       allow update: if isStaff()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'updatedBy']);
-      allow delete: if false;
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'updatedBy', 'staffNote']);
+      allow delete: if isOwner();
+    }
+
+    // Free evaluation requests. A CV, when attached, is split into base64
+    // chunks in the files subcollection, written in the same batch.
+    match /evaluations/{evaluationId} {
+      allow create: if request.resource.data.keys().hasOnly([
+            'name', 'email', 'phone', 'birthCountry', 'track', 'answers', 'file', 'consents', 'status', 'createdAt'])
+        && str(request.resource.data.name, 2, 200)
+        && str(request.resource.data.email, 5, 200)
+        && request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$')
+        && str(request.resource.data.phone, 7, 60)
+        && str(request.resource.data.birthCountry, 1, 80)
+        && request.resource.data.track in ['professional', 'family']
+        && request.resource.data.answers is map
+        && request.resource.data.answers.size() <= 40
+        && (request.resource.data.file == null
+            || (request.resource.data.file is map
+                && request.resource.data.file.chunks is int
+                && request.resource.data.file.chunks >= 1
+                && request.resource.data.file.chunks <= 6))
+        && request.resource.data.consents == {'noRelationship': true, 'accurate': true}
+        && request.resource.data.status == 'new'
+        && request.resource.data.createdAt == request.time;
+      allow read: if isStaff();
+      allow update: if isStaff()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'updatedBy', 'staffNote']);
+      allow delete: if isOwner();
+
+      match /files/{chunkId} {
+        allow create: if existsAfter(/databases/$(database)/documents/evaluations/$(evaluationId))
+          && getAfter(/databases/$(database)/documents/evaluations/$(evaluationId)).data.file != null
+          && int(chunkId) >= 0 && int(chunkId) < 6
+          && request.resource.data.keys().hasOnly(['index', 'data'])
+          && request.resource.data.data is string
+          && request.resource.data.data.size() <= 800000;
+        allow read: if isStaff();
+        allow delete: if isOwner();
+      }
+    }
+
+    // Website content managed in the back office. Published records are public.
+    match /attorneys/{id} {
+      allow read: if resource.data.status == 'published' || isStaff();
+      allow write: if isStaff();
+    }
+    match /cases/{id} {
+      allow read: if resource.data.status == 'published' || isStaff();
+      allow write: if isStaff();
+    }
+    match /reviews/{id} {
+      allow read: if resource.data.status == 'published' || isStaff();
+      allow write: if isStaff();
+    }
+    match /posts/{id} {
+      allow read: if resource.data.status == 'published' || isStaff();
+      allow write: if isStaff();
+    }
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+    match /meta/{id} {
+      allow read: if true;
+      allow write: if isStaff();
     }
 
     match /staff/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if false;
+      allow read: if request.auth != null && (request.auth.uid == uid || isStaff());
+      allow write: if isOwner();
     }
 
     match /{document=**} {

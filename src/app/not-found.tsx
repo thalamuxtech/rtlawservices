@@ -14,7 +14,7 @@ export default function NotFound() {
         <div className="mt-10 flex flex-wrap justify-center gap-3">
           <Link href="/" className="inline-flex min-h-11 items-center rounded-full bg-brass px-6 font-bold text-ink hover:bg-brass-light">Home</Link>
           <Link href="/expertise/" className="inline-flex min-h-11 items-center rounded-full border border-brass-light/50 px-6 font-bold text-brass-light hover:bg-brass-light hover:text-ink">Expertise</Link>
-          <Link href="/book/" className="inline-flex min-h-11 items-center rounded-full border border-brass-light/50 px-6 font-bold text-brass-light hover:bg-brass-light hover:text-ink">Book a consultation</Link>
+          <Link href="/free-evaluation/" className="inline-flex min-h-11 items-center rounded-full border border-brass-light/50 px-6 font-bold text-brass-light hover:bg-brass-light hover:text-ink">Free evaluation</Link>
         </div>
       </div>
     </main>

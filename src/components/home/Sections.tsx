@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
 import { ButtonLink, Container, SectionHeading } from "@/components/ui/primitives";
-import { AttorneyCard, CaseCard, ReviewCard } from "@/components/site/cards";
-import { ARTICLES } from "@/content/articles";
+import { AttorneyCard, CaseCard } from "@/components/site/cards";
 import { PILLARS, PROCESS } from "@/content/general";
-import { ATTORNEYS, CASES, REVIEWS } from "@/content/proof";
-import { RESULTS_CAVEAT, SITE } from "@/content/site";
+import { ATTORNEYS, CASES, POSTS, REVIEWS } from "@/content/live";
+import { ReviewsMarquee } from "@/components/proof/ReviewsMarquee";
+import { CTA, RESULTS_CAVEAT } from "@/content/site";
 
 export function TwoDoors() {
   return (
@@ -54,16 +54,18 @@ export function FeaturedResults() {
         <div className="flex flex-wrap items-end justify-between gap-8">
           <SectionHeading
             dark
-            title="Outcomes, documented"
+            title="Success stories, documented"
             lede="Anonymised summaries of matters, published with client consent. Each one shows the challenge, our approach and the time to decision."
           />
           <ButtonLink href="/case-results/" variant="outline-light">
-            All case results
+            All success stories
           </ButtonLink>
         </div>
         <div className="mt-16 grid gap-12 lg:grid-cols-3 lg:gap-10">
-          {featured.map((c) => (
-            <CaseCard key={c.slug} c={c} dark />
+          {featured.map((c, i) => (
+            <div key={c.slug} data-reveal style={{ ["--reveal-delay" as string]: `${i * 110}ms` }}>
+              <CaseCard c={c} dark />
+            </div>
           ))}
         </div>
         <p className="mt-12 text-sm text-stone-dark">{RESULTS_CAVEAT}</p>
@@ -89,8 +91,10 @@ export function AttorneysPreview() {
           </div>
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
-          {ATTORNEYS.map((a) => (
-            <AttorneyCard key={a.slug} a={a} />
+          {ATTORNEYS.map((a, i) => (
+            <div key={a.slug} data-reveal style={{ ["--reveal-delay" as string]: `${i * 110}ms` }}>
+              <AttorneyCard a={a} />
+            </div>
           ))}
         </div>
       </Container>
@@ -105,7 +109,7 @@ export function Pillars() {
         <SectionHeading title="What you can expect from us" />
         <dl className="grid gap-x-12 sm:grid-cols-2">
           {PILLARS.map((p) => (
-            <div key={p.title} className="border-t border-ink/15 py-7">
+            <div key={p.title} className="border-t border-ink/15 py-7" data-reveal>
               <dt className="font-serif-display text-2xl text-ink">{p.title}</dt>
               <dd className="mt-2 leading-relaxed text-stone">{p.text}</dd>
             </div>
@@ -129,8 +133,8 @@ export function ProcessRibbon({ compact }: { compact?: boolean }) {
         <ol className="relative mt-16 grid gap-10 lg:grid-cols-5 lg:gap-6">
           <div aria-hidden className="absolute left-0 right-0 top-5 hidden h-px bg-line lg:block" />
           <div aria-hidden className="reveal-line absolute left-0 top-5 hidden h-px w-full origin-left bg-brass lg:block" data-reveal />
-          {PROCESS.map((s) => (
-            <li key={s.n} className="relative">
+          {PROCESS.map((s, i) => (
+            <li key={s.n} className="relative" data-reveal style={{ ["--reveal-delay" as string]: `${200 + i * 140}ms` }}>
               <span className="relative z-10 grid size-10 place-items-center rounded-full border border-brass bg-paper text-sm font-bold text-brass-ink">
                 {Number(s.n)}
               </span>
@@ -145,52 +149,33 @@ export function ProcessRibbon({ compact }: { compact?: boolean }) {
 }
 
 export function ReviewsPreview() {
-  const top = REVIEWS.slice(0, 3);
-  if (!top.length) return null;
-  return (
-    <section className="bg-white py-24 sm:py-32">
-      <Container>
-        <div className="flex flex-wrap items-end justify-between gap-8">
-          <SectionHeading title="In our clients' words" />
-          <ButtonLink href="/reviews/" variant="outline">
-            All reviews
-          </ButtonLink>
-        </div>
-        <div className="mt-16 grid gap-12 lg:grid-cols-[1.4fr_1fr_1fr] lg:gap-0 lg:divide-x lg:divide-line">
-          {top.map((r, i) => (
-            <div key={r.id} className={i === 0 ? "lg:pr-12" : "lg:px-10"}>
-              <ReviewCard r={r} large={i === 0} />
-            </div>
-          ))}
-        </div>
-      </Container>
-    </section>
-  );
+  return <ReviewsMarquee reviews={REVIEWS} />;
 }
 
+const fmtDate = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
 export function ResourcesPreview() {
+  const posts = POSTS.slice(0, 3);
   return (
     <section className="py-24 sm:py-32">
       <Container className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
         <div>
-          <SectionHeading title="Guides written for clarity" lede="Plain explanations of common steps, reviewed by an attorney." />
-          <div className="mt-10">
-            <ButtonLink href="/resources/" variant="outline">
-              All resources
+          <SectionHeading title="Latest from the blog" lede="Policy updates and plain-language guides. Every post lists the official sources behind it." />
+          <div className="mt-10" data-reveal>
+            <ButtonLink href="/blog/" variant="outline">
+              Read the blog
             </ButtonLink>
           </div>
         </div>
         <ul className="border-t border-ink/15">
-          {ARTICLES.map((a) => (
-            <li key={a.slug}>
-              <Link href={`/resources/${a.slug}/`} className="group block border-b border-ink/15 py-7 transition-colors hover:bg-white sm:px-2">
+          {posts.map((p, i) => (
+            <li key={p.slug} data-reveal style={{ ["--reveal-delay" as string]: `${i * 90}ms` }}>
+              <Link href={`/blog/${p.slug}/`} className="group block border-b border-ink/15 py-7 transition-colors hover:bg-white sm:px-2">
                 <p className="text-sm text-stone">
-                  {a.category}, {a.readMinutes} minute read
+                  {p.category}, {fmtDate(p.published)}, {p.sources.length} sources
                 </p>
-                <h3 className="font-serif-display mt-2 text-[1.75rem] leading-tight text-ink decoration-1 underline-offset-[6px] group-hover:underline">
-                  {a.title}
-                </h3>
-                <p className="mt-2 max-w-[62ch] leading-relaxed text-stone">{a.dek}</p>
+                <h3 className="font-serif-display mt-2 text-[1.75rem] leading-tight text-ink decoration-1 underline-offset-[6px] group-hover:underline">{p.title}</h3>
+                <p className="mt-2 max-w-[62ch] leading-relaxed text-stone">{p.dek}</p>
               </Link>
             </li>
           ))}
@@ -208,14 +193,14 @@ export function BookingBand() {
       <div aria-hidden className="absolute -right-8 top-1/2 size-[360px] -translate-y-1/2 rounded-full border border-brass/30" />
       <Container className="relative grid items-center gap-12 lg:grid-cols-[1.3fr_0.7fr]">
         <div>
-          <h2 className="font-serif-display text-4xl text-balance sm:text-6xl">Tell us where you are. We will show you the way forward.</h2>
+          <h2 className="font-serif-display text-4xl text-balance sm:text-6xl" data-reveal>Tell us where you are. We will show you the way forward.</h2>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-stone-dark">
-            Choose a time that suits your time zone. Video, phone or in-office consultations.
+            Send your details for a free evaluation by an attorney, or book a consultation by video, phone or in person at a time that suits your time zone.
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
-            <ButtonLink href="/book/">See available times</ButtonLink>
-            <ButtonLink href={SITE.phoneHref} variant="outline-light">
-              Call {SITE.phone}
+            <ButtonLink href={CTA.evaluation.href}>Request a free evaluation</ButtonLink>
+            <ButtonLink href={CTA.consultation.href} variant="outline-light">
+              Book a consultation
             </ButtonLink>
           </div>
         </div>

@@ -7,7 +7,7 @@ import { CaseCard, ReviewCard } from "@/components/site/cards";
 import { BookingBand } from "@/components/home/Sections";
 import { ButtonLink, Container } from "@/components/ui/primitives";
 import { EXPERTISE, getExpertise } from "@/content/expertise";
-import { ATTORNEYS, casesFor, reviewsFor } from "@/content/proof";
+import { ATTORNEYS, casesFor, reviewsFor } from "@/content/live";
 import { RESULTS_CAVEAT, SITE } from "@/content/site";
 
 export function generateStaticParams() {
@@ -44,7 +44,7 @@ export default async function ExpertiseDetail({ params }: PageProps<"/expertise/
     ...(e.forms.length ? [{ id: "forms", label: "Forms involved" }] : []),
     { id: "timeline", label: "Timeline" },
     { id: "checklist", label: "Document checklist" },
-    ...(results.length ? [{ id: "results", label: "Case results" }] : []),
+    ...(results.length ? [{ id: "results", label: "Success stories" }] : []),
     { id: "faq", label: "Questions" },
   ];
 
@@ -61,9 +61,15 @@ export default async function ExpertiseDetail({ params }: PageProps<"/expertise/
             <p className="font-serif-display mt-1 text-2xl text-paper">{lead ? lead.name : "Assigned at booking"}</p>
             <p className="mt-4 text-sm text-stone-dark">Last reviewed {REVIEWED}</p>
             <div className="mt-6 grid gap-2">
-              <ButtonLink href={`/book/?matter=${e.slug}`}>
-                {pro ? "Request a profile review" : "Book a consultation"}
+              <ButtonLink href={`/free-evaluation/?matter=${e.slug}`}>Request a free evaluation</ButtonLink>
+              <ButtonLink href={`/book/?matter=${e.slug}`} variant="outline-light">
+                Book a consultation
               </ButtonLink>
+              {pro && (
+                <ButtonLink href="/check-eligibility/" variant="outline-light">
+                  Check eligibility
+                </ButtonLink>
+              )}
             </div>
           </div>
         }
@@ -175,7 +181,7 @@ export default async function ExpertiseDetail({ params }: PageProps<"/expertise/
 
           <section id="checklist" className="mt-20 scroll-mt-32">
             <h2 className="font-serif-display text-4xl text-ink">Document checklist</h2>
-            <p className="mt-3 text-stone">A starting list. We send a tailored checklist after the consultation.</p>
+            <p className="mt-3 text-stone">A starting list. We send a checklist for your case after the consultation.</p>
             <ul className="mt-8 grid gap-2 sm:grid-cols-2">
               {e.checklist.map((c) => (
                 <li key={c} className="flex gap-3 rounded-xl bg-mist p-4 text-[0.97rem] text-ink-soft">
@@ -188,7 +194,7 @@ export default async function ExpertiseDetail({ params }: PageProps<"/expertise/
 
           {results.length > 0 && (
             <section id="results" className="mt-20 scroll-mt-32">
-              <h2 className="font-serif-display text-4xl text-ink">Case results</h2>
+              <h2 className="font-serif-display text-4xl text-ink">Success stories</h2>
               <div className="mt-8 grid gap-x-10 gap-y-12 sm:grid-cols-2">
                 {results.map((c, i) => <CaseCard key={c.slug} c={c} index={i} />)}
               </div>
@@ -210,7 +216,10 @@ export default async function ExpertiseDetail({ params }: PageProps<"/expertise/
           <div className="mt-16 flex flex-wrap items-center gap-4 rounded-2xl bg-mist p-7">
             <CalendarCheck aria-hidden className="size-7 text-brass-ink" />
             <p className="flex-1 font-bold text-ink">Ready to talk it through?</p>
-            <ButtonLink href={`/book/?matter=${e.slug}`}>Book a consultation</ButtonLink>
+            <ButtonLink href={`/free-evaluation/?matter=${e.slug}`}>Free evaluation</ButtonLink>
+            <ButtonLink href={`/book/?matter=${e.slug}`} variant="outline">
+              Consultation
+            </ButtonLink>
           </div>
         </div>
       </Container>
