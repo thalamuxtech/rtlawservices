@@ -3,7 +3,7 @@ import { Logo } from "@/components/brand/Logo";
 import { ButtonLink, Container, SectionHeading } from "@/components/ui/primitives";
 import { AttorneyCard, CaseCard } from "@/components/site/cards";
 import { PILLARS, PROCESS } from "@/content/general";
-import { ATTORNEYS, CASES, POSTS, REVIEWS } from "@/content/live";
+import { ATTORNEYS, CASES, POSTS, REVIEWS, REVIEWS_ILLUSTRATIVE } from "@/content/live";
 import { ReviewsMarquee } from "@/components/proof/ReviewsMarquee";
 import { CTA, RESULTS_CAVEAT } from "@/content/site";
 
@@ -149,7 +149,7 @@ export function ProcessRibbon({ compact }: { compact?: boolean }) {
 }
 
 export function ReviewsPreview() {
-  return <ReviewsMarquee reviews={REVIEWS} />;
+  return <ReviewsMarquee reviews={REVIEWS} illustrative={REVIEWS_ILLUSTRATIVE} />;
 }
 
 const fmtDate = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });

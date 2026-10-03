@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Stars } from "@/components/ui/primitives";
 import type { Review } from "@/content/types";
+import { ILLUSTRATIVE_NOTE } from "@/content/live";
 import { cn } from "@/lib/utils";
 
 const BUILD = new Date();
@@ -56,7 +57,7 @@ function ReviewTile({ r, i }: { r: Review; i: number }) {
   );
 }
 
-export function ReviewsMarquee({ reviews }: { reviews: Review[] }) {
+export function ReviewsMarquee({ reviews, illustrative = false }: { reviews: Review[]; illustrative?: boolean }) {
   if (!reviews.length) return null;
   const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
   const half = Math.ceil(reviews.length / 2);
@@ -70,13 +71,17 @@ export function ReviewsMarquee({ reviews }: { reviews: Review[] }) {
           <h2 id="reviews-heading" className="font-serif-display text-[2.1rem] text-ink sm:text-5xl">
             In our clients&rsquo; words
           </h2>
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <span className="font-serif-display text-4xl text-ink">{avg.toFixed(1)}</span>
-            <Stars rating={Math.round(avg)} />
-            <span className="text-stone">
-              from {reviews.length} {fromGoogle ? "Google and client" : "client"} reviews
-            </span>
-          </div>
+          {illustrative ? (
+            <p className="mt-5 max-w-xl text-stone">{ILLUSTRATIVE_NOTE}</p>
+          ) : (
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <span className="font-serif-display text-4xl text-ink">{avg.toFixed(1)}</span>
+              <Stars rating={Math.round(avg)} />
+              <span className="text-stone">
+                from {reviews.length} {fromGoogle ? "Google and client" : "client"} reviews
+              </span>
+            </div>
+          )}
         </div>
         <Link
           href="/reviews/"

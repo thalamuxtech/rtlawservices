@@ -7,7 +7,7 @@ import { CaseCard, ReviewCard } from "@/components/site/cards";
 import { BookingBand } from "@/components/home/Sections";
 import { ButtonLink, Container } from "@/components/ui/primitives";
 import { EXPERTISE, getExpertise } from "@/content/expertise";
-import { ATTORNEYS, casesFor, reviewsFor } from "@/content/live";
+import { ATTORNEYS, ILLUSTRATIVE_NOTE, casesFor, reviewsFor } from "@/content/live";
 import { RESULTS_CAVEAT, SITE } from "@/content/site";
 
 export function generateStaticParams() {
@@ -203,8 +203,11 @@ export default async function ExpertiseDetail({ params }: PageProps<"/expertise/
           )}
 
           {reviews.length > 0 && (
-            <section className="mt-16 grid gap-10 border-t border-ink/15 pt-10 sm:grid-cols-2">
-              {reviews.map((r, i) => <ReviewCard key={r.id} r={r} index={i} />)}
+            <section className="mt-16 border-t border-ink/15 pt-10">
+              <div className="grid gap-10 sm:grid-cols-2">
+                {reviews.map((r, i) => <ReviewCard key={r.id} r={r} index={i} />)}
+              </div>
+              {reviews.some((r) => r.demo) && <p className="mt-6 text-sm text-stone">{ILLUSTRATIVE_NOTE}</p>}
             </section>
           )}
 

@@ -3,7 +3,7 @@ import { PageHero } from "@/components/site/PageHero";
 import { ReviewCard } from "@/components/site/cards";
 import { BookingBand } from "@/components/home/Sections";
 import { ButtonLink, Container, Stars } from "@/components/ui/primitives";
-import { REVIEWS } from "@/content/live";
+import { ILLUSTRATIVE_NOTE, REVIEWS, REVIEWS_ILLUSTRATIVE } from "@/content/live";
 
 export const metadata: Metadata = {
   title: "Client reviews",
@@ -16,10 +16,14 @@ export default function ReviewsPage() {
     <>
       <PageHero
         title="In our clients' words"
-        lede="Reviews are published with the reviewer's permission. We show first names and initials only, to protect privacy."
+        lede={
+          REVIEWS_ILLUSTRATIVE
+            ? ILLUSTRATIVE_NOTE
+            : "Reviews are published with the reviewer's permission. We show first names and initials only, to protect privacy."
+        }
         crumbs={[{ label: "Reviews" }]}
         aside={
-          REVIEWS.length ? (
+          REVIEWS.length && !REVIEWS_ILLUSTRATIVE ? (
             <div className="rounded-2xl border border-line-dark bg-ink-raised/80 p-6">
               <p className="font-serif-display text-6xl text-brass-light">{avg.toFixed(1)}</p>
               <Stars rating={Math.round(avg)} className="mt-3" />

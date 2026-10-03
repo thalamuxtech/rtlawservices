@@ -21,7 +21,8 @@ const live = liveJson as unknown as Live;
 const fromStore = live.source === "firestore";
 
 // Records flagged demo are fictional placeholders kept for the back office.
-// They are never published, so the public site shows only real material.
+// Attorneys and cases flagged demo are never published. Reviews flagged demo
+// are shown, with one note that they are illustrative, until real ones arrive.
 const visible = <T extends { demo?: boolean }>(rows: T[]) => rows.filter((r) => !r.demo);
 
 const pick = <T,>(remote: T[] | undefined, seed: T[]) => (fromStore && remote && remote.length ? remote : seed);
@@ -30,7 +31,10 @@ export const LIVE_SITE: Partial<SiteSettings> = live.site ?? {};
 
 export const ATTORNEYS: Attorney[] = visible(pick(live.attorneys, SEED_ATTORNEYS)).sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
 export const CASES: CaseResult[] = visible(pick(live.cases, SEED_CASES));
-export const REVIEWS: Review[] = visible(pick(live.reviews, SEED_REVIEWS)).sort((a, b) => b.date.localeCompare(a.date));
+export const REVIEWS: Review[] = pick(live.reviews, SEED_REVIEWS).sort((a, b) => b.date.localeCompare(a.date));
+// True while any published review is a fictional placeholder.
+export const REVIEWS_ILLUSTRATIVE = REVIEWS.some((r) => r.demo);
+export const ILLUSTRATIVE_NOTE = "These reviews are illustrative examples while client reviews are being collected.";
 export const POSTS: Post[] = pick(live.posts, SEED_POSTS).sort((a, b) => b.published.localeCompare(a.published));
 
 export const getAttorney = (slug: string) => ATTORNEYS.find((a) => a.slug === slug);

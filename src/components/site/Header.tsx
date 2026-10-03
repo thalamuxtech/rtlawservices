@@ -109,9 +109,9 @@ export function Header() {
                       <ul className="grid p-3">
                         {g.links.map((l) => (
                           <li key={l.href}>
-                            <Link href={l.href} className={cn("block rounded-xl px-4 py-3 transition-colors hover:bg-mist", active(l.href) && "bg-mist")}>
-                              <span className="block font-bold text-ink">{l.label}</span>
-                              {l.description && <span className="mt-0.5 block text-sm text-stone">{l.description}</span>}
+                            <Link href={l.href} className={cn("group block rounded-xl px-4 py-3 transition-colors duration-300 hover:bg-ink focus-visible:bg-ink", active(l.href) && "bg-mist")}>
+                              <span className="block font-bold text-ink transition-colors duration-300 group-hover:text-paper group-focus-visible:text-paper">{l.label}</span>
+                              {l.description && <span className="mt-0.5 block text-sm text-stone transition-colors duration-300 group-hover:text-stone-dark group-focus-visible:text-stone-dark">{l.description}</span>}
                             </Link>
                           </li>
                         ))}
@@ -125,8 +125,8 @@ export function Header() {
                   key={g.label}
                   href={g.href!}
                   className={cn(
-                    "relative flex min-h-11 items-center whitespace-nowrap rounded-full px-3 text-[0.92rem] font-bold transition-colors",
-                    groupActive(g) ? "text-ink" : "text-stone hover:text-ink",
+                    "relative flex min-h-11 items-center whitespace-nowrap rounded-full px-3 text-[0.92rem] font-bold transition-colors duration-300 hover:bg-ink hover:text-paper",
+                    groupActive(g) ? "text-ink" : "text-stone",
                   )}
                 >
                   {g.label}
@@ -145,7 +145,7 @@ export function Header() {
             </ButtonLink>
             <button
               type="button"
-              className="grid size-11 place-items-center rounded-full text-ink transition-colors hover:bg-mist xl:hidden"
+              className="grid size-11 place-items-center rounded-full text-ink transition-colors duration-300 hover:bg-ink hover:text-paper xl:hidden"
               aria-label={open === "mobile" ? "Close menu" : "Open menu"}
               aria-expanded={open === "mobile"}
               onClick={() => setOpen(open === "mobile" ? null : "mobile")}
@@ -169,7 +169,7 @@ function TopButton({ label, open, current, onClick, controls }: { label: string;
       aria-expanded={open}
       aria-controls={controls}
       onClick={onClick}
-      className={cn("flex min-h-11 items-center gap-1 whitespace-nowrap rounded-full px-3 text-[0.92rem] font-bold transition-colors", current || open ? "text-ink" : "text-stone hover:text-ink")}
+      className={cn("flex min-h-11 items-center gap-1 whitespace-nowrap rounded-full px-3 text-[0.92rem] font-bold transition-colors duration-300 hover:bg-ink hover:text-paper", open ? "bg-ink text-paper" : current ? "text-ink" : "text-stone")}
     >
       {label}
       <ChevronDown aria-hidden className={cn("size-4 transition-transform duration-300", open && "rotate-180")} />
@@ -208,13 +208,20 @@ function MegaColumn({ title, items, dark }: { title: string; items: ReturnType<t
           const Icon = EXPERTISE_ICONS[e.icon];
           return (
             <li key={e.slug}>
-              <Link href={`/expertise/${e.slug}/`} className={cn("group flex items-start gap-3 rounded-xl p-2.5 transition-colors", dark ? "hover:bg-ink-raised" : "hover:bg-mist")}>
-                <span className={cn("mt-0.5 grid size-8 shrink-0 place-items-center rounded-full border", dark ? "border-line-dark text-brass-light" : "border-line text-brass-ink")}>
+              <Link href={`/expertise/${e.slug}/`} className={cn("group flex items-start gap-3 rounded-xl p-2.5 transition-colors duration-300", dark ? "hover:bg-paper focus-visible:bg-paper" : "hover:bg-ink focus-visible:bg-ink")}>
+                <span
+                  className={cn(
+                    "mt-0.5 grid size-8 shrink-0 place-items-center rounded-full border transition-colors duration-300",
+                    dark
+                      ? "border-line-dark text-brass-light group-hover:border-line group-hover:text-brass-ink group-focus-visible:border-line group-focus-visible:text-brass-ink"
+                      : "border-line text-brass-ink group-hover:border-line-dark group-hover:text-brass-light group-focus-visible:border-line-dark group-focus-visible:text-brass-light",
+                  )}
+                >
                   <Icon aria-hidden className="size-4" />
                 </span>
                 <span>
-                  <span className={cn("block font-bold", dark ? "text-paper" : "text-ink")}>{e.title}</span>
-                  <span className={cn("block text-[0.82rem] font-bold", dark ? "text-stone-dark" : "text-stone")}>{e.codes}</span>
+                  <span className={cn("block font-bold transition-colors duration-300", dark ? "text-paper group-hover:text-ink group-focus-visible:text-ink" : "text-ink group-hover:text-paper group-focus-visible:text-paper")}>{e.title}</span>
+                  <span className={cn("block text-[0.82rem] font-bold transition-colors duration-300", dark ? "text-stone-dark group-hover:text-stone group-focus-visible:text-stone" : "text-stone group-hover:text-stone-dark group-focus-visible:text-stone-dark")}>{e.codes}</span>
                 </span>
               </Link>
             </li>
@@ -267,10 +274,10 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
                   type="button"
                   aria-expanded={section === g.label}
                   onClick={() => setSection(section === g.label ? null : g.label)}
-                  className="flex min-h-16 w-full items-center justify-between font-serif-display text-3xl"
+                  className="group -mx-3 flex min-h-16 w-[calc(100%+1.5rem)] items-center justify-between rounded-xl px-3 font-serif-display text-3xl transition-colors duration-300 hover:bg-paper hover:text-ink"
                 >
                   {g.label}
-                  <ChevronDown aria-hidden className={cn("size-6 text-brass-light transition-transform duration-300", section === g.label && "rotate-180")} />
+                  <ChevronDown aria-hidden className={cn("size-6 text-brass-light transition-transform duration-300 group-hover:text-brass-ink", section === g.label && "rotate-180")} />
                 </button>
                 <AnimatePresence initial={false}>
                   {section === g.label && (
@@ -283,7 +290,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
                     >
                       {g.links.map((l) => (
                         <li key={l.href}>
-                          <Link href={l.href} onClick={onClose} className="flex min-h-11 items-center pl-1 text-lg text-stone-dark transition-colors hover:text-paper">
+                          <Link href={l.href} onClick={onClose} className="-mx-3 flex min-h-11 items-center rounded-xl px-4 text-lg text-stone-dark transition-colors duration-300 hover:bg-paper hover:text-ink">
                             {l.label}
                           </Link>
                         </li>
@@ -294,7 +301,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
                 </AnimatePresence>
               </>
             ) : (
-              <Link href={g.href!} onClick={onClose} className="flex min-h-16 items-center font-serif-display text-3xl">
+              <Link href={g.href!} onClick={onClose} className="-mx-3 flex min-h-16 items-center rounded-xl px-3 font-serif-display text-3xl transition-colors duration-300 hover:bg-paper hover:text-ink">
                 {g.label}
               </Link>
             )}
