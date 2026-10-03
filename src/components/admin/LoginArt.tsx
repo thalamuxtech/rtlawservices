@@ -7,7 +7,7 @@ const COLUMNS = [0, 1, 2, 3, 4, 5];
 
 export function LoginArt() {
   return (
-    <div aria-hidden className="relative w-full max-w-[250px] xl:max-w-[340px] [@media(max-height:700px)]:hidden">
+    <div aria-hidden className="relative mx-auto w-full max-w-[250px] xl:max-w-[340px] [@media(max-height:700px)]:hidden">
       <div className="login-flag absolute left-1/2 top-[2.4%] ml-[2px] flex h-[26%] w-[37%]">
         {Array.from({ length: SLICES }, (_, i) => (
           <span

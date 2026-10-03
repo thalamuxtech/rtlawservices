@@ -143,7 +143,7 @@ function Login() {
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1.1fr_0.9fr]">
-      <div className="on-dark relative hidden overflow-hidden bg-ink p-14 text-paper lg:flex lg:flex-col lg:justify-between">
+      <div className="on-dark relative hidden overflow-hidden bg-ink p-14 text-paper lg:flex lg:flex-col lg:items-center lg:justify-between lg:text-center">
         <div aria-hidden className="grain absolute inset-0" />
         {[0, 1, 2].map((i) => (
           <motion.div
@@ -158,7 +158,7 @@ function Login() {
           </motion.div>
         ))}
         <Logo tone="dark" className="relative w-64" />
-        <div className="relative">
+        <div className="relative flex flex-col items-center">
           <LoginArt />
           <p className="mt-8 text-sm font-bold text-brass-light xl:mt-10">Staff portal</p>
           <p className="font-serif-display mt-2 text-4xl leading-tight xl:text-5xl">Client matters, managed with care</p>
@@ -166,7 +166,7 @@ function Login() {
             Review free evaluations, confirm consultations and reply to client messages. Approve success stories, reviews and
             articles before they appear on the website.
           </p>
-          <ul className="mt-8 grid max-w-lg gap-3 [@media(max-height:860px)]:hidden text-[0.97rem] text-paper/90">
+          <ul className="mt-8 grid max-w-lg gap-3 text-left [@media(max-height:860px)]:hidden text-[0.97rem] text-paper/90">
             {[
               { icon: ClipboardCheck, text: "Free evaluations and consultation requests" },
               { icon: MessagesSquare, text: "Client messages and follow-up" },
@@ -181,7 +181,7 @@ function Login() {
             ))}
           </ul>
         </div>
-        <p className="relative flex items-center gap-2 text-sm text-stone-dark">
+        <p className="relative flex items-center justify-center gap-2 text-sm text-stone-dark">
           <Lock aria-hidden className="size-4 text-brass-light" />
           Authorized staff only. Client information in this portal is confidential.
         </p>
