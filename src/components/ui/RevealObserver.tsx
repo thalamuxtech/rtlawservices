@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { startAnalytics } from "@/lib/firebase";
+import { startAnalytics } from "@/lib/analytics";
 
 /**
  * Adds `is-in` to every [data-reveal] element as it enters the viewport.

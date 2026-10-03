@@ -7,11 +7,11 @@ import { POSTS } from "@/content/live";
 
 export const metadata: Metadata = {
   title: "Resources",
-  description: "Guides, the current USCIS filing fees, and explainers on processing times, the Visa Bulletin and case status.",
+  description: "Guides, the current U.S. Citizenship and Immigration Services (USCIS) filing fees, and explainers on processing times, the Visa Bulletin and case status.",
 };
 
 const TOOLS = [
-  { href: "/resources/filing-fees/", title: "Filing fees", text: "Current government fees for common forms, from the official USCIS fee schedule." },
+  { href: "/resources/filing-fees/", title: "Filing fees", text: "Current government fees for common forms, from the official U.S. Citizenship and Immigration Services (USCIS) fee schedule." },
   { href: "/resources/processing-times/", title: "Processing times", text: "How to read official processing times and what affects them." },
   { href: "/resources/visa-bulletin/", title: "The Visa Bulletin", text: "What the monthly bulletin shows and how to find your place in line." },
   { href: "/resources/case-status/", title: "Case status", text: "How to check a USCIS case and understand the result." },

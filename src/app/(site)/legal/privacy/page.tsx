@@ -10,9 +10,10 @@ export default function PrivacyPage() {
       <h2>What we collect</h2>
       <ul>
         <li>Details you enter when booking or sending a message: name, email, phone, country, preferred language, the type of matter and the names of other parties, which we use for a conflict check.</li>
-        <li>Anonymous usage data from Google Analytics, such as pages viewed and device type.</li>
+        <li>Answers you give in the free evaluation questionnaire, such as country of birth, current status, education, work and, if you choose to answer, past immigration problems, plus any CV you upload.</li>
+        <li>Usage data from Google Analytics, such as pages viewed, device type and approximate location. Analytics uses cookies and does not receive what you type into forms.</li>
       </ul>
-      <p>We do not ask for passport numbers, immigration file numbers or immigration history through website forms.</p>
+      <p>We do not ask for passport numbers or immigration file numbers through website forms. Please share only what the questions ask for.</p>
       <h2>How we use it</h2>
       <p>To respond to you, schedule consultations, check for conflicts of interest and improve the website. We do not sell personal information.</p>
       <h2>Where it is stored</h2>

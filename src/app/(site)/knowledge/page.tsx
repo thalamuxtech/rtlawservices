@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 const TOOLS = [
   { href: "/check-eligibility/", icon: Gauge, title: "Eligibility self-check", text: "Score your record against EB-1A, O-1A and National Interest Waiver criteria." },
   { href: "/start-here/#path-finder", icon: Compass, title: "Path finder", text: "Three questions that point you to the right route." },
-  { href: "/resources/filing-fees/", icon: Receipt, title: "Filing fees", text: "Government fees from the current USCIS schedule." },
+  { href: "/resources/filing-fees/", icon: Receipt, title: "Filing fees", text: "Government fees from the current U.S. Citizenship and Immigration Services (USCIS) schedule." },
   { href: "/resources/processing-times/", icon: Hourglass, title: "Processing times", text: "Read official timelines and spot a stuck case." },
   { href: "/resources/visa-bulletin/", icon: CalendarRange, title: "Visa Bulletin", text: "Priority dates and the two monthly charts, explained." },
   { href: "/resources/case-status/", icon: Search, title: "Case status", text: "Find your receipt number and read status messages." },

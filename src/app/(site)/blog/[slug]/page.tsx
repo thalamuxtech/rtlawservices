@@ -16,7 +16,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): Promise<Metadata> {
   const p = getPost((await params).slug);
-  return p ? { title: p.title, description: p.dek, openGraph: { type: "article", title: p.title, description: p.dek } } : {};
+  return p ? { title: p.title, description: p.dek, openGraph: { type: "article", title: p.title, description: p.dek } } : { robots: { index: false } };
 }
 
 const fmt = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });

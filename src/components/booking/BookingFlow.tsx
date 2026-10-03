@@ -3,17 +3,14 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { collection, doc, getDocs, query, serverTimestamp, Timestamp, where, writeBatch } from "firebase/firestore";
+import type { Timestamp } from "firebase/firestore";
 import { ArrowLeft, CalendarCheck, CalendarPlus, Check, Loader2, Phone, Video, Building2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/primitives";
 import { ATTORNEYS } from "@/content/live";
 import { NO_RELATIONSHIP, SITE } from "@/content/site";
-import { db } from "@/lib/firebase";
-import {
-  MATTERS, MODES, attorneyFor, bookableDays, durationFor, fetchUsHolidays, fmtDayLong, fmtTime, icsFile,
-  slotId, slotsFor, tzLabel, visitorTz, FIRM_TZ, type Mode,
-} from "@/lib/booking";
-import { cn } from "@/lib/utils";
+import { store } from "@/lib/store";
+import { attorneyFor, blocksFor, bookableDays, durationFor, fetchUsHolidays, FIRM_TZ, fmtDayLong, fmtTime, icsFile, MATTERS, MODES, slotId, slotsFor, type Mode, tzLabel, visitorTz } from "@/lib/booking";
+import { cn, focusStep } from "@/lib/utils";
 
 const noopSubscribe = () => () => {};
 const STEPS = ["Matter", "Format", "Time", "Details", "Review"] as const;
@@ -69,7 +66,8 @@ export function BookingFlow() {
     // Never leave the calendar waiting: after 6 seconds show every time. The
     // create-only slot lock in Firestore still prevents double booking.
     const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 6000));
-    Promise.race([getDocs(query(collection(db(), "slots"), where("attorney", "==", attorney), where("day", "==", day))), timeout])
+    const lookup = store().then(({ fs, db }) => fs.getDocs(fs.query(fs.collection(db, "slots"), fs.where("attorney", "==", attorney), fs.where("day", "==", day))));
+    Promise.race([lookup, timeout])
       .then((snap) => {
         if (live) setTaken(new Set(snap.docs.map((d) => (d.data().start as Timestamp).toMillis())));
       })
@@ -104,8 +102,12 @@ export function BookingFlow() {
     if (step === 3 && !validate()) return;
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
+    focusStep();
   };
-  const back = () => setStep((s) => Math.max(s - 1, 0));
+  const back = () => {
+    setStep((s) => Math.max(s - 1, 0));
+    focusStep();
+  };
 
   const submit = async () => {
     if (!slot || !mode) return;
@@ -116,17 +118,22 @@ export function BookingFlow() {
     setSubmitting(true);
     setSubmitError("");
     try {
-      const firestore = db();
-      const batch = writeBatch(firestore);
-      const slotRef = doc(firestore, "slots", slotId(attorney, slot));
-      const bookingRef = doc(collection(firestore, "bookings"));
-      batch.set(slotRef, { attorney, day, start: Timestamp.fromDate(slot), createdAt: serverTimestamp() });
+      const { fs, db: firestore } = await store();
+      const batch = fs.writeBatch(firestore);
+      const bookingRef = fs.doc(fs.collection(firestore, "bookings"));
+      // Lock every 30-minute block the consultation covers. Each lock names its
+      // booking, and the security rules accept a lock only alongside that booking.
+      const blocks = blocksFor(slot, duration);
+      const slotRef = fs.doc(firestore, "slots", slotId(attorney, blocks[0]));
+      blocks.forEach((b) =>
+        batch.set(fs.doc(firestore, "slots", slotId(attorney, b)), { attorney, day, start: fs.Timestamp.fromDate(b), bookingId: bookingRef.id, createdAt: fs.serverTimestamp() }),
+      );
       batch.set(bookingRef, {
         matter,
         matterLabel: matterInfo?.label ?? matter,
         mode,
         attorney,
-        start: Timestamp.fromDate(slot),
+        start: fs.Timestamp.fromDate(slot),
         day,
         durationMin: duration,
         visitorTz: tz,
@@ -141,7 +148,7 @@ export function BookingFlow() {
         consents: { noRelationship: true, privacy: true },
         slotId: slotRef.id,
         status: "new",
-        createdAt: serverTimestamp(),
+        createdAt: fs.serverTimestamp(),
       });
       await batch.commit();
       setDone(true);
@@ -213,7 +220,7 @@ export function BookingFlow() {
           ))}
         </ol>
 
-        <div className="mt-10 min-h-[420px]">
+        <div className="mt-10 min-h-[420px]" data-step-root>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={step}
@@ -284,7 +291,7 @@ export function BookingFlow() {
                     {tz !== FIRM_TZ && <> (our office uses Eastern Time)</>}.
                   </p>
                   {submitError && <p role="alert" className="mt-4 rounded-xl bg-danger/10 p-4 text-sm font-bold text-danger">{submitError}</p>}
-                  <div className="mt-8 -mx-1 flex gap-2 overflow-x-auto px-1 pb-3" role="listbox" aria-label="Available days">
+                  <div className="mt-8 -mx-1 flex gap-2 overflow-x-auto px-1 pb-3" role="group" aria-label="Available days">
                     {days.map((d) => {
                       const [y, m, dd] = d.split("-").map(Number);
                       const dt = new Date(Date.UTC(y, m - 1, dd, 12));
@@ -292,8 +299,7 @@ export function BookingFlow() {
                         <button
                           key={d}
                           type="button"
-                          role="option"
-                          aria-selected={day === d}
+                          aria-pressed={day === d}
                           onClick={() => {
                             setDay(d);
                             setSlot(null);
@@ -321,7 +327,7 @@ export function BookingFlow() {
                       ) : (
                         <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-5">
                           {times.map((t) => {
-                            const isTaken = taken.has(t.getTime());
+                            const isTaken = blocksFor(t, duration).some((b) => taken.has(b.getTime()));
                             const selected = slot?.getTime() === t.getTime();
                             return (
                               <button
@@ -444,7 +450,7 @@ export function BookingFlow() {
         </dl>
         <div className="mt-8 flex gap-3 border-t border-line-dark pt-6 text-sm text-stone-dark">
           <ShieldCheck aria-hidden className="size-5 shrink-0 text-brass" />
-          Confidential. Only firm staff can read what you send.
+          Sent securely. Only authorized firm staff can read what you send.
         </div>
         <a href={SITE.phoneHref} className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-brass-light hover:text-paper">
           <Phone aria-hidden className="size-4" /> Prefer to call? {SITE.phone}

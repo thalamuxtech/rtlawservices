@@ -38,7 +38,7 @@ export default function FreeEvaluationPage() {
         crumbs={[{ label: "Free evaluation" }]}
         aside={
           <ul className="grid gap-3 rounded-2xl border border-line-dark bg-ink-raised/80 p-6 text-sm text-stone-dark">
-            {["Free and without obligation", "Reviewed by an attorney", "Confidential from the first message", "Professionals, families and employers"].map((t) => (
+            {["Free and without obligation", "Reviewed by an attorney", "Sent securely, read only by firm staff", "Professionals, families and employers"].map((t) => (
               <li key={t} className="flex items-center gap-3">
                 <ShieldCheck aria-hidden className="size-4 shrink-0 text-brass-light" /> {t}
               </li>

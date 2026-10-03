@@ -328,7 +328,7 @@ export const BASE_EXPERTISE: Expertise[] = [
       { q: "Can my spouse and children come with me?", a: "Yes. Spouses and unmarried children under 21 can accompany O-1 holders in O-3 status and EB-1 applicants as derivatives." },
       { q: "Do founders qualify for O-1?", a: "Often, yes. Funding from established investors, press coverage, judging roles and a critical role in a distinguished company can all support the case. The company itself can act as petitioner." },
       { q: "What is EB-1B?", a: "EB-1B is for outstanding professors and researchers with international recognition and at least three years of experience. It requires a qualifying job offer and at least two of six criteria." },
-      { q: "Can an RFE be avoided?", a: "No method guarantees it. A well-organized petition that addresses each criterion with independent evidence is consistent with fewer requests in our experience." },
+      { q: "Can a request for evidence (RFE) be avoided?", a: "No method guarantees it. A well-organized petition that addresses each criterion with independent evidence leaves fewer gaps for an officer to question." },
     ],
   },
   {

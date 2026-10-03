@@ -1,7 +1,7 @@
 // Firm details. Values published from the back office (settings/site) override
 // these defaults at build time, so a new phone number changes in one place.
 
-import { LIVE_SITE } from "./live";
+import { ATTORNEYS, CASES, LIVE_SITE } from "./live";
 import { PAGES } from "./pages";
 
 export const SITE_MODE: "preview" | "production" =
@@ -9,10 +9,12 @@ export const SITE_MODE: "preview" | "production" =
 
 export const SHOW_DEMO = SITE_MODE !== "production";
 
+const SITE_NAME = "RT Law Services";
+
 const phone = LIVE_SITE.phone || "+1 (617) 642-6344";
 
 export const SITE = {
-  name: "RT Law Services",
+  name: SITE_NAME,
   shortName: "RT Law",
   tagline: PAGES.firm.tagline,
   url: "https://rtlawservice.web.app",
@@ -31,7 +33,10 @@ export const SITE = {
       ],
   timezone: "America/New_York",
   // Maryland Rule 19-307.2 requires the name of at least one responsible attorney.
-  responsibleAttorney: (LIVE_SITE.responsibleAttorney ?? null) as string | null,
+  responsibleAttorney: (LIVE_SITE.responsibleAttorney ||
+    ATTORNEYS.find((a) => /managing/i.test(a.title))?.name ||
+    ATTORNEYS[0]?.name ||
+    SITE_NAME) as string,
   announcement: LIVE_SITE.announcement || "",
   refundPolicy: LIVE_SITE.refundPolicy?.enabled ? LIVE_SITE.refundPolicy : null,
   evaluationDays: LIVE_SITE.evaluationDays || 1,
@@ -50,7 +55,8 @@ export type NavGroup = { label: string; href?: string; links?: NavLink[] };
 
 export const NAV: NavGroup[] = [
   { label: "Expertise", href: "/expertise/" },
-  { label: "Success stories", href: "/case-results/" },
+  // Hidden until at least one success story is published.
+  ...(CASES.length ? [{ label: "Success stories", href: "/case-results/" }] : []),
   { label: "Reviews", href: "/reviews/" },
   {
     label: "Knowledge center",
@@ -58,7 +64,7 @@ export const NAV: NavGroup[] = [
       { label: "Knowledge center", href: "/knowledge/", description: "Guides, tools and references in one place" },
       { label: "Blog", href: "/blog/", description: "Policy updates and guides, with sources" },
       { label: "Check eligibility", href: "/check-eligibility/", description: "Score your record for EB-1A, O-1A or NIW" },
-      { label: "Filing fees", href: "/resources/filing-fees/", description: "Current USCIS fees for common forms" },
+      { label: "Filing fees", href: "/resources/filing-fees/", description: "Current government fees for common forms" },
       { label: "Processing times", href: "/resources/processing-times/", description: "How to read official timelines" },
       { label: "Visa Bulletin", href: "/resources/visa-bulletin/", description: "Priority dates, explained" },
     ],

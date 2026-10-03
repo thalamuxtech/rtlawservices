@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { collection, doc, getDocs, orderBy, query, serverTimestamp, updateDoc, type Timestamp } from "firebase/firestore";
-import { Download, Mail, Phone } from "lucide-react";
+import { collection, deleteDoc, doc, getDocs, orderBy, query, serverTimestamp, type Timestamp, updateDoc } from "firebase/firestore";
+import { Download, Mail, Phone, Trash2 } from "lucide-react";
 import { db } from "@/lib/firebase";
+import { blocksFor, slotId } from "@/lib/booking";
 import { cn } from "@/lib/utils";
 import { AreaIn, Btn, Chip, Empty, fmtTs, Loading, Panel, Search, SectionHeader, useToast, type Row } from "../kit";
 
@@ -70,7 +71,17 @@ export const MESSAGES: Config = {
   ],
 };
 
-export function Requests({ cfg, rows, uid }: { cfg: Config; rows: Row[] | null; uid: string }) {
+// Statuses that mean the meeting will not happen, so its time goes back on the calendar.
+const RELEASES = new Set(["cancelled", "not-a-fit", "referred"]);
+
+/** Slot locks held by a booking: one per 30-minute block, keyed as in the booking form. */
+const slotIdsOf = (r: Row) => {
+  const start = (r.start as Timestamp | undefined)?.toDate?.();
+  if (!start || !r.attorney) return r.slotId ? [String(r.slotId)] : [];
+  return blocksFor(start, Number(r.durationMin) || 30).map((b) => slotId(String(r.attorney), b));
+};
+
+export function Requests({ cfg, rows, uid, role }: { cfg: Config; rows: Row[] | null; uid: string; role?: string }) {
   const toast = useToast();
   const [filter, setFilter] = useState("all");
   const [q, setQ] = useState("");
@@ -95,9 +106,32 @@ export function Requests({ cfg, rows, uid }: { cfg: Config; rows: Row[] | null; 
     setBusy(true);
     try {
       await updateDoc(doc(db(), cfg.col, current.id), { ...patch, updatedAt: serverTimestamp(), updatedBy: uid });
-      toast("ok", done);
+      if (cfg.col === "bookings" && typeof patch.status === "string" && RELEASES.has(patch.status)) {
+        await Promise.all(slotIdsOf(current).map((id) => deleteDoc(doc(db(), "slots", id)).catch(() => {})));
+        toast("ok", `${done}. The time is open for booking again.`);
+      } else toast("ok", done);
     } catch {
       toast("error", "Could not save. Check your connection and permissions.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Owners can erase a request, for example when a client asks for their data to be deleted.
+  const erase = async () => {
+    if (!current || !confirm(`Delete this request from ${current.name} permanently, including any CV? This cannot be undone.`)) return;
+    setBusy(true);
+    try {
+      if (cfg.col === "evaluations") {
+        const files = await getDocs(collection(db(), cfg.col, current.id, "files"));
+        await Promise.all(files.docs.map((f) => deleteDoc(f.ref)));
+      }
+      if (cfg.col === "bookings") await Promise.all(slotIdsOf(current).map((id) => deleteDoc(doc(db(), "slots", id)).catch(() => {})));
+      await deleteDoc(doc(db(), cfg.col, current.id));
+      setOpenId(null);
+      toast("ok", "Request deleted");
+    } catch {
+      toast("error", "Could not delete. Only owners can delete requests.");
     } finally {
       setBusy(false);
     }
@@ -179,6 +213,11 @@ export function Requests({ cfg, rows, uid }: { cfg: Config; rows: Row[] | null; 
         footer={
           current && (
             <>
+              {role === "owner" && (
+                <Btn variant="danger" busy={busy} onClick={erase} className="mr-auto">
+                  <Trash2 aria-hidden className="size-4" /> Delete
+                </Btn>
+              )}
               <Btn variant="ghost" onClick={() => setOpenId(null)}>
                 Close
               </Btn>

@@ -10,9 +10,10 @@ const MAX_W = 1400;
 const MAX_CHARS = 700_000;
 
 /**
- * Redacts an approval document before upload. Selected areas are pixelated
- * and blurred into the image itself, so the unredacted original never leaves
- * the browser. Returns a WebP data URL small enough for one Firestore document.
+ * Redacts an approval document before upload. Each selected area is painted
+ * over with one flat colour, so no detail survives to be recovered, and the
+ * unredacted original never leaves the browser. Returns a WebP data URL small
+ * enough for one Firestore document.
  */
 export function RedactionTool({ open, onClose, onDone }: { open: boolean; onClose: () => void; onDone: (dataUrl: string) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -54,13 +55,19 @@ export function RedactionTool({ open, onClose, onDone }: { open: boolean; onClos
     setError("");
     if (!f) return;
     if (!/^image\/(png|jpe?g|webp)$/.test(f.type)) return setError("Upload a PNG, JPEG or WebP image. Export a PDF page as an image first.");
-    const url = URL.createObjectURL(f);
-    const im = new Image();
-    im.onload = () => {
-      setImg(im);
-      setRects([]);
+    // A data URL is allowed by the site's content security policy; a blob URL is not.
+    const reader = new FileReader();
+    reader.onerror = () => setError("The file could not be read. Try another image.");
+    reader.onload = () => {
+      const im = new Image();
+      im.onerror = () => setError("This image could not be opened. Try a PNG or JPEG export.");
+      im.onload = () => {
+        setImg(im);
+        setRects([]);
+      };
+      im.src = String(reader.result);
     };
-    im.src = url;
+    reader.readAsDataURL(f);
   };
 
   const finish = async () => {
@@ -109,7 +116,7 @@ export function RedactionTool({ open, onClose, onDone }: { open: boolean; onClos
       <ol className="mb-5 grid gap-1 text-sm text-stone">
         <li>1. Upload the approval notice as an image.</li>
         <li>2. Drag a box over every name, receipt number, address, date of birth and A-number.</li>
-        <li>3. Apply. The blur is burned into the image, so the original details are never stored.</li>
+        <li>3. Apply. Each area is painted over in the image itself, so the original details are never stored.</li>
       </ol>
       {!img ? (
         <label className="flex cursor-pointer flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-line bg-white p-12 text-center hover:border-ink/40">
@@ -145,26 +152,27 @@ export function RedactionTool({ open, onClose, onDone }: { open: boolean; onClos
   );
 }
 
-/** Pixelates then blurs a region in place. Pixelation alone destroys the detail; the blur softens the result. */
+/**
+ * Covers a region with a single flat colour: the region's average tone, softened
+ * toward grey. It reads like a blur on the page, but unlike pixelation or blur it
+ * keeps no information that tools could use to reconstruct the text.
+ */
 function redact(ctx: CanvasRenderingContext2D, c: HTMLCanvasElement, r: Rect) {
   const x = Math.max(0, Math.floor(r.x));
   const y = Math.max(0, Math.floor(r.y));
   const w = Math.min(c.width - x, Math.ceil(r.w));
   const h = Math.min(c.height - y, Math.ceil(r.h));
   if (w < 2 || h < 2) return;
-  const block = Math.max(8, Math.round(Math.min(w, h) / 3));
-  const tmp = document.createElement("canvas");
-  tmp.width = Math.max(1, Math.round(w / block));
-  tmp.height = Math.max(1, Math.round(h / block));
-  const t = tmp.getContext("2d")!;
-  t.drawImage(c, x, y, w, h, 0, 0, tmp.width, tmp.height);
+  const one = document.createElement("canvas");
+  one.width = one.height = 1;
+  const o = one.getContext("2d")!;
+  o.drawImage(c, x, y, w, h, 0, 0, 1, 1);
+  const [red, green, blue] = o.getImageData(0, 0, 1, 1).data;
+  const mix = (v: number) => Math.round(v * 0.55 + 150 * 0.45);
   ctx.save();
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(tmp, 0, 0, tmp.width, tmp.height, x, y, w, h);
-  ctx.filter = "blur(10px)";
+  ctx.fillStyle = `rgb(${mix(red)}, ${mix(green)}, ${mix(blue)})`;
   ctx.beginPath();
-  ctx.rect(x, y, w, h);
-  ctx.clip();
-  ctx.drawImage(c, x, y, w, h, x, y, w, h);
+  ctx.roundRect(x, y, w, h, Math.min(8, h / 3));
+  ctx.fill();
   ctx.restore();
 }

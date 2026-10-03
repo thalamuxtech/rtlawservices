@@ -172,6 +172,7 @@
 @media (prefers-reduced-motion: no-preference) {
   .marquee-track { animation: marquee-x 70s linear infinite; }
   .marquee-reverse { animation-direction: reverse; animation-duration: 80s; }
+  .marquee-paused .marquee-track,
   .marquee-row:hover .marquee-track,
   .marquee-row:focus-within .marquee-track { animation-play-state: paused; }
 }

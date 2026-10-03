@@ -70,6 +70,10 @@ export function slotsFor(day: string, duration: number, now = new Date()): Date[
   return res;
 }
 
+/** The 30-minute blocks a consultation occupies, so longer meetings lock every block they cover. */
+export const blocksFor = (start: Date, minutes: number) =>
+  Array.from({ length: Math.max(1, Math.ceil(minutes / 30)) }, (_, i) => new Date(start.getTime() + i * 30 * 60_000));
+
 export const slotId = (attorney: string, start: Date) => `${attorney}_${start.toISOString().replace(/[:.]/g, "-")}`;
 
 export function visitorTz() {

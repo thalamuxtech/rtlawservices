@@ -18,7 +18,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/case-results/[slug]">): Promise<Metadata> {
   const c = getCase((await params).slug);
-  return c ? { title: `Success story: ${c.title}`, description: `${c.category}: ${c.outcome}` } : {};
+  return c ? { title: `Success story: ${c.title}`, description: `${c.category}: ${c.outcome}` } : { robots: { index: false } };
 }
 
 export default async function CaseDetail({ params }: PageProps<"/case-results/[slug]">) {

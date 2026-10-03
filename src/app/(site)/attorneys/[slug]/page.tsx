@@ -16,7 +16,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/attorneys/[slug]">): Promise<Metadata> {
   const a = getAttorney((await params).slug);
-  return a ? { title: `${a.name}, ${a.title}`, description: a.bio[0] } : {};
+  return a ? { title: `${a.name}, ${a.title}`, description: a.bio[0] } : { robots: { index: false } };
 }
 
 export default async function AttorneyPage({ params }: PageProps<"/attorneys/[slug]">) {
@@ -25,7 +25,7 @@ export default async function AttorneyPage({ params }: PageProps<"/attorneys/[sl
   const results = casesByAttorney(a.slug);
   const ld = {
     "@context": "https://schema.org",
-    "@type": "Attorney",
+    "@type": "Person",
     name: a.name,
     jobTitle: a.title,
     knowsLanguage: a.languages,

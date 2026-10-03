@@ -125,7 +125,7 @@ export default function StartHerePage() {
               <p className="mt-2 leading-relaxed text-stone">
                 In the United States, a notary public is not a lawyer and cannot give immigration advice. Only licensed
                 attorneys and accredited representatives may do so.{" "}
-                <Link href="/resources/avoiding-notario-fraud/" className="font-bold text-brass-ink underline underline-offset-4">
+                <Link href="/blog/avoiding-notario-fraud/" className="font-bold text-brass-ink underline underline-offset-4">
                   Read our guide to avoiding scams
                 </Link>
                 .

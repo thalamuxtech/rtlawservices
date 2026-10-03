@@ -58,6 +58,7 @@ export function ContentManager({ kind, rows, uid }: { kind: Kind; rows: Row[] | 
   const toast = useToast();
   const [q, setQ] = useState("");
   const [edit, setEdit] = useState<Row | null>(null);
+  const [opened, setOpened] = useState("");
   const [isNew, setIsNew] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -68,19 +69,27 @@ export function ContentManager({ kind, rows, uid }: { kind: Kind; rows: Row[] | 
 
   const save = async () => {
     if (!edit) return;
-    const idSource = meta.idField === "slug" ? edit.slug || slugify(edit.title || edit.name || "") : edit.id || `${slugify(edit.name || "review")}-${Date.now().toString(36)}`;
-    const id = slugify(String(idSource));
-    if (!id) return toast("error", "Add a title or name first.");
-    const { id: _ignored, updatedAt: _u, updatedBy: _b, ...data } = edit;
+    const { id: _ignored, updatedAt: _u, updatedBy: _b, _slugEdited, ...data } = edit;
     void _ignored;
     void _u;
     void _b;
-    if (meta.idField === "slug") data.slug = id;
+    // The web address follows the full title unless someone typed one.
+    const slug = slugify(String(_slugEdited ? data.slug : data.slug && !isNew ? data.slug : data.title || data.name || ""));
+    if (meta.idField === "slug") {
+      if (!slug) return toast("error", "Add a title or name first.");
+      data.slug = slug;
+    }
+    // Existing records always save to their own document, so a changed title or
+    // address never creates a copy. New records must not reuse an address.
+    const id = !isNew ? edit.id : meta.idField === "slug" ? slug : `${slugify(String(edit.name || "review"))}-${Date.now().toString(36)}`;
+    if (!id) return toast("error", "Add a title or name first.");
+    if (isNew && (rows ?? []).some((r) => r.id === id || r.slug === id)) return toast("error", "Another record already uses this web address. Change the title or web address.");
     if (kind === "attorneys" && !data.initials) data.initials = String(data.name || "").split(/\s+/).filter(Boolean).slice(0, 2).map((p: string) => p[0]).join("").toUpperCase();
     if (kind === "posts") data.readMinutes = Math.max(1, Math.round(String(data.body || "").split(/\s+/).length / 220));
     setBusy(true);
     try {
-      await saveContent(kind, id, data, uid);
+      const wasLive = (rows ?? []).find((r) => r.id === id)?.status === "published";
+      await saveContent(kind, id, data, uid, data.status === "published" || wasLive);
       toast("ok", data.status === "published" ? "Saved. It goes live with the next publish." : "Saved as draft");
       setEdit(null);
     } catch {
@@ -116,7 +125,9 @@ export function ContentManager({ kind, rows, uid }: { kind: Kind; rows: Row[] | 
               variant="gold"
               onClick={() => {
                 setIsNew(true);
-                setEdit(meta.blank());
+                const blank = meta.blank();
+                setOpened(JSON.stringify(blank));
+                setEdit(blank);
               }}
             >
               <Plus aria-hidden className="size-4" /> {meta.add}
@@ -137,6 +148,7 @@ export function ContentManager({ kind, rows, uid }: { kind: Kind; rows: Row[] | 
                 type="button"
                 onClick={() => {
                   setIsNew(false);
+                  setOpened(JSON.stringify(r));
                   setEdit({ ...r });
                 }}
                 className="flex h-full w-full gap-4 rounded-2xl border border-line bg-white p-4 text-left transition-colors hover:border-ink/40"
@@ -186,7 +198,11 @@ export function ContentManager({ kind, rows, uid }: { kind: Kind; rows: Row[] | 
       <Panel
         open={!!edit}
         title={isNew ? meta.add : `Edit ${String(edit?.title || edit?.name || "")}`}
-        onClose={() => setEdit(null)}
+        onClose={() => {
+          // Closing with unsaved edits asks first, so Escape or a stray click cannot discard work.
+          if (edit && JSON.stringify(edit) !== opened && !confirm("Discard your unsaved changes?")) return;
+          setEdit(null);
+        }}
         wide
         footer={
           <>
@@ -218,7 +234,12 @@ function Editor({ kind, r, set }: { kind: Kind; r: Row; set: (p: Partial<Row>) =
       <SelectIn label="Visibility" value={r.status} onChange={(v) => set({ status: v })} options={STATUS_OPTIONS} />
       {kind !== "posts" && (
         <div className="pt-6">
-          <Toggle label="Fictional placeholder" hint="Kept in the back office only. Never shown on the website. Turn off once the record is real." checked={!!r.demo} onChange={(v) => set({ demo: v })} />
+          <Toggle
+            label="Fictional placeholder"
+            hint={kind === "reviews" ? "Shown on the website with a note that reviews are illustrative examples. Turn off once the review is real." : "Kept in the back office only. Never shown on the website. Turn off once the record is real."}
+            checked={!!r.demo}
+            onChange={(v) => set({ demo: v })}
+          />
         </div>
       )}
     </div>
@@ -254,8 +275,8 @@ function Editor({ kind, r, set }: { kind: Kind; r: Row; set: (p: Partial<Row>) =
     return (
       <div className="grid gap-5">
         {common}
-        <TextIn label="Title" value={r.title} onChange={(v) => set({ title: v, slug: r.slug || slugify(v) })} />
-        <TextIn label="Web address" hint={`/blog/${r.slug || slugify(r.title || "")}/`} value={r.slug} onChange={(v) => set({ slug: slugify(v) })} />
+        <TextIn label="Title" value={r.title} onChange={(v) => set({ title: v, ...(r._slugEdited || r.id ? {} : { slug: slugify(v) }) })} />
+        <TextIn label="Web address" hint={`/blog/${r.slug || slugify(r.title || "")}/`} value={r.slug} onChange={(v) => set({ slug: slugify(v), _slugEdited: true })} />
         <AreaIn label="Summary" value={r.dek} onChange={(v) => set({ dek: v })} rows={2} />
         <div className="grid gap-4 sm:grid-cols-3">
           <SelectIn label="Category" value={r.category} onChange={(v) => set({ category: v })} options={["Start here", "Family", "Citizenship", "Work", "Professionals", "Employers", "Estates"].map((c) => ({ value: c, label: c }))} />
@@ -298,7 +319,7 @@ function Editor({ kind, r, set }: { kind: Kind; r: Row; set: (p: Partial<Row>) =
         {common}
         <PhotoField value={r.photo} onChange={(v) => set({ photo: v })} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <TextIn label="Full name" value={r.name} onChange={(v) => set({ name: v, slug: r.slug || slugify(v) })} />
+          <TextIn label="Full name" value={r.name} onChange={(v) => set({ name: v, ...(r.id ? {} : { slug: slugify(v) }) })} />
           <TextIn label="Title" value={r.title} onChange={(v) => set({ title: v })} />
           <TextIn label="Display order" type="number" value={r.order} onChange={(v) => set({ order: Number(v) })} />
           <TextIn label="Practice limitation" hint="For example: Practice limited to federal immigration law." value={r.practiceLimitation} onChange={(v) => set({ practiceLimitation: v })} />
@@ -358,7 +379,7 @@ function Editor({ kind, r, set }: { kind: Kind; r: Row; set: (p: Partial<Row>) =
           <Toggle label="Feature on the home page" checked={!!r.featured} onChange={(v) => set({ featured: v })} />
         </div>
       </div>
-      <TextIn label="Title" value={r.title} onChange={(v) => set({ title: v, slug: r.slug || slugify(v) })} />
+      <TextIn label="Title" value={r.title} onChange={(v) => set({ title: v, ...(r.id ? {} : { slug: slugify(v) }) })} />
       <div className="grid gap-4 sm:grid-cols-2">
         <SelectIn label="Track" value={r.track} onChange={(v) => set({ track: v })} options={[{ value: "individuals", label: "Individuals and families" }, { value: "professionals", label: "Professionals and employers" }]} />
         <SelectIn label="Practice area" value={r.expertise} onChange={(v) => set({ expertise: v })} options={EXPERTISE_OPTIONS} />
@@ -389,16 +410,23 @@ function Editor({ kind, r, set }: { kind: Kind; r: Row; set: (p: Partial<Row>) =
 function PhotoField({ value, onChange }: { value?: string; onChange: (v: string | null) => void }) {
   const pick = (f: File | null) => {
     if (!f) return;
-    const img = new Image();
-    img.onload = () => {
-      const size = 800;
-      const c = document.createElement("canvas");
-      const s = Math.min(img.width, img.height);
-      c.width = c.height = size;
-      c.getContext("2d")!.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
-      onChange(c.toDataURL("image/webp", 0.82));
+    // Read as a data URL: the site's content security policy blocks blob URLs.
+    const reader = new FileReader();
+    reader.onerror = () => alert("The file could not be read. Try another image.");
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => alert("This image could not be opened. Try a PNG or JPEG.");
+      img.onload = () => {
+        const size = 800;
+        const c = document.createElement("canvas");
+        const s = Math.min(img.width, img.height);
+        c.width = c.height = size;
+        c.getContext("2d")!.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
+        onChange(c.toDataURL("image/webp", 0.82));
+      };
+      img.src = String(reader.result);
     };
-    img.src = URL.createObjectURL(f);
+    reader.readAsDataURL(f);
   };
   return (
     <div className="flex items-center gap-4">

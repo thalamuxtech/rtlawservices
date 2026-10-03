@@ -14,9 +14,13 @@ export function SiteSettings({ uid }: { uid: string }) {
   const toast = useToast();
   const [s, setS] = useState<DocumentData | null>(null);
   const [busy, setBusy] = useState(false);
-  useEffect(() => onSnapshot(doc(db(), "settings", "site"), (d) => setS(d.data() ?? {})), []);
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => onSnapshot(doc(db(), "settings", "site"), (d) => setS((cur) => (cur && dirty ? cur : (d.data() ?? {})))), [dirty]);
   if (!s) return <Loading />;
-  const set = (p: DocumentData) => setS((cur) => ({ ...cur, ...p }));
+  const set = (p: DocumentData) => {
+    setS((cur) => ({ ...cur, ...p }));
+    setDirty(true);
+  };
   const refund = s.refundPolicy ?? { enabled: false, title: "Approval or refund", text: "" };
 
   const save = async () => {
@@ -26,6 +30,7 @@ export function SiteSettings({ uid }: { uid: string }) {
       void _u;
       void _b;
       await saveContent("settings", "site", data, uid);
+      setDirty(false);
       toast("ok", "Settings saved. The website updates with the next publish.");
     } catch {
       toast("error", "Could not save settings.");
@@ -36,7 +41,15 @@ export function SiteSettings({ uid }: { uid: string }) {
 
   return (
     <div className="grid max-w-3xl gap-8">
-      <SectionHeader title="Website details" lede="Contact details, hours and home page figures used across the website." action={<Btn variant="gold" busy={busy} onClick={save}>Save changes</Btn>} />
+      <SectionHeader title="Website details" lede="Contact details, hours and home page figures used across the website." action={
+          <div className="flex flex-wrap items-center gap-2">
+            {dirty && <span className="rounded-full bg-brass-pale px-3 py-1.5 text-sm font-bold text-brass-ink">Unsaved changes</span>}
+            <Btn variant="gold" busy={busy} onClick={save}>
+              Save changes
+            </Btn>
+          </div>
+        }
+      />
       <Group title="Contact">
         <div className="grid gap-4 sm:grid-cols-2">
           <TextIn label="Phone" value={s.phone} onChange={(v) => set({ phone: v })} />

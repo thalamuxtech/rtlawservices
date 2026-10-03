@@ -106,8 +106,8 @@ export function EligibilityChecker() {
     : sid === "niw"
       ? !gateMet
         ? "The waiver needs an EB-2 basis first. Other routes may still fit, which a free evaluation can explore."
-        : `You have ticked ${count} of the 3 parts. Strengthening the missing part is often a matter of evidence and framing.`
-      : `You have ticked ${count} of the ${std.threshold} criteria needed. Many professionals meet more than they first think once evidence is gathered.`;
+        : `You have ticked ${count} of the 3 parts. An attorney can review whether further evidence exists.`
+      : `You have ticked ${count} of the ${std.threshold} criteria needed. An attorney can review whether further evidence exists.`;
 
   const send = () => {
     const titles = [...(std.gate ?? []), ...std.items].filter((i) => sel.includes(i.id)).map((i) => i.title);

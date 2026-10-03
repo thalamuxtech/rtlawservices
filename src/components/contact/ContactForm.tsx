@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { Check, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/primitives";
 import { NO_RELATIONSHIP } from "@/content/site";
-import { db } from "@/lib/firebase";
+import { store } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const TOPICS = ["A new matter", "An existing case", "Fees and billing", "Something else"];
@@ -30,14 +29,15 @@ export function ContactForm() {
     }
     setState("sending");
     try {
-      await addDoc(collection(db(), "messages"), {
+      const { fs, db } = await store();
+      await fs.addDoc(fs.collection(db, "messages"), {
         name: f.name.trim(),
         email: f.email.trim().toLowerCase(),
         phone: f.phone.trim(),
         topic: f.topic,
         message: f.message.trim(),
         status: "new",
-        createdAt: serverTimestamp(),
+        createdAt: fs.serverTimestamp(),
       });
       setState("sent");
     } catch {
@@ -108,7 +108,13 @@ export function ContactForm() {
       <div className="rounded-2xl bg-mist p-5">
         <div className="flex gap-3">
           <input id="c-consent" type="checkbox" checked={f.consent} onChange={(e) => setF({ ...f, consent: e.target.checked })} className="mt-1 size-5 shrink-0 accent-ink" aria-invalid={!!errors.consent} />
-          <label htmlFor="c-consent" className="text-sm leading-relaxed text-ink-soft">I understand: {NO_RELATIONSHIP}</label>
+          <label htmlFor="c-consent" className="text-sm leading-relaxed text-ink-soft">
+            I understand: {NO_RELATIONSHIP} Your message is handled under our{" "}
+            <a href="/legal/privacy/" className="font-bold underline underline-offset-2">
+              privacy policy
+            </a>
+            .
+          </label>
         </div>
         {errors.consent && <p role="alert" className="ml-8 mt-1 text-sm font-bold text-danger">{errors.consent}</p>}
       </div>

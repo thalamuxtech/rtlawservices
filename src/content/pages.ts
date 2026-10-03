@@ -68,7 +68,7 @@ export const DEFAULT_PAGES: PagesContent = {
   ],
   pillars: [
     { title: "Personal attention", text: "One case at a time. A named attorney leads your matter, and you can book directly with that attorney." },
-    { title: "Demonstrated results", text: "We publish anonymised outcomes with client consent, so you can judge our work on the record." },
+    { title: "Honest assessment", text: "We tell you plainly how strong your case looks, including when a route is unlikely to succeed, before you commit to it." },
     { title: "Global families", text: "Video consultations scheduled in your own time zone, for clients across the United States and abroad." },
     { title: "Long-term planning", text: "From a first visa to citizenship and estate planning, we think in years, not single filings." },
   ],

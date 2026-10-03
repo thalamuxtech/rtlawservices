@@ -60,7 +60,11 @@ export function Header() {
         <div className="container-luxe flex h-9 items-center justify-between">
           <p>{SITE.announcement || "Based in Maryland. Serving clients across the United States and abroad."}</p>
           <div className="flex items-center gap-6">
-            <span>Mon to Fri 9:00 AM to 5:00 PM ET</span>
+            {SITE.hours[0] && (
+              <span>
+                {SITE.hours[0].days} {SITE.hours[0].time} ET
+              </span>
+            )}
             <a href={SITE.phoneHref} className="flex items-center gap-1.5 text-brass-light transition-colors hover:text-paper">
               <Phone aria-hidden className="size-3.5" /> {SITE.phone}
             </a>
@@ -251,11 +255,15 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Menu"
+      onKeyDown={(e) => e.key === "Escape" && onClose()}
       className="on-dark fixed inset-0 z-50 overflow-y-auto bg-ink text-paper xl:hidden"
     >
       <div className="container-luxe flex h-20 items-center justify-between">
         <Logo tone="dark" className="w-[210px]" />
-        <button type="button" className="grid size-11 place-items-center rounded-full text-paper" aria-label="Close menu" onClick={onClose}>
+        <button type="button" autoFocus className="grid size-11 place-items-center rounded-full text-paper" aria-label="Close menu" onClick={onClose}>
           <X className="size-6" />
         </button>
       </div>

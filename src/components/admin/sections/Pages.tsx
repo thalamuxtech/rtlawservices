@@ -64,7 +64,7 @@ export function PagesEditor({ uid }: { uid: string }) {
   const save = async () => {
     setBusy(true);
     try {
-      await saveContent("settings", "pages", data as unknown as DocumentData, uid);
+      await saveContent("settings", "pages", changesOnly(data), uid);
       setDirty(false);
       toast("ok", "Page text saved. The website updates with the next publish, usually within 15 minutes.");
     } catch {
@@ -221,6 +221,30 @@ export function PagesEditor({ uid }: { uid: string }) {
       </AnimatePresence>
     </div>
   );
+}
+
+/** Keeps only the fields that differ from the original wording. */
+function changesOnly(data: PagesContent): DocumentData {
+  const base = current({});
+  // Compare with sorted keys: Firestore returns map fields in alphabetical order.
+  const stable = (v: unknown): unknown =>
+    Array.isArray(v) ? v.map(stable) : v && typeof v === "object" ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, stable((v as Record<string, unknown>)[k])])) : v;
+  const same = (a: unknown, b: unknown) => JSON.stringify(stable(a)) === JSON.stringify(stable(b));
+  const out: DocumentData = {};
+  for (const k of Object.keys(data) as (keyof PagesContent)[]) {
+    const v = data[k] as unknown;
+    const d = base[k] as unknown;
+    if (k === "expertise") {
+      const edited = Object.fromEntries(Object.entries(data.expertise).filter(([, o]) => o && Object.keys(o).length));
+      if (Object.keys(edited).length) out.expertise = edited;
+    } else if (Array.isArray(v)) {
+      if (!same(v, d)) out[k] = v;
+    } else {
+      const fields = Object.fromEntries(Object.entries(v as object).filter(([f, x]) => !same(x, (d as Record<string, unknown>)[f])));
+      if (Object.keys(fields).length) out[k] = fields;
+    }
+  }
+  return out;
 }
 
 type Over = PagesContent["expertise"][string];

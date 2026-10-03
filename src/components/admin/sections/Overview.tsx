@@ -279,7 +279,7 @@ export function Overview({ evaluations, bookings, messages, content, name, go }:
                 </span>
                 <span className={cn("inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-bold", delta > 0 ? "bg-success/10 text-success" : delta < 0 ? "bg-danger/10 text-danger" : "bg-mist text-stone")}>
                   <Trend aria-hidden className="size-3.5" />
-                  {Math.abs(delta)}%
+                  {!k.prev && k.value ? "New" : `${Math.abs(delta)}%`}
                 </span>
               </span>
               <motion.span key={`${k.value}-${sample}-${range}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="font-serif-display mt-4 block text-5xl leading-none text-ink">

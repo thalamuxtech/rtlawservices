@@ -28,13 +28,19 @@ service cloud.firestore {
 
     // Slot locks carry no personal data, so anyone may read them to grey out
     // taken times. A slot can be created once and never overwritten, which
-    // prevents double booking.
+    // prevents double booking. Each lock must name a booking written in the
+    // same batch for the same attorney, so times cannot be locked without a
+    // request that staff can see and remove.
     match /slots/{slotId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['attorney', 'day', 'start', 'createdAt'])
+      allow create: if request.resource.data.keys().hasOnly(['attorney', 'day', 'start', 'bookingId', 'createdAt'])
         && str(request.resource.data.attorney, 1, 64)
+        && slotId.matches('^' + request.resource.data.attorney + '_.+')
         && str(request.resource.data.day, 10, 10)
         && inBookingWindow(request.resource.data.start)
+        && str(request.resource.data.bookingId, 10, 64)
+        && existsAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId))
+        && getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.attorney == request.resource.data.attorney
         && request.resource.data.createdAt == request.time;
       allow update: if false;
       allow delete: if isStaff();
@@ -64,9 +70,14 @@ service cloud.firestore {
         && request.resource.data.consents == {'noRelationship': true, 'privacy': true}
         && request.resource.data.status == 'new'
         && request.resource.data.createdAt == request.time
-        // The matching slot lock must be written in the same batch.
+        // The matching slot lock must be new and written in the same batch,
+        // and it must point back at this booking.
+        && str(request.resource.data.slotId, 10, 120)
+        && str(request.resource.data.day, 10, 10)
+        && !exists(/databases/$(database)/documents/slots/$(request.resource.data.slotId))
         && existsAfter(/databases/$(database)/documents/slots/$(request.resource.data.slotId))
-        && getAfter(/databases/$(database)/documents/slots/$(request.resource.data.slotId)).data.start == request.resource.data.start;
+        && getAfter(/databases/$(database)/documents/slots/$(request.resource.data.slotId)).data.start == request.resource.data.start
+        && getAfter(/databases/$(database)/documents/slots/$(request.resource.data.slotId)).data.bookingId == bookingId;
       allow read: if isStaff();
       allow update: if isStaff()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'updatedBy', 'staffNote']);

@@ -3,13 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { collection, doc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { ArrowLeft, Briefcase, Check, FileText, Heart, Loader2, Send, ShieldCheck, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/primitives";
-import { NO_RELATIONSHIP } from "@/content/site";
+import { NO_RELATIONSHIP, SITE } from "@/content/site";
 import { countryNames } from "@/lib/countries";
-import { db } from "@/lib/firebase";
-import { cn } from "@/lib/utils";
+import { store } from "@/lib/store";
+import { cn, focusStep } from "@/lib/utils";
 
 type Track = "professional" | "family";
 type Answers = Record<string, string | string[] | boolean>;
@@ -123,6 +122,7 @@ export function EvaluationForm() {
     setDir(to > step ? 1 : -1);
     setStep(to);
     document.getElementById("evaluation")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    focusStep();
   };
 
   const onFile = (f: File | null) => {
@@ -141,9 +141,9 @@ export function EvaluationForm() {
     }
     setState("sending");
     try {
-      const firestore = db();
-      const ref = doc(collection(firestore, "evaluations"));
-      const batch = writeBatch(firestore);
+      const { fs, db: firestore } = await store();
+      const ref = fs.doc(fs.collection(firestore, "evaluations"));
+      const batch = fs.writeBatch(firestore);
       const answers: Record<string, string | string[]> = {};
       for (const [k, v] of Object.entries(a)) {
         if (["firstName", "lastName", "email", "phone", "birthCountry", "track", "website", "consentRelationship", "consentAccurate", "consentPrivacy"].includes(k)) continue;
@@ -167,9 +167,9 @@ export function EvaluationForm() {
         file: chunks.length ? { name: file!.name.slice(0, 160), type: file!.type || "application/octet-stream", size: file!.size, chunks: chunks.length } : null,
         consents: { noRelationship: true, accurate: true },
         status: "new",
-        createdAt: serverTimestamp(),
+        createdAt: fs.serverTimestamp(),
       });
-      chunks.forEach((data, index) => batch.set(doc(firestore, "evaluations", ref.id, "files", String(index)), { index, data }));
+      chunks.forEach((data, index) => batch.set(fs.doc(firestore, "evaluations", ref.id, "files", String(index)), { index, data }));
       await batch.commit();
       try {
         localStorage.removeItem(STORE);
@@ -348,12 +348,12 @@ export function EvaluationForm() {
         </div>
         <p className="mt-6 hidden gap-3 text-sm text-stone lg:flex">
           <ShieldCheck aria-hidden className="size-5 shrink-0 text-brass-ink" />
-          Confidential. Only firm staff can read what you send. Your draft is saved in this browser until you submit.
+          Sent securely. Only authorized firm staff can read what you send. Your draft is saved in this browser until you submit.
         </p>
       </aside>
 
       <div className="min-w-0 rounded-3xl border border-line bg-white p-6 shadow-[0_40px_80px_-50px_rgba(20,24,31,0.45)] sm:p-10">
-        <div className="min-h-[460px] overflow-hidden">
+        <div className="min-h-[460px] overflow-hidden" data-step-root>
           <AnimatePresence mode="wait" initial={false} custom={dir}>
             {panel}
           </AnimatePresence>
@@ -393,7 +393,7 @@ function Success({ name }: { name: string }) {
   const steps = [
     { t: "Received", d: "Your answers are with our intake team now." },
     { t: "Attorney review", d: "An attorney reviews your record against the legal standard." },
-    { t: "Your evaluation", d: "We email our assessment and the routes that fit, usually within one business day." },
+    { t: "Your evaluation", d: `We email our assessment and the routes that fit, usually within ${SITE.evaluationDays === 1 ? "one business day" : `${SITE.evaluationDays} business days`}.` },
   ];
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease }} className="mx-auto max-w-2xl text-center" role="status">
@@ -431,10 +431,10 @@ function Reveal({ children }: { children: React.ReactNode }) {
 function Fieldset({ title, lede, children }: { title: string; lede?: string; children: React.ReactNode }) {
   return (
     <fieldset className="grid gap-8">
-      <div>
-        <legend className="font-serif-display text-3xl text-ink sm:text-4xl">{title}</legend>
-        {lede && <p className="mt-3 text-stone">{lede}</p>}
-      </div>
+      <legend className="font-serif-display float-left w-full text-3xl text-ink sm:text-4xl">
+        {title}
+        {lede && <span className="mt-3 block font-sans text-base text-stone">{lede}</span>}
+      </legend>
       {children}
     </fieldset>
   );

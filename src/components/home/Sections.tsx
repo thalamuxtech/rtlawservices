@@ -14,7 +14,7 @@ export function TwoDoors() {
       <Container>
         <SectionHeading
           title="Wherever you start, we meet you there"
-          lede="Some clients are filing for the first time. Others hold doctorates, run companies or sponsor teams. Each path is written for its reader, with the same attorneys and the same care behind it."
+          lede="Some clients are filing for the first time. Others hold doctorates, run companies or sponsor teams. Each path is written for its reader, with the same attorney and the same care behind it."
         />
         <div className="mt-14 grid gap-5 lg:grid-cols-2">
           <Link href="/start-here/" className="group flex flex-col rounded-3xl bg-mist p-9 transition-colors duration-300 hover:bg-[#e6e9ea] sm:p-12">
@@ -34,7 +34,7 @@ export function TwoDoors() {
               Petitions built as arguments
             </h3>
             <p className="mt-5 max-w-md text-lg leading-relaxed text-stone-dark">
-              O-1, EB-1A, National Interest Waiver, H-1B, L-1, E-2, EB-5 and PERM. Each petition maps your record to the
+              O-1, EB-1A, National Interest Waiver, H-1B, L-1, E-2, EB-5 and Program Electronic Review Management (PERM) labor certification. Each petition maps your record to the
               legal standard an officer applies.
             </p>
             <span className="mt-auto pt-10 font-bold text-brass-light">See professional services</span>

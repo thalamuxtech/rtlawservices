@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Lock, Mail, MapPin, Phone } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { byTrack } from "@/content/expertise";
+import { CASES } from "@/content/live";
 import { NO_RELATIONSHIP, SITE } from "@/content/site";
 
 const cols = [
@@ -12,7 +13,7 @@ const cols = [
     links: [
       { label: "About", href: "/about/" },
       { label: "Attorneys", href: "/attorneys/" },
-      { label: "Success stories", href: "/case-results/" },
+      ...(CASES.length ? [{ label: "Success stories", href: "/case-results/" }] : []),
       { label: "Free evaluation", href: "/free-evaluation/" },
       { label: "Check eligibility", href: "/check-eligibility/" },
       { label: "Knowledge center", href: "/knowledge/" },
@@ -28,7 +29,7 @@ const cols = [
 export function Footer() {
   const year = new Date().getFullYear();
   return (
-    <footer className="on-dark relative overflow-hidden bg-ink text-stone-dark">
+    <footer className="on-dark relative overflow-hidden bg-ink pb-24 text-stone-dark sm:pb-0">
       <div aria-hidden className="grain pointer-events-none absolute inset-0 opacity-60" />
       <div className="container-luxe relative">
         <div className="grid gap-12 border-b border-line-dark py-16 lg:grid-cols-[1.2fr_2fr]">
@@ -80,10 +81,7 @@ export function Footer() {
             </p>
             <p>
               Responsible attorney:{" "}
-              {SITE.responsibleAttorney ?? (
-                <span className="text-brass-light">to be named by the firm before public launch</span>
-              )}
-              . Office: {SITE.region}.
+              {SITE.responsibleAttorney}. Office: {SITE.region}.
             </p>
           </div>
           <div className="flex flex-wrap items-start gap-x-6 gap-y-2 lg:justify-end">

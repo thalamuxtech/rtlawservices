@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, setDoc, type DocumentData, type Timestamp,
+  collection, deleteDoc, doc, onSnapshot, serverTimestamp, setDoc, type DocumentData, type Timestamp,
 } from "firebase/firestore";
 import { ArrowDown, ArrowUp, CheckCircle2, Loader2, Plus, Trash2, X, XCircle } from "lucide-react";
 import { db } from "@/lib/firebase";
@@ -13,15 +13,34 @@ import { cn } from "@/lib/utils";
 
 export type Row = DocumentData & { id: string };
 
+const sortKey = (v: unknown) => (v && typeof v === "object" && "toMillis" in v ? (v as Timestamp).toMillis() : (v as string | number | undefined) ?? "");
+
+/**
+ * Live rows of a collection, newest first. Sorting happens here rather than in
+ * the query, because Firestore leaves out documents that lack the ordered field.
+ */
 export function useCollection(name: string, order = "createdAt") {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState("");
   useEffect(
     () =>
       onSnapshot(
-        query(collection(db(), name), orderBy(order, "desc")),
-        (s) => setRows(s.docs.map((d) => ({ id: d.id, ...d.data() }))),
-        (e) => setError(e.message),
+        collection(db(), name),
+        (s) => {
+          setError("");
+          const list = s.docs.map((d) => ({ id: d.id, ...d.data() }) as Row);
+          const asc = order === "order";
+          list.sort((a, b) => {
+            const x = sortKey(a[order]);
+            const y = sortKey(b[order]);
+            return (x < y ? -1 : x > y ? 1 : 0) * (asc ? 1 : -1);
+          });
+          setRows(list);
+        },
+        (e) => {
+          setError(e.message);
+          setRows((r) => r ?? []);
+        },
       ),
     [name, order],
   );
@@ -41,9 +60,9 @@ const clean = (v: unknown): unknown =>
       ? Object.fromEntries(Object.entries(v as object).filter(([, x]) => x !== undefined).map(([k, x]) => [k, clean(x)]))
       : v;
 
-export async function saveContent(col: string, id: string, data: DocumentData, uid: string) {
+export async function saveContent(col: string, id: string, data: DocumentData, uid: string, affectsSite = true) {
   await setDoc(doc(db(), col, id), { ...(clean(data) as DocumentData), updatedAt: serverTimestamp(), updatedBy: uid }, { merge: false });
-  await touchContent(uid);
+  if (affectsSite) await touchContent(uid);
 }
 
 export async function removeContent(col: string, id: string, uid: string) {
@@ -51,8 +70,15 @@ export async function removeContent(col: string, id: string, uid: string) {
   await touchContent(uid);
 }
 
-export const fmtTs = (t?: Timestamp | null, tz = "America/New_York") =>
-  t?.toDate ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: tz }).format(t.toDate()) : "";
+export const fmtTs = (t?: Timestamp | null, tz = "America/New_York"): string => {
+  if (!t?.toDate) return "";
+  try {
+    return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: tz }).format(t.toDate());
+  } catch {
+    // An unknown time zone from a form submission must not break the portal.
+    return tz === "America/New_York" ? t.toDate().toISOString() : fmtTs(t);
+  }
+};
 
 export const slugify = (s: string) =>
   s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
@@ -110,12 +136,26 @@ export function SectionHeader({ title, lede, action }: { title: string; lede?: s
   );
 }
 
+// Open panels, innermost last, so Escape closes only the panel on top.
+const panelStack: symbol[] = [];
+
 export function Panel({ open, title, onClose, children, footer, wide }: { open: boolean; title: string; onClose: () => void; children: ReactNode; footer?: ReactNode; wide?: boolean }) {
   useEffect(() => {
-    const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    if (open) window.addEventListener("keydown", k);
-    return () => window.removeEventListener("keydown", k);
-  }, [open, onClose]);
+    if (!open) return;
+    const me = Symbol(title);
+    panelStack.push(me);
+    const k = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && panelStack[panelStack.length - 1] === me) {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", k);
+    return () => {
+      window.removeEventListener("keydown", k);
+      panelStack.splice(panelStack.indexOf(me), 1);
+    };
+  }, [open, onClose, title]);
   return (
     <AnimatePresence>
       {open && (
@@ -271,15 +311,28 @@ export function Toggle({ label, checked, onChange, hint }: { label: string; chec
   );
 }
 
-/** Edits a list of strings, one per line. */
+/** Edits a list of strings, one per line. Blank lines are dropped when the list is used. */
 export function LinesIn({ label, value, onChange, hint, rows = 4 }: { label: string; value: string[] | undefined; onChange: (v: string[]) => void; hint?: string; rows?: number }) {
+  // Keep the raw text while typing, so Enter at the end starts a new line.
+  const joined = (value ?? []).join("\n");
+  const [text, setText] = useState(joined);
+  const [synced, setSynced] = useState(joined);
+  if (joined !== synced) {
+    setSynced(joined);
+    if (joined !== text.split("\n").map((x) => x.trim()).filter(Boolean).join("\n")) setText(joined);
+  }
   return (
     <AreaIn
       label={label}
       hint={hint ?? "One item per line."}
       rows={rows}
-      value={(value ?? []).join("\n")}
-      onChange={(v) => onChange(v.split("\n").map((x) => x.trimStart()).filter((x, i, arr) => x || i < arr.length - 1))}
+      value={text}
+      onChange={(v) => {
+        setText(v);
+        const list = v.split("\n").map((x) => x.trim()).filter(Boolean);
+        setSynced(list.join("\n"));
+        onChange(list);
+      }}
     />
   );
 }

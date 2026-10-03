@@ -45,8 +45,7 @@ export default function DiasporaPage() {
           </div>
           <p className="text-lg leading-relaxed text-stone-dark">
             The Diaspora Connect seminar series was created by the founders of RT as a platform for the Pan-African
-            diaspora in the United States to explore business, investment and family ties with home countries. Event
-            announcements will appear on this page.
+            diaspora in the United States to explore business, investment and family ties with home countries.
           </p>
         </Container>
       </section>

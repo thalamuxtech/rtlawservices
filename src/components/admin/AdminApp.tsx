@@ -442,6 +442,14 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
           </p>
         </header>
         <main className="px-4 py-8 sm:px-8">
+          {[evaluations, bookings, messages, cases, reviews, posts, attorneys, staffRows].some((c) => c.error) && (
+            <div role="alert" className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-danger/30 bg-danger/5 px-5 py-4 text-sm">
+              <span className="font-bold text-danger">Some records could not be loaded. Check your connection, or ask an owner to confirm your access.</span>
+              <button type="button" onClick={() => location.reload()} className="min-h-11 rounded-full border border-danger/30 bg-white px-4 font-bold text-danger hover:bg-danger hover:text-white">
+                Try again
+              </button>
+            </div>
+          )}
           <AnimatePresence mode="wait">
             <motion.div key={section} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>
               {section === "overview" && (
@@ -454,9 +462,9 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
                   go={go}
                 />
               )}
-              {section === "evaluations" && <Requests cfg={EVALUATIONS} rows={evaluations.rows} uid={user.uid} />}
-              {section === "bookings" && <Requests cfg={BOOKINGS} rows={bookings.rows} uid={user.uid} />}
-              {section === "messages" && <Requests cfg={MESSAGES} rows={messages.rows} uid={user.uid} />}
+              {section === "evaluations" && <Requests cfg={EVALUATIONS} rows={evaluations.rows} uid={user.uid} role={staff.role} />}
+              {section === "bookings" && <Requests cfg={BOOKINGS} rows={bookings.rows} uid={user.uid} role={staff.role} />}
+              {section === "messages" && <Requests cfg={MESSAGES} rows={messages.rows} uid={user.uid} role={staff.role} />}
               {section === "cases" && <ContentManager kind="cases" rows={cases.rows} uid={user.uid} />}
               {section === "reviews" && <ContentManager kind="reviews" rows={reviews.rows} uid={user.uid} />}
               {section === "posts" && <ContentManager kind="posts" rows={posts.rows} uid={user.uid} />}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MarqueePause } from "./MarqueePause";
 import { Stars } from "@/components/ui/primitives";
 import type { Review } from "@/content/types";
 import { ILLUSTRATIVE_NOTE } from "@/content/live";
@@ -83,15 +84,18 @@ export function ReviewsMarquee({ reviews, illustrative = false }: { reviews: Rev
             </div>
           )}
         </div>
-        <Link
-          href="/reviews/"
-          className="inline-flex min-h-11 items-center justify-center rounded-full border border-ink/25 px-6 font-bold text-ink transition-colors hover:border-ink hover:bg-ink hover:text-paper"
-        >
-          Read all reviews
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <MarqueePause target="reviews-marquee" />
+          <Link
+            href="/reviews/"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-ink/25 px-6 font-bold text-ink transition-colors hover:border-ink hover:bg-ink hover:text-paper"
+          >
+            Read all reviews
+          </Link>
+        </div>
       </div>
 
-      <div className="marquee-mask mt-14" aria-label="Client reviews">
+      <div id="reviews-marquee" className="marquee-mask mt-14" role="region" aria-label="Client reviews">
         {rows.map((row, ri) => (
           <div key={ri} className="marquee-row group/row flex overflow-hidden">
             <div className="marquee-track flex w-max gap-5 pr-5" style={{ animationDuration: `${Math.max(40, row.length * 9)}s` }}>
