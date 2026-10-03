@@ -6,9 +6,10 @@ import { AnimatePresence, motion } from "motion/react";
 import { onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import {
-  BookOpen, CalendarClock, ClipboardCheck, ExternalLink, Eye, EyeOff, FileBadge, Gauge, KeyRound, LayoutDashboard, Loader2, LogOut, Mail, Menu, Rocket, Settings, ShieldAlert, Star, Users, UserSquare2, Wand2, X,
+  BookOpen, CalendarClock, ClipboardCheck, ExternalLink, Eye, EyeOff, FileBadge, Gauge, Globe2, KeyRound, LayoutDashboard, Loader2, Lock, LogOut, Mail, Menu, MessagesSquare, Rocket, Settings, ShieldAlert, Star, Users, UserSquare2, Wand2, X,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { LoginArt } from "./LoginArt";
 import { auth, db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { ToastProvider, useCollection } from "./kit";
@@ -60,8 +61,19 @@ export function AdminApp() {
 type PasswordCred = Credential & { password?: string; id: string };
 
 // The portal email is not secret, so it is pre-filled. The password is never
-// shipped in the site code; the browser's password manager supplies it.
+// shipped in the site code. After a sign-in with "Remember on this device",
+// Autoload fills both fields from this browser's storage.
 const DEFAULT_EMAIL = "admin@rtlawservices.com";
+const SAVED_KEY = "rt-admin-login";
+
+function savedLogin(): { email: string; password: string } | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(SAVED_KEY) || "null");
+    return v?.email && v?.password ? v : null;
+  } catch {
+    return null;
+  }
+}
 
 function Login() {
   const [email, setEmail] = useState(() => {
@@ -73,6 +85,7 @@ function Login() {
   });
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [busy, setBusy] = useState(false);
@@ -88,9 +101,8 @@ function Login() {
       await signInWithEmailAndPassword(auth(), em, pw);
       try {
         localStorage.setItem("rt-admin-email", em);
-        // Offer the browser's password manager, so Autoload works next time.
-        const PC = (window as unknown as { PasswordCredential?: new (d: { id: string; password: string; name?: string }) => Credential }).PasswordCredential;
-        if (PC && navigator.credentials?.store) await navigator.credentials.store(new PC({ id: em, password: pw, name: "RT Law Services staff" }));
+        if (remember) localStorage.setItem(SAVED_KEY, JSON.stringify({ email: em, password: pw }));
+        else localStorage.removeItem(SAVED_KEY);
       } catch {}
     } catch {
       setError("Sign-in failed. Check your email and password.");
@@ -102,23 +114,23 @@ function Login() {
   const autoload = async () => {
     setError("");
     setInfo("");
-    try {
-      const cred = (await navigator.credentials?.get({ password: true, mediation: "optional" } as CredentialRequestOptions)) as PasswordCred | null;
-      if (cred?.id && cred.password) {
-        setEmail(cred.id);
-        setPassword(cred.password);
-        setInfo("Details loaded. Signing you in.");
-        await signIn(undefined, { email: cred.id, password: cred.password });
-        return;
-      }
-    } catch {}
-    let last: string | null = null;
-    try {
-      last = localStorage.getItem("rt-admin-email");
-    } catch {}
-    setEmail(last || DEFAULT_EMAIL);
+    let found = savedLogin();
+    if (!found) {
+      // Fall back to the browser's password manager where it supports this.
+      try {
+        const cred = (await navigator.credentials?.get({ password: true, mediation: "optional" } as CredentialRequestOptions)) as PasswordCred | null;
+        if (cred?.id && cred.password) found = { email: cred.id, password: cred.password };
+      } catch {}
+    }
+    if (found) {
+      setEmail(found.email);
+      setPassword(found.password);
+      setInfo("Details filled in. Choose Sign in.");
+      return;
+    }
+    setEmail(DEFAULT_EMAIL);
     document.getElementById("a-pass")?.focus();
-    setInfo("Email loaded. Enter your password once and choose Save in your browser, and Autoload will sign you in next time.");
+    setInfo("No saved details on this device yet. Enter the password once with Remember on this device ticked, and Autoload will fill both fields next time.");
   };
 
   const reset = async () => {
@@ -147,10 +159,32 @@ function Login() {
         ))}
         <Logo tone="dark" className="relative w-64" />
         <div className="relative">
-          <p className="font-serif-display text-5xl leading-tight">The back office</p>
-          <p className="mt-4 max-w-md text-lg text-stone-dark">Evaluations, consultations, success stories, reviews, the blog and every detail of the website, in one place.</p>
+          <LoginArt />
+          <p className="mt-8 text-sm font-bold text-brass-light xl:mt-10">Staff portal</p>
+          <p className="font-serif-display mt-2 text-4xl leading-tight xl:text-5xl">Client matters, managed with care</p>
+          <p className="mt-4 max-w-lg text-lg leading-relaxed text-stone-dark">
+            Review free evaluations, confirm consultations and reply to client messages. Approve success stories, reviews and
+            articles before they appear on the website.
+          </p>
+          <ul className="mt-8 grid max-w-lg gap-3 [@media(max-height:860px)]:hidden text-[0.97rem] text-paper/90">
+            {[
+              { icon: ClipboardCheck, text: "Free evaluations and consultation requests" },
+              { icon: MessagesSquare, text: "Client messages and follow-up" },
+              { icon: Globe2, text: "Website content and publishing" },
+            ].map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-center gap-3">
+                <span className="grid size-8 shrink-0 place-items-center rounded-full border border-line-dark text-brass-light">
+                  <Icon aria-hidden className="size-4" />
+                </span>
+                {text}
+              </li>
+            ))}
+          </ul>
         </div>
-        <p className="relative text-sm text-stone-dark">Staff only. Activity is recorded.</p>
+        <p className="relative flex items-center gap-2 text-sm text-stone-dark">
+          <Lock aria-hidden className="size-4 text-brass-light" />
+          Authorized staff only. Client information in this portal is confidential.
+        </p>
       </div>
 
       <div className="grid place-items-center bg-paper px-4 py-16">
@@ -159,20 +193,18 @@ function Login() {
           <p className="text-sm font-bold text-brass-ink">Staff sign-in</p>
           <h1 className="font-serif-display mt-2 text-5xl text-ink">Welcome back</h1>
 
-          <button
-            type="button"
-            onClick={autoload}
-            className="group mt-10 flex min-h-14 w-full items-center justify-center gap-3 rounded-2xl border border-ink/20 bg-white text-base font-bold text-ink transition-colors hover:border-ink"
-          >
-            <Wand2 aria-hidden className="size-5 text-brass-ink transition-transform group-hover:rotate-12" /> Autoload my details
-          </button>
-          <div className="my-6 flex items-center gap-4 text-sm text-stone">
-            <span className="h-px flex-1 bg-line" /> or sign in <span className="h-px flex-1 bg-line" />
+          <div className="mt-10 flex items-center justify-between">
+            <label htmlFor="a-email" className="block text-sm font-bold text-ink">
+              Email
+            </label>
+            <button
+              type="button"
+              onClick={autoload}
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-ink/20 bg-white px-4 text-sm font-bold text-ink transition-colors duration-300 hover:bg-ink hover:text-paper"
+            >
+              <Wand2 aria-hidden className="size-4" /> Autoload
+            </button>
           </div>
-
-          <label htmlFor="a-email" className="block text-sm font-bold text-ink">
-            Email
-          </label>
           <input id="a-email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-line bg-white px-4 outline-none focus:border-ink" />
           <label htmlFor="a-pass" className="mt-5 block text-sm font-bold text-ink">
             Password
@@ -196,6 +228,10 @@ function Login() {
               {showPw ? <EyeOff aria-hidden className="size-5" /> : <Eye aria-hidden className="size-5" />}
             </button>
           </div>
+          <label className="mt-4 flex min-h-11 cursor-pointer items-center gap-3 text-sm text-stone">
+            <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="size-5 accent-ink" />
+            Remember on this device
+          </label>
           <AnimatePresence>
             {(error || info) && (
               <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} role={error ? "alert" : "status"} className={cn("mt-4 text-sm font-bold", error ? "text-danger" : "text-success")}>
