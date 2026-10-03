@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import {
-  BookOpen, CalendarClock, ClipboardCheck, ExternalLink, FileBadge, Gauge, KeyRound, LayoutDashboard, Loader2, LogOut, Mail, Menu, Rocket, Settings, ShieldAlert, Star, Users, UserSquare2, Wand2, X,
+  BookOpen, CalendarClock, ClipboardCheck, ExternalLink, Eye, EyeOff, FileBadge, Gauge, KeyRound, LayoutDashboard, Loader2, LogOut, Mail, Menu, Rocket, Settings, ShieldAlert, Star, Users, UserSquare2, Wand2, X,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { auth, db } from "@/lib/firebase";
@@ -59,15 +59,20 @@ export function AdminApp() {
 
 type PasswordCred = Credential & { password?: string; id: string };
 
+// The portal email is not secret, so it is pre-filled. The password is never
+// shipped in the site code; the browser's password manager supplies it.
+const DEFAULT_EMAIL = "admin@rtlawservices.com";
+
 function Login() {
   const [email, setEmail] = useState(() => {
     try {
-      return typeof window === "undefined" ? "" : localStorage.getItem("rt-admin-email") || "";
+      return (typeof window !== "undefined" && localStorage.getItem("rt-admin-email")) || DEFAULT_EMAIL;
     } catch {
-      return "";
+      return DEFAULT_EMAIL;
     }
   });
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [busy, setBusy] = useState(false);
@@ -111,12 +116,9 @@ function Login() {
     try {
       last = localStorage.getItem("rt-admin-email");
     } catch {}
-    if (last) {
-      setEmail(last);
-      setInfo("Email loaded. Enter your password, or let your browser fill it in.");
-    } else {
-      setInfo("No saved details on this device yet. Sign in once and let your browser save them.");
-    }
+    setEmail(last || DEFAULT_EMAIL);
+    document.getElementById("a-pass")?.focus();
+    setInfo("Email loaded. Enter your password once and choose Save in your browser, and Autoload will sign you in next time.");
   };
 
   const reset = async () => {
@@ -175,7 +177,25 @@ function Login() {
           <label htmlFor="a-pass" className="mt-5 block text-sm font-bold text-ink">
             Password
           </label>
-          <input id="a-pass" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-line bg-white px-4 outline-none focus:border-ink" />
+          <div className="relative mt-2">
+            <input
+              id="a-pass"
+              type={showPw ? "text" : "password"}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="min-h-12 w-full rounded-xl border border-line bg-white pl-4 pr-14 outline-none focus:border-ink"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw((v) => !v)}
+              aria-label={showPw ? "Hide password" : "Show password"}
+              aria-pressed={showPw}
+              className="absolute right-1 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-lg text-stone transition-colors hover:text-ink"
+            >
+              {showPw ? <EyeOff aria-hidden className="size-5" /> : <Eye aria-hidden className="size-5" />}
+            </button>
+          </div>
           <AnimatePresence>
             {(error || info) && (
               <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} role={error ? "alert" : "status"} className={cn("mt-4 text-sm font-bold", error ? "text-danger" : "text-success")}>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/site/PageHero";
 import { ReviewCard } from "@/components/site/cards";
 import { BookingBand } from "@/components/home/Sections";
-import { Container, SampleBadge, Stars } from "@/components/ui/primitives";
+import { ButtonLink, Container, Stars } from "@/components/ui/primitives";
 import { REVIEWS } from "@/content/live";
 
 export const metadata: Metadata = {
@@ -12,7 +12,6 @@ export const metadata: Metadata = {
 
 export default function ReviewsPage() {
   const avg = REVIEWS.length ? REVIEWS.reduce((s, r) => s + r.rating, 0) / REVIEWS.length : 0;
-  const anyDemo = REVIEWS.some((r) => r.demo);
   return (
     <>
       <PageHero
@@ -22,7 +21,6 @@ export default function ReviewsPage() {
         aside={
           REVIEWS.length ? (
             <div className="rounded-2xl border border-line-dark bg-ink-raised/80 p-6">
-              {anyDemo && <SampleBadge dark className="mb-4" />}
               <p className="font-serif-display text-6xl text-brass-light">{avg.toFixed(1)}</p>
               <Stars rating={Math.round(avg)} className="mt-3" />
               <p className="mt-3 text-sm text-stone-dark">Average of {REVIEWS.length} reviews on this page</p>
@@ -32,6 +30,15 @@ export default function ReviewsPage() {
       />
       <section className="py-20">
         <Container>
+          {REVIEWS.length === 0 && (
+            <div className="mx-auto max-w-xl rounded-3xl border border-line bg-white p-10 text-center">
+              <p className="font-serif-display text-3xl text-ink">Client reviews are on their way</p>
+              <p className="mt-3 text-stone">We publish reviews only with each client&rsquo;s permission. In the meantime, an attorney can review your situation at no cost.</p>
+              <div className="mt-6 flex justify-center">
+                <ButtonLink href="/free-evaluation/">Request a free evaluation</ButtonLink>
+              </div>
+            </div>
+          )}
           <div className="columns-1 gap-12 sm:columns-2 lg:columns-3 [&>*]:mb-12 [&>*]:break-inside-avoid [&>*]:border-t [&>*]:border-ink/15 [&>*]:pt-8">
             {REVIEWS.map((r, i) => <ReviewCard key={r.id} r={r} index={i % 3} />)}
           </div>

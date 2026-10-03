@@ -10,7 +10,8 @@ import { POSTS, getPost } from "@/content/live";
 import { SITE } from "@/content/site";
 
 export function generateStaticParams() {
-  return POSTS.map((p) => ({ slug: p.slug }));
+  // Static export needs one route even when nothing is published; it renders the 404 page.
+  return POSTS.length ? POSTS.map((p) => ({ slug: p.slug })) : [{ slug: "none" }];
 }
 
 export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): Promise<Metadata> {

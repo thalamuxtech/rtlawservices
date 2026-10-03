@@ -166,7 +166,7 @@ export function ContentManager({ kind, rows, uid }: { kind: Kind; rows: Row[] | 
                   <span className="block truncate text-sm text-stone">{kind === "reviews" ? `"${r.quote}"` : subtitle(kind, r)}</span>
                   <span className="mt-2 flex flex-wrap items-center gap-2">
                     <Chip status={r.status} />
-                    {r.demo && <span className="rounded-full border border-brass-ink/40 px-2 text-xs font-bold text-brass-ink">Sample</span>}
+                    {r.demo && <span className="rounded-full border border-brass-ink/40 px-2 text-xs font-bold text-brass-ink">Placeholder, not on website</span>}
                     {r.featured && <span className="rounded-full bg-brass-pale px-2 text-xs font-bold text-brass-ink">Featured</span>}
                     {kind === "reviews" && (
                       <span className="flex items-center gap-0.5 text-brass">
@@ -218,7 +218,7 @@ function Editor({ kind, r, set }: { kind: Kind; r: Row; set: (p: Partial<Row>) =
       <SelectIn label="Visibility" value={r.status} onChange={(v) => set({ status: v })} options={STATUS_OPTIONS} />
       {kind !== "posts" && (
         <div className="pt-6">
-          <Toggle label="Sample content" hint="Shows a Sample label. Hidden in production mode." checked={!!r.demo} onChange={(v) => set({ demo: v })} />
+          <Toggle label="Fictional placeholder" hint="Kept in the back office only. Never shown on the website. Turn off once the record is real." checked={!!r.demo} onChange={(v) => set({ demo: v })} />
         </div>
       )}
     </div>

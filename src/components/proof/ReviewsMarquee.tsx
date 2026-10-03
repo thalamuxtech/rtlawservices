@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SampleBadge, Stars } from "@/components/ui/primitives";
+import { Stars } from "@/components/ui/primitives";
 import type { Review } from "@/content/types";
 import { cn } from "@/lib/utils";
 
@@ -47,7 +47,7 @@ function ReviewTile({ r, i }: { r: Review; i: number }) {
             {isNew && <span className="ml-2 rounded bg-success px-1.5 py-0.5 text-[0.7rem] font-bold text-white">NEW</span>}
           </p>
         </div>
-        {r.source === "google" ? <GoogleMark /> : r.demo ? <SampleBadge /> : null}
+        {r.source === "google" ? <GoogleMark /> : null}
       </div>
       <Stars rating={r.rating} className="mt-3" />
       <blockquote className="mt-3 line-clamp-5 text-[0.95rem] leading-relaxed text-ink-soft">{r.quote}</blockquote>

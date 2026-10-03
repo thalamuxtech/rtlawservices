@@ -4,13 +4,14 @@ import { notFound } from "next/navigation";
 import { PageHero } from "@/components/site/PageHero";
 import { CaseCard } from "@/components/site/cards";
 import { BookingBand } from "@/components/home/Sections";
-import { ButtonLink, Container, SampleBadge } from "@/components/ui/primitives";
+import { ButtonLink, Container } from "@/components/ui/primitives";
 import { getExpertise } from "@/content/expertise";
 import { ATTORNEYS, casesByAttorney, getAttorney } from "@/content/live";
 import { SITE } from "@/content/site";
 
 export function generateStaticParams() {
-  return ATTORNEYS.map((a) => ({ slug: a.slug }));
+  // Static export needs one route even when nothing is published; it renders the 404 page.
+  return ATTORNEYS.length ? ATTORNEYS.map((a) => ({ slug: a.slug })) : [{ slug: "none" }];
 }
 
 export async function generateMetadata({ params }: PageProps<"/attorneys/[slug]">): Promise<Metadata> {
@@ -47,7 +48,6 @@ export default async function AttorneyPage({ params }: PageProps<"/attorneys/[sl
           <div className="relative grid aspect-square place-items-center overflow-hidden rounded-3xl border border-line-dark bg-ink-raised">
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_50%_110%,rgba(177,151,107,0.4),transparent_60%)]" />
             <span className="font-serif-display relative text-8xl text-brass-light">{a.initials}</span>
-            {a.demo && <SampleBadge dark className="absolute right-4 top-4" />}
           </div>
         }
       >

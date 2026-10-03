@@ -21,7 +21,10 @@ export default function CaseResultsPage() {
       />
       <section className="py-20">
         <Container>
-          {CASES.length ? <CaseLibrary cases={CASES} /> : <p className="text-stone">Case results will appear here once published with client consent.</p>}
+          {CASES.length ? <CaseLibrary cases={CASES} /> : <div className="mx-auto max-w-xl rounded-3xl border border-line bg-white p-10 text-center">
+              <p className="font-serif-display text-3xl text-ink">Success stories are on their way</p>
+              <p className="mt-3 text-stone">Each story is published only with the client&rsquo;s written consent and with identifying details removed.</p>
+            </div>}
           <div className="mt-14 rounded-2xl border border-line bg-mist p-6 text-sm leading-relaxed text-stone">
             <strong className="text-ink">About these results.</strong> {RESULTS_CAVEAT} Timelines reflect the conditions of
             each case at the time and do not predict current processing.

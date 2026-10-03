@@ -6,13 +6,14 @@ import { PageHero } from "@/components/site/PageHero";
 import { CaseCard } from "@/components/site/cards";
 import { ApprovalDocument } from "@/components/proof/ApprovalDocument";
 import { BookingBand } from "@/components/home/Sections";
-import { ButtonLink, Container, SampleBadge } from "@/components/ui/primitives";
+import { ButtonLink, Container } from "@/components/ui/primitives";
 import { getExpertise } from "@/content/expertise";
 import { CASES, getAttorney, getCase } from "@/content/live";
 import { CTA, RESULTS_CAVEAT } from "@/content/site";
 
 export function generateStaticParams() {
-  return CASES.map((c) => ({ slug: c.slug }));
+  // Static export needs one route even when nothing is published; it renders the 404 page.
+  return CASES.length ? CASES.map((c) => ({ slug: c.slug })) : [{ slug: "none" }];
 }
 
 export async function generateMetadata({ params }: PageProps<"/case-results/[slug]">): Promise<Metadata> {
@@ -23,8 +24,7 @@ export async function generateMetadata({ params }: PageProps<"/case-results/[slu
 export default async function CaseDetail({ params }: PageProps<"/case-results/[slug]">) {
   const c = getCase((await params).slug);
   if (!c) notFound();
-  // Sample stories never name a real attorney.
-  const attorney = c.demo ? undefined : getAttorney(c.attorney);
+  const attorney = getAttorney(c.attorney);
   const area = getExpertise(c.expertise);
   const more = CASES.filter((x) => x.slug !== c.slug && x.track === c.track).slice(0, 3);
   const rows = [
@@ -43,7 +43,6 @@ export default async function CaseDetail({ params }: PageProps<"/case-results/[s
       >
         <div className="flex flex-wrap items-center gap-4">
           <span className="font-serif-display text-3xl text-brass-light">{c.headline}</span>
-          {c.demo && <SampleBadge dark />}
         </div>
       </PageHero>
 
@@ -113,10 +112,12 @@ export default async function CaseDetail({ params }: PageProps<"/case-results/[s
           </div>
         </div>
 
-        <aside className="lg:sticky lg:top-32 lg:h-fit">
-          <p className="mb-4 text-sm font-bold text-stone">{c.documentUrl ? "Approval notice, personal details redacted" : "Approval notice (sample illustration)"}</p>
-          <ApprovalDocument c={c} />
-        </aside>
+        {c.documentUrl && (
+          <aside className="lg:sticky lg:top-32 lg:h-fit">
+            <p className="mb-4 text-sm font-bold text-stone">Approval notice, personal details redacted</p>
+            <ApprovalDocument c={c} />
+          </aside>
+        )}
       </Container>
 
       {more.length > 0 && (

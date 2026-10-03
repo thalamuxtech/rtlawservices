@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SampleBadge, Stars } from "@/components/ui/primitives";
+import { Stars } from "@/components/ui/primitives";
 import { DocumentPreview } from "@/components/proof/ApprovalDocument";
 import type { Attorney, CaseResult, Review } from "@/content/types";
 import { cn } from "@/lib/utils";
@@ -11,13 +11,12 @@ import { cn } from "@/lib/utils";
 export function CaseCard({ c, dark }: { c: CaseResult; dark?: boolean; index?: number }) {
   return (
     <Link href={`/case-results/${c.slug}/`} className="group flex h-full flex-col">
-      <DocumentPreview c={c} />
+      {c.documentUrl && <DocumentPreview c={c} />}
       <div className="mt-6 flex flex-1 flex-col border-t-2 border-brass pt-5">
       <div className="flex items-center justify-between gap-3">
         <p className={cn("text-sm font-bold", dark ? "text-stone-dark" : "text-stone")}>
           {c.category}, {c.year}
         </p>
-        {c.demo && <SampleBadge dark={dark} />}
       </div>
       <p
         className={cn(
@@ -42,7 +41,6 @@ export function ReviewCard({ r, large }: { r: Review; index?: number; large?: bo
     <figure className="flex h-full flex-col">
       <div className="flex items-center gap-3">
         <Stars rating={r.rating} />
-        {r.demo && <SampleBadge />}
       </div>
       <blockquote
         className={cn(
@@ -71,7 +69,6 @@ export function AttorneyCard({ a }: { a: Attorney; index?: number }) {
         <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(177,151,107,0.35),transparent_60%)]" />
         <span className="font-serif-display relative text-7xl text-brass-light">{a.initials}</span>
         <span className="absolute bottom-4 left-4 text-sm text-stone-dark">Portrait to follow</span>
-        {a.demo && <SampleBadge dark className="absolute right-4 top-4" />}
       </div>
       <div className="p-7">
         <p className="font-serif-display text-[1.75rem] text-ink decoration-1 underline-offset-[6px] group-hover:underline">{a.name}</p>

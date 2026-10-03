@@ -20,8 +20,9 @@ type Live = {
 const live = liveJson as unknown as Live;
 const fromStore = live.source === "firestore";
 
-const showDemo = process.env.NEXT_PUBLIC_SITE_MODE !== "production";
-const visible = <T extends { demo?: boolean }>(rows: T[]) => rows.filter((r) => showDemo || !r.demo);
+// Records flagged demo are fictional placeholders kept for the back office.
+// They are never published, so the public site shows only real material.
+const visible = <T extends { demo?: boolean }>(rows: T[]) => rows.filter((r) => !r.demo);
 
 const pick = <T,>(remote: T[] | undefined, seed: T[]) => (fromStore && remote && remote.length ? remote : seed);
 
