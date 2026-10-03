@@ -30,8 +30,22 @@ function decode(v) {
 }
 const fields = (f) => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, decode(v)]));
 
+// Retries transient network failures with a short backoff.
+async function fetchRetry(url, init, tries = 4) {
+  for (let i = 1; ; i++) {
+    try {
+      const res = await fetch(url, init);
+      if (res.status >= 500 && i < tries) throw new Error(`HTTP ${res.status}`);
+      return res;
+    } catch (err) {
+      if (i >= tries) throw err;
+      await new Promise((r) => setTimeout(r, 1000 * 2 ** i));
+    }
+  }
+}
+
 async function published(collection) {
-  const res = await fetch(`${BASE}:runQuery?key=${KEY}`, {
+  const res = await fetchRetry(`${BASE}:runQuery?key=${KEY}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -47,7 +61,7 @@ async function published(collection) {
 }
 
 async function doc(path) {
-  const res = await fetch(`${BASE}/${path}?key=${KEY}`);
+  const res = await fetchRetry(`${BASE}/${path}?key=${KEY}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
   return fields((await res.json()).fields || {});
@@ -89,9 +103,15 @@ async function main() {
       `pull-content: ${live.attorneys.length} attorneys, ${live.cases.length} cases, ${live.reviews.length} reviews, ${live.posts.length} posts`,
     );
   } catch (err) {
+    // In CI, never publish fallback content in place of the live content.
+    if (process.env.CI) {
+      console.error(`pull-content: Firestore unavailable (${err.message}). Stopping the build.`);
+      process.exit(1);
+    }
     console.warn(`pull-content: Firestore unavailable (${err.message}). Using seed content.`);
   }
   mkdirSync("src/content/generated", { recursive: true });
+  mkdirSync("public", { recursive: true });
   const json = JSON.stringify(live, null, 2);
   writeFileSync(OUT, json);
   const hash = digest.update(json).digest("hex").slice(0, 16);
