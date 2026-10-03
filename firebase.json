@@ -8,26 +8,77 @@
     "public": "out",
     "cleanUrls": true,
     "trailingSlash": true,
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "redirects": [
-      { "source": "/practice-area{,/**}", "destination": "/expertise/", "type": 301 },
-      { "source": "/we-have-expertise-in{,/**}", "destination": "/expertise/", "type": 301 },
-      { "source": "/request-appointment{,/**}", "destination": "/book/", "type": 301 },
-      { "source": "/contact-us{,/**}", "destination": "/contact/", "type": 301 },
-      { "source": "/fiduciary-services{,/**}", "destination": "/expertise/estates/", "type": 301 },
-      { "source": "/diaspora-connect{,/**}", "destination": "/diaspora/", "type": 301 },
-      { "source": "/gateway-to-nigerian-markets{,/**}", "destination": "/diaspora/", "type": 301 },
-      { "source": "/video-blog{,/**}", "destination": "/resources/", "type": 301 }
+      {
+        "source": "/practice-area{,/**}",
+        "destination": "/expertise/",
+        "type": 301
+      },
+      {
+        "source": "/we-have-expertise-in{,/**}",
+        "destination": "/expertise/",
+        "type": 301
+      },
+      {
+        "source": "/request-appointment{,/**}",
+        "destination": "/book/",
+        "type": 301
+      },
+      {
+        "source": "/contact-us{,/**}",
+        "destination": "/contact/",
+        "type": 301
+      },
+      {
+        "source": "/fiduciary-services{,/**}",
+        "destination": "/expertise/estates/",
+        "type": 301
+      },
+      {
+        "source": "/diaspora-connect{,/**}",
+        "destination": "/diaspora/",
+        "type": 301
+      },
+      {
+        "source": "/gateway-to-nigerian-markets{,/**}",
+        "destination": "/diaspora/",
+        "type": 301
+      },
+      {
+        "source": "/video-blog{,/**}",
+        "destination": "/resources/",
+        "type": 301
+      }
     ],
     "headers": [
       {
         "source": "**",
         "headers": [
-          { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains" },
-          { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "X-Frame-Options", "value": "DENY" },
-          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-          { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" },
+          {
+            "key": "Strict-Transport-Security",
+            "value": "max-age=63072000; includeSubDomains"
+          },
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "DENY"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "key": "Permissions-Policy",
+            "value": "camera=(), microphone=(), geolocation=(), payment=()"
+          },
           {
             "key": "Content-Security-Policy",
             "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.google-analytics.com https://www.googletagmanager.com; font-src 'self' data:; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://www.google-analytics.com https://region1.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://date.nager.at; frame-src https://rtlawservice.firebaseapp.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
@@ -35,12 +86,22 @@
         ]
       },
       {
-        "source": "/_next/static/**",
-        "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+        "source": "**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=0, must-revalidate"
+          }
+        ]
       },
       {
-        "source": "**/*.@(html)",
-        "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+        "source": "/_next/static/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
       }
     ]
   }
