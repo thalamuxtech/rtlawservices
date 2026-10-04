@@ -11,20 +11,21 @@ export type HeroImageName = "legal-library" | "law-consultation" | "case-prepara
 export function BlendImage({ name, position = "60% 30%", priority = false, className }: { name: HeroImageName; position?: string; priority?: boolean; className?: string }) {
   const src = (w: number) => `/images/${name}-${w}.webp`;
   return (
-    <div aria-hidden className={cn("pointer-events-none absolute inset-y-0 right-0 -z-10 w-full overflow-hidden lg:w-[60%]", className)}>
+    <div aria-hidden className={cn("pointer-events-none absolute inset-y-0 right-0 -z-10 w-full overflow-hidden lg:flex lg:w-[62%] lg:justify-end", className)}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src(840)}
         srcSet={`${src(560)} 560w, ${src(840)} 840w, ${src(1120)} 1120w`}
-        sizes="(min-width: 1024px) 60vw, 100vw"
+        sizes="(min-width: 1024px) 720px, 100vw"
         alt=""
         width={1120}
         height={1400}
         loading={priority ? "eager" : "lazy"}
         fetchPriority={priority ? "high" : "auto"}
         decoding="async"
-        className="blend-img size-full object-cover"
-        style={{ objectPosition: position }}
+        // Phones: fills the hero faintly. Large screens: the whole photo at the hero's height, uncropped.
+        className="blend-img size-full object-cover lg:h-full lg:w-auto lg:max-w-full lg:object-contain lg:object-right"
+        style={{ ["--pos" as string]: position }}
       />
     </div>
   );

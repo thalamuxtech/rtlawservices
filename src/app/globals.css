@@ -217,20 +217,22 @@
    behind the text; on large screens they fill the right side and dissolve
    toward the writing on the left and toward the bottom edge. */
 .blend-img {
+  object-position: var(--pos, 60% 30%);
   opacity: 0.3;
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.6) 45%, transparent 92%);
   mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.6) 45%, transparent 92%);
 }
 @media (min-width: 1024px) {
   .blend-img {
+    object-position: right center;
     opacity: 1;
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 12%, rgba(0, 0, 0, 0.12) 24%, rgba(0, 0, 0, 0.55) 40%, rgba(0, 0, 0, 0.9) 54%, #000 64%), linear-gradient(to top, transparent 0%, #000 26%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.25) 14%, rgba(0, 0, 0, 0.7) 30%, #000 46%), linear-gradient(to top, transparent 0%, #000 26%);
     -webkit-mask-composite: source-in;
-    mask-image: linear-gradient(to right, transparent 0%, transparent 12%, rgba(0, 0, 0, 0.12) 24%, rgba(0, 0, 0, 0.55) 40%, rgba(0, 0, 0, 0.9) 54%, #000 64%), linear-gradient(to top, transparent 0%, #000 26%);
+    mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.25) 14%, rgba(0, 0, 0, 0.7) 30%, #000 46%), linear-gradient(to top, transparent 0%, #000 26%);
     mask-composite: intersect;
   }
 }
 @media (prefers-reduced-motion: no-preference) {
   .blend-img { animation: blend-settle 2.6s var(--ease-luxe) both; }
 }
-@keyframes blend-settle { from { transform: scale(1.06); filter: brightness(0.7); } to { transform: none; filter: none; } }
+@keyframes blend-settle { from { transform: scale(1.02); filter: brightness(0.7); } to { transform: none; filter: none; } }
