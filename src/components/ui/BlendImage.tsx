@@ -11,7 +11,7 @@ export type HeroImageName = "legal-library" | "law-consultation" | "case-prepara
 export function BlendImage({ name, position = "60% 30%", priority = false, className }: { name: HeroImageName; position?: string; priority?: boolean; className?: string }) {
   const src = (w: number) => `/images/${name}-${w}.webp`;
   return (
-    <div aria-hidden className={cn("pointer-events-none absolute inset-y-0 right-0 -z-10 w-full overflow-hidden lg:flex lg:w-[62%] lg:justify-end", className)}>
+    <div aria-hidden className={cn("blend-frame pointer-events-none absolute inset-y-0 right-0 -z-10 w-full overflow-hidden lg:flex lg:justify-end", className)}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src(840)}
