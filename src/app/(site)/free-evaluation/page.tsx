@@ -32,6 +32,8 @@ export default function FreeEvaluationPage() {
   return (
     <>
       <PageHero
+        image="case-preparation"
+        imagePosition="62% 45%"
         eyebrow="Free evaluation"
         title="Find out where you stand, from an attorney, at no cost"
         lede={`Send your background and an immigration attorney will assess which routes fit, usually within ${days} business day${days > 1 ? "s" : ""}. No fee, and no obligation.`}

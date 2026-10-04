@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SITE } from "@/content/site";
+import { BlendImage, type HeroImageName } from "@/components/ui/BlendImage";
 
 export function PageHero({
   eyebrow,
@@ -12,6 +13,8 @@ export function PageHero({
   dark = true,
   children,
   aside,
+  image,
+  imagePosition,
 }: {
   eyebrow?: string;
   title: ReactNode;
@@ -20,6 +23,9 @@ export function PageHero({
   dark?: boolean;
   children?: ReactNode;
   aside?: ReactNode;
+  /** A photograph that fades into the right side of a dark hero. */
+  image?: HeroImageName;
+  imagePosition?: string;
 }) {
   const all = [{ label: "Home", href: "/" }, ...crumbs];
   const ld = {
@@ -28,13 +34,14 @@ export function PageHero({
     itemListElement: all.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.label, ...(c.href ? { item: SITE.url + c.href } : {}) })),
   };
   return (
-    <section className={cn("relative overflow-hidden", dark ? "on-dark bg-ink text-paper" : "bg-mist text-ink")}>
+    <section className={cn("relative isolate overflow-hidden", dark ? "on-dark bg-ink text-paper" : "bg-mist text-ink")}>
+      {dark && image && <BlendImage name={image} position={imagePosition} priority />}
       {dark && <div aria-hidden className="grain absolute inset-0" />}
       {dark && (
         <div aria-hidden className="absolute -right-40 -top-40 size-[560px] rounded-full bg-[radial-gradient(circle,rgba(177,151,107,0.18),transparent_65%)]" />
       )}
       <div className={cn("container-luxe relative grid gap-12 pb-20 pt-12 sm:pb-24 sm:pt-16", aside && "lg:grid-cols-[1.4fr_0.6fr] lg:items-end")}>
-        <div>
+        <div className={cn(image && !aside && "lg:max-w-[54%]")}>
           <nav aria-label="Breadcrumb" className="rise">
             <ol className={cn("flex flex-wrap items-center gap-1.5 text-sm", dark ? "text-stone-dark" : "text-stone")}>
               {all.map((c, i) => (

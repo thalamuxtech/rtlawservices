@@ -16,6 +16,8 @@ export default function AboutPage() {
   return (
     <>
       <PageHero
+        image="path-forward"
+        imagePosition="50% 55%"
         title={about.title}
         lede={about.lede}
         crumbs={[{ label: "About" }]}

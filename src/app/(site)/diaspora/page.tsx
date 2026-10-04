@@ -20,6 +20,8 @@ export default function DiasporaPage() {
   return (
     <>
       <PageHero
+        image="global-connection"
+        imagePosition="62% 45%"
         title="A U.S. firm you can reach from anywhere"
         lede="If you live outside the United States, or your family does, distance should not make the process harder to follow."
         crumbs={[{ label: "Clients abroad" }]}

@@ -23,6 +23,8 @@ export default function StartHerePage() {
   return (
     <>
       <PageHero
+        image="path-forward"
+        imagePosition="50% 55%"
         title="U.S. immigration, explained in plain words"
         lede="If this is your first time dealing with the U.S. immigration system, begin with this page. It takes about ten minutes to read, and every term is defined as it appears."
         crumbs={[{ label: "Start here" }]}

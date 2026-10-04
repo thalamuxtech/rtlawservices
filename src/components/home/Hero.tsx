@@ -1,12 +1,11 @@
 "use client";
 
 import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring } from "motion/react";
-import { Logo } from "@/components/brand/Logo";
 import { ButtonLink } from "@/components/ui/primitives";
 import { CTA } from "@/content/site";
 import { PAGES } from "@/content/pages";
+import { BlendImage } from "@/components/ui/BlendImage";
 
-const ease = [0.22, 1, 0.36, 1] as const;
 const words = PAGES.home.headline.split(/\s+/);
 
 export function Hero() {
@@ -27,6 +26,7 @@ export function Hero() {
         my.set(((e.clientY - r.top) / r.height) * 100);
       }}
     >
+      <BlendImage name="legal-library" position="58% 28%" priority />
       <div aria-hidden className="grain absolute inset-0 -z-10" />
       <motion.div aria-hidden className="absolute inset-0 -z-10" style={{ background: glow }} />
       <div aria-hidden className="absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-t from-ink to-transparent" />
@@ -66,40 +66,7 @@ export function Hero() {
           </p>
         </div>
 
-        <HeroMark />
       </div>
     </section>
-  );
-}
-
-function HeroMark() {
-  const reduce = useReducedMotion();
-  return (
-    <div className="relative mx-auto hidden aspect-square w-full max-w-[460px] lg:block" aria-hidden>
-      {[0, 1, 2].map((i) => (
-        <motion.div
-          key={i}
-          className="absolute rounded-full border border-brass/25"
-          style={{ inset: `${i * 11}%` }}
-          initial={{ opacity: 0, scale: 0.85 }}
-          animate={reduce ? { opacity: 1, scale: 1 } : { opacity: 1, scale: 1, rotate: i % 2 ? -360 : 360 }}
-          transition={{
-            opacity: { duration: 1, delay: 0.2 + i * 0.15 },
-            scale: { duration: 1.2, ease, delay: 0.2 + i * 0.15 },
-            rotate: { duration: 60 + i * 20, repeat: Infinity, ease: "linear" },
-          }}
-        >
-          <span className="absolute left-1/2 top-0 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brass" />
-        </motion.div>
-      ))}
-      <motion.div
-        className="absolute inset-[30%] grid place-items-center rounded-full bg-paper shadow-[0_40px_120px_-20px_rgba(177,151,107,0.45)]"
-        initial={{ opacity: 0, scale: 0.6 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.1, ease, delay: 0.45 }}
-      >
-        <Logo variant="mark" className="w-[62%]" />
-      </motion.div>
-    </div>
   );
 }

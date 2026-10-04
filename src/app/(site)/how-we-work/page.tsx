@@ -19,6 +19,8 @@ export default function HowWeWorkPage() {
   return (
     <>
       <PageHero
+        image="case-preparation"
+        imagePosition="62% 45%"
         title="A clear process, from first call to final decision"
         lede="Every client follows the same five stages. At any point you can ask which stage you are in and what happens next."
         crumbs={[{ label: "How we work" }]}

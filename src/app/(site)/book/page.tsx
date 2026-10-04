@@ -13,6 +13,8 @@ export default function BookPage() {
   return (
     <>
       <PageHero
+        image="law-consultation"
+        imagePosition="50% 30%"
         title="Choose a time that suits you"
         lede="Five short steps. Times appear in your own time zone, and our intake team confirms every request by email within one business day."
         crumbs={[{ label: "Book" }]}
