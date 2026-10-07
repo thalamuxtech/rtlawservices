@@ -98,6 +98,17 @@ export function Footer() {
               <Lock aria-hidden className="size-4" />
             </Link>
             <p className="w-full lg:text-right">© {year} {SITE.name}</p>
+            <p className="w-full lg:text-right">
+              Powered by{" "}
+              <a
+                href="https://thalamux-tech.web.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-paper underline-offset-4 transition-colors hover:text-brass-light hover:underline"
+              >
+                Thalamux Tech
+              </a>
+            </p>
           </div>
         </div>
       </div>
