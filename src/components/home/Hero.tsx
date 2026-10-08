@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring } from "motion/react";
 import { ButtonLink } from "@/components/ui/primitives";
 import { CTA } from "@/content/site";
@@ -36,10 +37,14 @@ export function Hero() {
           <p className="rise eyebrow text-brass-light">{PAGES.home.eyebrow}</p>
 
           <h1 className="font-serif-display mt-7 text-[2.65rem] leading-[1.04] text-balance sm:text-6xl lg:text-[4.6rem]">
+            {/* Real spaces between the animated words, so copied text, search engines and screen readers read whole words. */}
             {words.map((w, i) => (
-              <span key={i} className="rise-word inline-block pr-[0.25em]" style={{ ["--d" as string]: `${150 + i * 55}ms` }}>
-                {w}
-              </span>
+              <Fragment key={i}>
+                {i > 0 && " "}
+                <span className="rise-word inline-block" style={{ ["--d" as string]: `${150 + i * 55}ms` }}>
+                  {w}
+                </span>
+              </Fragment>
             ))}
           </h1>
 

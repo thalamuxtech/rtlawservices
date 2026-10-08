@@ -70,7 +70,8 @@ export function ReviewsMarquee({ reviews, illustrative = false }: { reviews: Rev
       <div className="container-luxe flex flex-wrap items-end justify-between gap-8">
         <div>
           <h2 id="reviews-heading" className="font-serif-display text-[2.1rem] text-ink sm:text-5xl">
-            In our clients&rsquo; words
+            {/* A recommendation claim needs real reviews behind it, so placeholders keep the neutral heading. */}
+            {illustrative ? <>In our clients&rsquo; words</> : "Our clients keep recommending us"}
           </h2>
           {illustrative ? (
             <p className="mt-5 max-w-xl text-stone">{ILLUSTRATIVE_NOTE}</p>

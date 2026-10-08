@@ -36,7 +36,7 @@ export const DEFAULT_PAGES: PagesContent = {
   },
   home: {
     eyebrow: "RT Law Services, immigration counsel",
-    headline: "Your immigration matter, handled by an attorney who knows your name.",
+    headline: "Focused immigration counsel, built around the details of your case.",
     lede: "From a first green card to an extraordinary ability petition. Clear guidance for first-time applicants and exacting work for professionals, founders and employers.",
     primaryCta: "Request a free evaluation",
     secondaryCta: "Book a consultation",

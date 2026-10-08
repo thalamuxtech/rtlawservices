@@ -56,3 +56,6 @@ AGENTS.md
 /src/content/generated/
 /public/media/
 /public/build-meta.json
+
+# Claude Code personal settings
+.claude/settings.local.json
