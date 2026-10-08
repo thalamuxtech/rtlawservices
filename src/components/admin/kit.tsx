@@ -7,6 +7,7 @@ import {
 } from "firebase/firestore";
 import { ArrowDown, ArrowUp, CheckCircle2, Loader2, Plus, Trash2, X, XCircle } from "lucide-react";
 import { db } from "@/lib/firebase";
+import { writeLiveContent } from "@/lib/live-content";
 import { requestPublish } from "@/lib/publish";
 import { cn } from "@/lib/utils";
 
@@ -48,11 +49,21 @@ export function useCollection(name: string, order = "createdAt") {
   return { rows, error };
 }
 
-/** Records the time of the last content change and starts a site rebuild. */
+/**
+ * Records the time of the last content change, updates the content the public
+ * website reads on each page view, and starts a site rebuild.
+ */
 export async function touchContent(uid: string) {
   await setDoc(doc(db(), "meta", "content"), { updatedAt: serverTimestamp(), updatedBy: uid }, { merge: true });
-  // Not awaited: the save has succeeded, and the Publishing screen reports any
-  // problem starting the build. The scheduled run remains the fallback.
+  try {
+    await writeLiveContent();
+    await setDoc(doc(db(), "meta", "content"), { liveError: "" }, { merge: true });
+  } catch (err) {
+    // The save itself succeeded; the change then waits for the rebuild.
+    await setDoc(doc(db(), "meta", "content"), { liveError: err instanceof Error ? err.message : "Unknown error" }, { merge: true }).catch(() => {});
+  }
+  // Not awaited: the Publishing screen reports any problem starting the build.
+  // The rebuild refreshes search engine copies and uploaded images.
   void requestPublish(uid);
 }
 

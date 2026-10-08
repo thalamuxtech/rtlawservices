@@ -8,15 +8,17 @@ import { ChevronDown, Menu, Phone, X } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { ButtonLink } from "@/components/ui/primitives";
 import { EXPERTISE_ICONS } from "@/components/ui/icons";
-import { byTrack } from "@/content/expertise";
-import { CTA, NAV, SITE, type NavGroup } from "@/content/site";
+import type { Expertise } from "@/content/expertise";
+import { useContent } from "@/content/LiveContent";
+import { CTA, type NavGroup } from "@/content/site";
 import { cn } from "@/lib/utils";
 
-const individuals = byTrack("individuals");
-const professionals = byTrack("professionals");
 const ease = [0.22, 1, 0.36, 1] as const;
 
 export function Header() {
+  const { SITE, NAV, byTrack } = useContent();
+  const individuals = byTrack("individuals");
+  const professionals = byTrack("professionals");
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   // Menus are keyed to the route they were opened on, so navigating closes them.
@@ -203,7 +205,7 @@ function Dropdown({ id, show, wide, children }: { id: string; show: boolean; wid
   );
 }
 
-function MegaColumn({ title, items, dark }: { title: string; items: ReturnType<typeof byTrack>; dark?: boolean }) {
+function MegaColumn({ title, items, dark }: { title: string; items: Expertise[]; dark?: boolean }) {
   return (
     <div className={cn("p-7", dark && "on-dark bg-ink")}>
       <p className={cn("eyebrow mb-4", dark ? "text-brass-light" : "text-brass-ink")}>{title}</p>
@@ -237,6 +239,9 @@ function MegaColumn({ title, items, dark }: { title: string; items: ReturnType<t
 }
 
 function MobileMenu({ onClose }: { onClose: () => void }) {
+  const { SITE, NAV, byTrack } = useContent();
+  const individuals = byTrack("individuals");
+  const professionals = byTrack("professionals");
   const [section, setSection] = useState<string | null>(null);
   const groups: { label: string; href?: string; links?: { label: string; href: string }[] }[] = [
     { label: "Home", href: "/" },

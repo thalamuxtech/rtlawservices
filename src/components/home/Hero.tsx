@@ -4,12 +4,12 @@ import { Fragment } from "react";
 import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring } from "motion/react";
 import { ButtonLink } from "@/components/ui/primitives";
 import { CTA } from "@/content/site";
-import { PAGES } from "@/content/pages";
+import { useContent } from "@/content/LiveContent";
 import { BlendImage } from "@/components/ui/BlendImage";
 
-const words = PAGES.home.headline.split(/\s+/);
-
 export function Hero() {
+  const { PAGES } = useContent();
+  const words = PAGES.home.headline.split(/\s+/);
   const reduce = useReducedMotion();
   const mx = useMotionValue(70);
   const my = useMotionValue(30);

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ExpertiseIndex } from "@/components/site/ExpertiseIndex";
-import { byTrack, type Track } from "@/content/expertise";
+import type { Track } from "@/content/expertise";
+import { useContent } from "@/content/LiveContent";
 import { cn } from "@/lib/utils";
 
 const TABS: { id: Track; label: string }[] = [
@@ -12,6 +13,7 @@ const TABS: { id: Track; label: string }[] = [
 ];
 
 export function ExpertiseTabs() {
+  const { byTrack } = useContent();
   const [tab, setTab] = useState<Track>("individuals");
 
   return (

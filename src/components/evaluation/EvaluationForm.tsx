@@ -5,7 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, Briefcase, Check, FileText, Heart, Loader2, Send, ShieldCheck, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/primitives";
-import { NO_RELATIONSHIP, SITE } from "@/content/site";
+import { NO_RELATIONSHIP } from "@/content/site";
+import { useContent } from "@/content/LiveContent";
 import { countryNames } from "@/lib/countries";
 import { store } from "@/lib/store";
 import { cn, focusStep } from "@/lib/utils";
@@ -390,6 +391,7 @@ function toBase64(f: File) {
 }
 
 function Success({ name }: { name: string }) {
+  const { SITE } = useContent();
   const steps = [
     { t: "Received", d: "Your answers are with our intake team now." },
     { t: "Attorney review", d: "An attorney reviews your record against the legal standard." },

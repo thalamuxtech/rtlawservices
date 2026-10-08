@@ -14,13 +14,13 @@ import {
   TwoDoors,
 } from "@/components/home/Sections";
 import { ButtonLink, Container, SectionHeading } from "@/components/ui/primitives";
-import { CTA, SITE } from "@/content/site";
+import { CTA } from "@/content/site";
 
 export default function HomePage() {
   return (
     <>
       <Hero />
-      <StatsBand stats={[...SITE.stats]} />
+      <StatsBand />
       <TwoDoors />
       <section className="relative overflow-hidden bg-brass-pale/50 py-20">
         <Container className="grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">

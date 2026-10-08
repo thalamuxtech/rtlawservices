@@ -4,6 +4,7 @@ import { MobileActionBar } from "@/components/site/Chrome";
 import { RevealObserver } from "@/components/ui/RevealObserver";
 import { MotionProvider } from "@/components/ui/MotionProvider";
 import { SITE } from "@/content/site";
+import { LiveContentProvider } from "@/content/LiveContent";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -20,21 +21,23 @@ const jsonLd = {
 
 export default function SiteLayout({ children }: LayoutProps<"/">) {
   return (
-    <MotionProvider>
-      <a
-        href="#main"
-        className="sr-only z-[60] rounded-full bg-ink px-5 py-3 font-bold text-paper focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
-      >
-        Skip to content
-      </a>
-      <Header />
-      <main id="main">
-        {children}
-      </main>
-      <Footer />
-      <MobileActionBar />
-      <RevealObserver />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-    </MotionProvider>
+    <LiveContentProvider>
+      <MotionProvider>
+        <a
+          href="#main"
+          className="sr-only z-[60] rounded-full bg-ink px-5 py-3 font-bold text-paper focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+        >
+          Skip to content
+        </a>
+        <Header />
+        <main id="main">
+          {children}
+        </main>
+        <Footer />
+        <MobileActionBar />
+        <RevealObserver />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      </MotionProvider>
+    </LiveContentProvider>
   );
 }

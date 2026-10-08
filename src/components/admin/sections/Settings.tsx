@@ -6,6 +6,7 @@ import { createUserWithEmailAndPassword, getAuth, sendPasswordResetEmail, signOu
 import { deleteDoc, doc, onSnapshot, setDoc, serverTimestamp, type DocumentData, type Timestamp } from "firebase/firestore";
 import { CheckCircle2, Clock, ExternalLink, GitBranch, Globe2, Loader2, RefreshCw, Rocket, Trash2, UserPlus } from "lucide-react";
 import { auth, db, firebaseApp } from "@/lib/firebase";
+import { writeLiveContent } from "@/lib/live-content";
 import { hasPublishToken, latestBuild, requestPublish, savePublishToken, type BuildRun } from "@/lib/publish";
 import { AreaIn, Btn, Chip, Empty, Loading, RowsIn, saveContent, SectionHeader, SelectIn, TextIn, Toggle, useToast, type Row } from "../kit";
 
@@ -32,7 +33,7 @@ export function SiteSettings({ uid }: { uid: string }) {
       void _b;
       await saveContent("settings", "site", data, uid);
       setDirty(false);
-      toast("ok", "Settings saved. The website updates in a few minutes.");
+      toast("ok", "Settings saved. The website shows them now.");
     } catch {
       toast("error", "Could not save settings.");
     } finally {
@@ -214,7 +215,7 @@ const when = (d: Date) => d.toLocaleString("en-US", { dateStyle: "medium", timeS
 
 export function Publishing({ uid, role }: { uid: string; role: string }) {
   const toast = useToast();
-  const [meta, setMeta] = useState<{ updatedAt?: Timestamp; publishRequestedAt?: Timestamp; publishError?: string } | null>(null);
+  const [meta, setMeta] = useState<{ updatedAt?: Timestamp; publishRequestedAt?: Timestamp; publishError?: string; liveError?: string } | null>(null);
   const [build, setBuild] = useState<{ builtAt?: string; contentHash?: string } | null>(null);
   const [run, setRun] = useState<BuildRun | null>(null);
   const [tokenSaved, setTokenSaved] = useState<boolean | null>(null);
@@ -249,13 +250,22 @@ export function Publishing({ uid, role }: { uid: string; role: string }) {
 
   const publishNow = async () => {
     setPublishing(true);
+    let live = true;
+    try {
+      await writeLiveContent();
+      await setDoc(doc(db(), "meta", "content"), { liveError: "" }, { merge: true });
+    } catch {
+      live = false;
+    }
     const r = await requestPublish(uid);
     setPublishing(false);
-    if (r.ok) {
-      toast("ok", "Publishing started. The website updates in a few minutes.");
+    if (!live) {
+      toast("error", "Could not update the live website content. Try again in a moment.");
+    } else if (r.ok || r.reason === "no-token") {
+      toast("ok", "The website now shows the latest content.");
       setTimeout(load, 4000);
     } else {
-      toast("error", r.reason === "no-token" ? "Add a publishing token first." : `Could not start publishing. ${r.detail ?? ""}`);
+      toast("error", `The website shows the latest content, but the rebuild could not start. ${r.detail ?? ""}`);
     }
   };
   const saveToken = async (value: string) => {
@@ -275,6 +285,7 @@ export function Publishing({ uid, role }: { uid: string; role: string }) {
   const pending = !!(changed && built && changed > built);
   const failed = run?.status === "completed" && run.conclusion === "failure";
   const error = meta?.publishError;
+  const liveError = meta?.liveError;
 
   return (
     <div className="grid max-w-3xl gap-8">
@@ -284,7 +295,7 @@ export function Publishing({ uid, role }: { uid: string; role: string }) {
         action={
           <div className="flex flex-wrap items-center gap-2">
             <Btn variant="ghost" busy={checking} onClick={check}><RefreshCw aria-hidden className="size-4" /> Check again</Btn>
-            <Btn variant="gold" busy={publishing} onClick={publishNow} disabled={tokenSaved === false}><Rocket aria-hidden className="size-4" /> Publish now</Btn>
+            <Btn variant="gold" busy={publishing} onClick={publishNow}><Rocket aria-hidden className="size-4" /> Publish now</Btn>
           </div>
         }
       />
@@ -293,12 +304,18 @@ export function Publishing({ uid, role }: { uid: string; role: string }) {
           {running ? <Loader2 aria-hidden className="size-6 animate-spin" /> : pending ? <Clock aria-hidden className="size-6" /> : <CheckCircle2 aria-hidden className="size-6" />}
         </span>
         <div>
-          <p className="font-serif-display text-2xl text-ink">{running ? "Publishing now" : pending ? "Changes waiting to publish" : "Website up to date"}</p>
+          <p className="font-serif-display text-2xl text-ink">{running ? "Rebuilding the website" : pending ? "Live, rebuild pending" : "Website up to date"}</p>
           <p className="text-sm text-stone">
             Last content change: {changed ? when(changed) : "none recorded"}. Last publish: {built ? when(built) : "unknown"}.
           </p>
         </div>
       </div>
+      {liveError && (
+        <div role="alert" className="rounded-2xl border border-danger/30 bg-danger/5 p-5 text-sm text-ink">
+          <p className="font-bold text-danger">The last change did not reach the website straight away.</p>
+          <p className="mt-1">{liveError}. Click Publish now to try again. Otherwise the change goes live with the next build.</p>
+        </div>
+      )}
       {(failed || error) && (
         <div role="alert" className="rounded-2xl border border-danger/30 bg-danger/5 p-5 text-sm text-ink">
           <p className="font-bold text-danger">{failed ? "The last build failed." : "Publishing could not start."}</p>
@@ -317,8 +334,8 @@ export function Publishing({ uid, role }: { uid: string; role: string }) {
       <ol className="grid gap-4">
         {[
           { icon: CheckCircle2, t: "Save", d: "Saving a story, review, post, attorney, page text or setting records the change in the database instantly." },
-          { icon: GitBranch, t: "Automatic build", d: "Each save starts a rebuild of the website with the latest published content. A scheduled job also checks for missed changes, but GitHub can delay it by several hours." },
-          { icon: Globe2, t: "Live", d: "The new version replaces the old one in a few minutes. Visitors always see a complete, fast, static website." },
+          { icon: Globe2, t: "Live at once", d: "Each save also updates the content the website reads on every page view, so visitors see the change on their next page load." },
+          { icon: GitBranch, t: "Automatic build", d: "Each save also starts a rebuild, which refreshes the copies search engines read and adds new photos and documents. A scheduled job catches any missed change, but GitHub can delay it by several hours." },
         ].map(({ icon: Icon, t, d }) => (
           <li key={t} className="flex gap-4 rounded-2xl border border-line bg-white p-5">
             <Icon aria-hidden className="mt-0.5 size-5 shrink-0 text-brass-ink" />

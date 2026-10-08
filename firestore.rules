@@ -158,6 +158,12 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isStaff();
     }
+    // The published content the public website reads on each page view,
+    // rewritten by the back office after every save.
+    match /public/{id} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
     match /meta/{id} {
       allow read: if true;
       allow write: if isStaff();

@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
+import { LiveRoute } from "@/components/views/LiveRoute";
 
 export default function NotFound() {
+  // Records published since the last build are shown from live content.
+  return <LiveRoute fallback={<NotFoundPage />} />;
+}
+
+function NotFoundPage() {
   return (
     <main className="on-dark grid min-h-dvh place-items-center bg-ink px-4 text-center text-paper">
       <div>

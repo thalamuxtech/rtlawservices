@@ -6,8 +6,8 @@ import { AnimatePresence, motion } from "motion/react";
 import type { Timestamp } from "firebase/firestore";
 import { ArrowLeft, CalendarCheck, CalendarPlus, Check, Loader2, Phone, Video, Building2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/primitives";
-import { ATTORNEYS } from "@/content/live";
-import { NO_RELATIONSHIP, SITE } from "@/content/site";
+import { NO_RELATIONSHIP } from "@/content/site";
+import { useContent } from "@/content/LiveContent";
 import { store } from "@/lib/store";
 import { attorneyFor, blocksFor, bookableDays, durationFor, fetchUsHolidays, FIRM_TZ, fmtDayLong, fmtTime, icsFile, MATTERS, MODES, slotId, slotsFor, type Mode, tzLabel, visitorTz } from "@/lib/booking";
 import { cn, focusStep } from "@/lib/utils";
@@ -27,11 +27,14 @@ const EMPTY: Details = {
 };
 
 export function BookingFlow() {
+  const { ATTORNEYS, SITE, getExpertise } = useContent();
+  // Practice area titles can be edited in the back office.
+  const matters = MATTERS.map((m) => ({ ...m, label: getExpertise(m.id)?.title ?? m.label }));
   const params = useSearchParams();
   const initialMatter = params.get("matter");
   const preferredAttorney = params.get("attorney");
-  const [step, setStep] = useState(initialMatter && MATTERS.some((m) => m.id === initialMatter) ? 1 : 0);
-  const [matter, setMatter] = useState<string>(initialMatter && MATTERS.some((m) => m.id === initialMatter) ? initialMatter : "");
+  const [step, setStep] = useState(initialMatter && matters.some((m) => m.id === initialMatter) ? 1 : 0);
+  const [matter, setMatter] = useState<string>(initialMatter && matters.some((m) => m.id === initialMatter) ? initialMatter : "");
   const [mode, setMode] = useState<Mode | "">("");
   const [day, setDay] = useState("");
   const [slot, setSlot] = useState<Date | null>(null);
@@ -45,10 +48,10 @@ export function BookingFlow() {
   const [done, setDone] = useState(false);
   const tz = useSyncExternalStore(noopSubscribe, visitorTz, () => FIRM_TZ);
 
-  const attorney = attorneyFor(matter || "general", preferredAttorney);
+  const attorney = attorneyFor(matter || "general", preferredAttorney, ATTORNEYS);
   const attorneyName = ATTORNEYS.find((a) => a.slug === attorney)?.name;
   const duration = durationFor(matter);
-  const matterInfo = MATTERS.find((m) => m.id === matter);
+  const matterInfo = matters.find((m) => m.id === matter);
 
   useEffect(() => {
     const y = new Date().getFullYear();
@@ -233,7 +236,7 @@ export function BookingFlow() {
                 <fieldset>
                   <legend className="font-serif-display text-3xl text-ink sm:text-4xl">What would you like to discuss?</legend>
                   <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                    {MATTERS.map((m) => (
+                    {matters.map((m) => (
                       <label
                         key={m.id}
                         className={cn(

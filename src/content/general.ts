@@ -1,7 +1,15 @@
 import type { Faq } from "./expertise";
-import { PAGES } from "./pages";
+import { PAGES, type Pages } from "./pages";
 
-// Process steps and pillars are edited in the back office (Page text).
+// Process steps, pillars and FAQs are edited in the back office (Page text).
+export function deriveGeneral(pages: Pages) {
+  return {
+    PROCESS: pages.process.map((p, i) => ({ n: String(i + 1).padStart(2, "0"), ...p })),
+    PILLARS: pages.pillars,
+    GENERAL_FAQS: pages.faqs?.length ? pages.faqs : DEFAULT_GENERAL_FAQS,
+  };
+}
+
 export const PROCESS = PAGES.process.map((p, i) => ({ n: String(i + 1).padStart(2, "0"), ...p }));
 
 export const PILLARS = PAGES.pillars;

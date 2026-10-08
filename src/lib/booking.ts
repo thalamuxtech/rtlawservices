@@ -2,6 +2,7 @@ import { TZDate } from "@date-fns/tz";
 import { addDays, format } from "date-fns";
 import { EXPERTISE } from "@/content/expertise";
 import { ATTORNEYS } from "@/content/live";
+import type { Attorney } from "@/content/types";
 
 export const FIRM_TZ = "America/New_York";
 export const MIN_NOTICE_HOURS = 24;
@@ -34,9 +35,10 @@ const WINDOWS: Record<number, [number, number] | null> = {
   6: [10, 13],
 };
 
-export function attorneyFor(matter: string, preferred?: string | null) {
-  if (preferred && ATTORNEYS.some((a) => a.slug === preferred)) return preferred;
-  return ATTORNEYS.find((a) => a.leads.includes(matter))?.slug ?? ATTORNEYS[0]?.slug ?? "firm";
+/** Live attorney records can be passed in; the build's list is the default. */
+export function attorneyFor(matter: string, preferred?: string | null, attorneys: Attorney[] = ATTORNEYS) {
+  if (preferred && attorneys.some((a) => a.slug === preferred)) return preferred;
+  return attorneys.find((a) => a.leads.includes(matter))?.slug ?? attorneys[0]?.slug ?? "firm";
 }
 
 /** Business days in firm time zone, from tomorrow until the horizon, excluding holidays. */

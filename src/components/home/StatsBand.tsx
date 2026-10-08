@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { animate, useInView, useReducedMotion } from "motion/react";
+import { useContent } from "@/content/LiveContent";
 
 type Stat = { value: number; prefix?: string; suffix?: string; label: string };
 
@@ -30,7 +31,9 @@ function Counter({ s }: { s: Stat }) {
   );
 }
 
-export function StatsBand({ stats }: { stats: Stat[] }) {
+export function StatsBand({ stats: given }: { stats?: Stat[] }) {
+  const { SITE } = useContent();
+  const stats: Stat[] = given ?? [...SITE.stats];
   if (!stats.length) return null;
   return (
     <section className="on-dark border-t border-line-dark bg-ink text-paper" aria-label="The firm in numbers">

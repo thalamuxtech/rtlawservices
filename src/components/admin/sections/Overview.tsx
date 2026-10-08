@@ -563,10 +563,10 @@ export function Overview({ evaluations, bookings, messages, content, name, go }:
               {pending ? <Sparkles aria-hidden className="size-5" /> : <Globe2 aria-hidden className="size-5" />}
             </span>
             <div>
-              <p className={cn("font-serif-display text-2xl", pending ? "text-ink" : "text-paper")}>{pending ? "Changes are on their way" : "The website is up to date"}</p>
+              <p className={cn("font-serif-display text-2xl", pending ? "text-ink" : "text-paper")}>{pending ? "Live, rebuild pending" : "The website is up to date"}</p>
               <p className={cn("mt-1 text-sm", pending ? "text-stone" : "text-stone-dark")}>
                 {build?.builtAt ? `Last published ${new Date(build.builtAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}. ` : ""}
-                Saved changes go live automatically, usually within 5 minutes.
+                Saved changes show on the website at once.
               </p>
             </div>
           </div>

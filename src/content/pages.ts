@@ -1,7 +1,8 @@
 // Page text that staff can change in the back office (settings/pages).
 // The defaults below are the current wording. A published value replaces its
-// default at build time; an empty value falls back to the default, so a page
-// never renders blank.
+// default at build time, and again in the browser when newer content is
+// published (see LiveContent.tsx); an empty value falls back to the default, so
+// a page never renders blank.
 
 import liveJson from "./generated/live.json";
 import type { Expertise, Faq } from "./expertise";
@@ -76,10 +77,6 @@ export const DEFAULT_PAGES: PagesContent = {
   expertise: {},
 };
 
-type Raw = { source?: string; pages?: Partial<PagesContent> };
-const raw = liveJson as unknown as Raw;
-const published: Partial<PagesContent> = raw.source === "firestore" ? (raw.pages ?? {}) : {};
-
 const filled = (v: unknown) => (Array.isArray(v) ? v.length > 0 : typeof v === "string" ? v.trim() !== "" : v != null);
 
 /** Keeps each default unless a non-empty published value exists. */
@@ -89,17 +86,29 @@ function merge<T extends Record<string, unknown>>(base: T, over?: Partial<T>): T
   return out;
 }
 
-export const PAGES = {
-  firm: merge(DEFAULT_PAGES.firm, published.firm),
-  home: merge(DEFAULT_PAGES.home, published.home),
-  about: merge(DEFAULT_PAGES.about, published.about),
-  process: filled(published.process) ? published.process! : DEFAULT_PAGES.process,
-  pillars: filled(published.pillars) ? published.pillars! : DEFAULT_PAGES.pillars,
-  faqs: published.faqs,
-  expertise: published.expertise ?? {},
-};
+/** Page text with published values laid over the defaults. */
+export function mergePages(published: Partial<PagesContent> = {}) {
+  return {
+    firm: merge(DEFAULT_PAGES.firm, published.firm),
+    home: merge(DEFAULT_PAGES.home, published.home),
+    about: merge(DEFAULT_PAGES.about, published.about),
+    process: filled(published.process) ? published.process! : DEFAULT_PAGES.process,
+    pillars: filled(published.pillars) ? published.pillars! : DEFAULT_PAGES.pillars,
+    faqs: published.faqs,
+    expertise: published.expertise ?? {},
+  };
+}
+
+export type Pages = ReturnType<typeof mergePages>;
 
 /** Applies published overrides to a practice area, ignoring empty fields. */
-export function withOverrides<E extends Expertise>(e: E): E {
-  return merge(e as unknown as Record<string, unknown>, PAGES.expertise[e.slug] as Record<string, unknown>) as unknown as E;
+export function applyOverrides<E extends Expertise>(pages: Pages, e: E): E {
+  return merge(e as unknown as Record<string, unknown>, pages.expertise[e.slug] as Record<string, unknown>) as unknown as E;
 }
+
+type Raw = { source?: string; pages?: Partial<PagesContent> };
+const raw = liveJson as unknown as Raw;
+
+export const PAGES = mergePages(raw.source === "firestore" ? raw.pages : undefined);
+
+export const withOverrides = <E extends Expertise>(e: E): E => applyOverrides(PAGES, e);

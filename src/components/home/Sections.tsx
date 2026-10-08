@@ -1,10 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
 import { ButtonLink, Container, SectionHeading } from "@/components/ui/primitives";
 import { admissionsOf, AttorneyCard, AttorneyPortrait, CaseCard, LanguageChips } from "@/components/site/cards";
-import { getExpertise } from "@/content/expertise";
-import { PILLARS, PROCESS } from "@/content/general";
-import { ATTORNEYS, CASES, POSTS, REVIEWS, REVIEWS_ILLUSTRATIVE } from "@/content/live";
+import { useContent } from "@/content/LiveContent";
+import type { Attorney } from "@/content/types";
 import { ReviewsMarquee } from "@/components/proof/ReviewsMarquee";
 import { CTA, RESULTS_CAVEAT } from "@/content/site";
 
@@ -46,6 +47,7 @@ export function TwoDoors() {
 }
 
 export function FeaturedResults() {
+  const { CASES } = useContent();
   const featured = CASES.filter((c) => c.featured).slice(0, 3);
   if (!featured.length) return null;
   return (
@@ -76,6 +78,7 @@ export function FeaturedResults() {
 }
 
 export function AttorneysPreview() {
+  const { ATTORNEYS } = useContent();
   if (!ATTORNEYS.length) return null;
   return (
     <section className="py-24 sm:py-32">
@@ -118,7 +121,8 @@ export function AttorneysPreview() {
 const listOr = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} or ${xs[xs.length - 1]}`);
 
 /** A single attorney shown as a full profile card instead of half an empty grid. */
-function FeaturedAttorney({ a }: { a: (typeof ATTORNEYS)[number] }) {
+function FeaturedAttorney({ a }: { a: Attorney }) {
+  const { getExpertise } = useContent();
   const focus = a.leads.map((s) => getExpertise(s)?.title).filter(Boolean).slice(0, 5) as string[];
   const admitted = admissionsOf(a);
   return (
@@ -160,6 +164,7 @@ function FeaturedAttorney({ a }: { a: (typeof ATTORNEYS)[number] }) {
 }
 
 export function Pillars() {
+  const { PILLARS } = useContent();
   return (
     <section className="border-y border-line bg-mist py-24 sm:py-28">
       <Container className="grid gap-14 lg:grid-cols-[0.8fr_1.2fr]">
@@ -178,6 +183,7 @@ export function Pillars() {
 }
 
 export function ProcessRibbon({ compact }: { compact?: boolean }) {
+  const { PROCESS } = useContent();
   return (
     <section className={compact ? "" : "py-24 sm:py-32"}>
       <Container>
@@ -206,12 +212,14 @@ export function ProcessRibbon({ compact }: { compact?: boolean }) {
 }
 
 export function ReviewsPreview() {
+  const { REVIEWS, REVIEWS_ILLUSTRATIVE } = useContent();
   return <ReviewsMarquee reviews={REVIEWS} illustrative={REVIEWS_ILLUSTRATIVE} />;
 }
 
 const fmtDate = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
 export function ResourcesPreview() {
+  const { POSTS } = useContent();
   const posts = POSTS.slice(0, 3);
   return (
     <section className="py-24 sm:py-32">

@@ -1,8 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { CalendarCheck, Phone } from "lucide-react";
-import { SITE } from "@/content/site";
+import { useContent } from "@/content/LiveContent";
 
 export function MobileActionBar() {
+  const { SITE } = useContent();
   return (
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/95 p-3 backdrop-blur-xl sm:hidden">
       <div className="grid grid-cols-2 gap-3">

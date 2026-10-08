@@ -1,33 +1,34 @@
+"use client";
+
 import Link from "next/link";
 import { Lock, Mail, MapPin, Phone } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
-import { byTrack } from "@/content/expertise";
-import { CASES } from "@/content/live";
-import { NO_RELATIONSHIP, SITE } from "@/content/site";
-
-const cols = [
-  { title: "Individuals", links: byTrack("individuals").map((e) => ({ label: e.title, href: `/expertise/${e.slug}/` })) },
-  { title: "Professionals", links: byTrack("professionals").map((e) => ({ label: e.title, href: `/expertise/${e.slug}/` })) },
-  {
-    title: "Firm",
-    links: [
-      { label: "About", href: "/about/" },
-      { label: "Attorneys", href: "/attorneys/" },
-      ...(CASES.length ? [{ label: "Success stories", href: "/case-results/" }] : []),
-      { label: "Free evaluation", href: "/free-evaluation/" },
-      { label: "Check eligibility", href: "/check-eligibility/" },
-      { label: "Knowledge center", href: "/knowledge/" },
-      { label: "Blog", href: "/blog/" },
-      { label: "Client reviews", href: "/reviews/" },
-      { label: "How we work", href: "/how-we-work/" },
-      { label: "Diaspora clients", href: "/diaspora/" },
-      { label: "FAQ", href: "/faq/" },
-    ],
-  },
-];
+import { useContent } from "@/content/LiveContent";
+import { NO_RELATIONSHIP } from "@/content/site";
 
 export function Footer() {
+  const { SITE, CASES, byTrack } = useContent();
   const year = new Date().getFullYear();
+  const cols = [
+    { title: "Individuals", links: byTrack("individuals").map((e) => ({ label: e.title, href: `/expertise/${e.slug}/` })) },
+    { title: "Professionals", links: byTrack("professionals").map((e) => ({ label: e.title, href: `/expertise/${e.slug}/` })) },
+    {
+      title: "Firm",
+      links: [
+        { label: "About", href: "/about/" },
+        { label: "Attorneys", href: "/attorneys/" },
+        ...(CASES.length ? [{ label: "Success stories", href: "/case-results/" }] : []),
+        { label: "Free evaluation", href: "/free-evaluation/" },
+        { label: "Check eligibility", href: "/check-eligibility/" },
+        { label: "Knowledge center", href: "/knowledge/" },
+        { label: "Blog", href: "/blog/" },
+        { label: "Client reviews", href: "/reviews/" },
+        { label: "How we work", href: "/how-we-work/" },
+        { label: "Diaspora clients", href: "/diaspora/" },
+        { label: "FAQ", href: "/faq/" },
+      ],
+    },
+  ];
   return (
     <footer className="on-dark relative overflow-hidden bg-ink pb-24 text-stone-dark sm:pb-0">
       <div aria-hidden className="grain pointer-events-none absolute inset-0 opacity-60" />
