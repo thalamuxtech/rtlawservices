@@ -90,7 +90,7 @@ export function ContentManager({ kind, rows, uid }: { kind: Kind; rows: Row[] | 
     try {
       const wasLive = (rows ?? []).find((r) => r.id === id)?.status === "published";
       await saveContent(kind, id, data, uid, data.status === "published" || wasLive);
-      toast("ok", data.status === "published" ? "Saved. It goes live with the next publish." : "Saved as draft");
+      toast("ok", data.status === "published" ? "Saved. It goes live in a few minutes." : "Saved as draft");
       setEdit(null);
     } catch {
       toast("error", "Could not save. Check required fields and your permissions.");

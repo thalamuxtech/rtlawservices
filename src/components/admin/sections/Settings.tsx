@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { initializeApp, deleteApp } from "firebase/app";
 import { createUserWithEmailAndPassword, getAuth, sendPasswordResetEmail, signOut } from "firebase/auth";
 import { deleteDoc, doc, onSnapshot, setDoc, serverTimestamp, type DocumentData, type Timestamp } from "firebase/firestore";
-import { CheckCircle2, Clock, ExternalLink, GitBranch, Globe2, RefreshCw, Trash2, UserPlus } from "lucide-react";
+import { CheckCircle2, Clock, ExternalLink, GitBranch, Globe2, Loader2, RefreshCw, Rocket, Trash2, UserPlus } from "lucide-react";
 import { auth, db, firebaseApp } from "@/lib/firebase";
+import { hasPublishToken, latestBuild, requestPublish, savePublishToken, type BuildRun } from "@/lib/publish";
 import { AreaIn, Btn, Chip, Empty, Loading, RowsIn, saveContent, SectionHeader, SelectIn, TextIn, Toggle, useToast, type Row } from "../kit";
 
 /* ---------- Site settings ---------- */
@@ -31,7 +32,7 @@ export function SiteSettings({ uid }: { uid: string }) {
       void _b;
       await saveContent("settings", "site", data, uid);
       setDirty(false);
-      toast("ok", "Settings saved. The website updates with the next publish.");
+      toast("ok", "Settings saved. The website updates in a few minutes.");
     } catch {
       toast("error", "Could not save settings.");
     } finally {
@@ -209,16 +210,28 @@ export function Staff({ rows, uid, role }: { rows: Row[] | null; uid: string; ro
 
 /* ---------- Publishing ---------- */
 
-export function Publishing() {
-  const [meta, setMeta] = useState<{ updatedAt?: Timestamp } | null>(null);
+const when = (d: Date) => d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+
+export function Publishing({ uid, role }: { uid: string; role: string }) {
+  const toast = useToast();
+  const [meta, setMeta] = useState<{ updatedAt?: Timestamp; publishRequestedAt?: Timestamp; publishError?: string } | null>(null);
   const [build, setBuild] = useState<{ builtAt?: string; contentHash?: string } | null>(null);
+  const [run, setRun] = useState<BuildRun | null>(null);
+  const [tokenSaved, setTokenSaved] = useState<boolean | null>(null);
+  const [newToken, setNewToken] = useState("");
   const [checking, setChecking] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const owner = role === "owner";
   useEffect(() => onSnapshot(doc(db(), "meta", "content"), (s) => setMeta(s.data() ?? null)), []);
   const load = () =>
-    fetch(`/build-meta.json?ts=${Date.now()}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then(setBuild)
-      .catch(() => setBuild(null));
+    Promise.all([
+      fetch(`/build-meta.json?ts=${Date.now()}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then(setBuild)
+        .catch(() => setBuild(null)),
+      latestBuild().then(setRun),
+      hasPublishToken().then(setTokenSaved),
+    ]);
   const check = () => {
     setChecking(true);
     load().finally(() => setChecking(false));
@@ -226,29 +239,85 @@ export function Publishing() {
   useEffect(() => {
     load();
   }, []);
+  // While a build runs, check its progress every 20 seconds.
+  const running = !!run && run.status !== "completed";
+  useEffect(() => {
+    if (!running) return;
+    const t = setInterval(load, 20000);
+    return () => clearInterval(t);
+  }, [running]);
+
+  const publishNow = async () => {
+    setPublishing(true);
+    const r = await requestPublish(uid);
+    setPublishing(false);
+    if (r.ok) {
+      toast("ok", "Publishing started. The website updates in a few minutes.");
+      setTimeout(load, 4000);
+    } else {
+      toast("error", r.reason === "no-token" ? "Add a publishing token first." : `Could not start publishing. ${r.detail ?? ""}`);
+    }
+  };
+  const saveToken = async (value: string) => {
+    try {
+      await savePublishToken(value.trim(), uid);
+      setNewToken("");
+      setTokenSaved(!!value.trim());
+      toast("ok", value.trim() ? "Publishing token saved." : "Publishing token removed.");
+      load();
+    } catch {
+      toast("error", "Could not save the token.");
+    }
+  };
+
   const changed = meta?.updatedAt?.toDate?.();
   const built = build?.builtAt ? new Date(build.builtAt) : null;
   const pending = !!(changed && built && changed > built);
+  const failed = run?.status === "completed" && run.conclusion === "failure";
+  const error = meta?.publishError;
 
   return (
     <div className="grid max-w-3xl gap-8">
-      <SectionHeader title="Publishing" lede="How saved changes reach the public website." action={<Btn variant="ghost" busy={checking} onClick={check}><RefreshCw aria-hidden className="size-4" /> Check again</Btn>} />
-      <div className={`flex items-center gap-4 rounded-2xl p-6 ${pending ? "bg-brass-pale" : "bg-white ring-1 ring-line"}`}>
-        <span className={`grid size-12 place-items-center rounded-full ${pending ? "bg-brass text-ink" : "bg-success text-white"}`}>
-          {pending ? <Clock aria-hidden className="size-6" /> : <CheckCircle2 aria-hidden className="size-6" />}
+      <SectionHeader
+        title="Publishing"
+        lede="How saved changes reach the public website."
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <Btn variant="ghost" busy={checking} onClick={check}><RefreshCw aria-hidden className="size-4" /> Check again</Btn>
+            <Btn variant="gold" busy={publishing} onClick={publishNow} disabled={tokenSaved === false}><Rocket aria-hidden className="size-4" /> Publish now</Btn>
+          </div>
+        }
+      />
+      <div className={`flex items-center gap-4 rounded-2xl p-6 ${pending || running ? "bg-brass-pale" : "bg-white ring-1 ring-line"}`}>
+        <span className={`grid size-12 shrink-0 place-items-center rounded-full ${pending || running ? "bg-brass text-ink" : "bg-success text-white"}`}>
+          {running ? <Loader2 aria-hidden className="size-6 animate-spin" /> : pending ? <Clock aria-hidden className="size-6" /> : <CheckCircle2 aria-hidden className="size-6" />}
         </span>
         <div>
-          <p className="font-serif-display text-2xl text-ink">{pending ? "Changes waiting to publish" : "Website up to date"}</p>
+          <p className="font-serif-display text-2xl text-ink">{running ? "Publishing now" : pending ? "Changes waiting to publish" : "Website up to date"}</p>
           <p className="text-sm text-stone">
-            Last content change: {changed ? changed.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) : "none recorded"}. Last publish:{" "}
-            {built ? built.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) : "unknown"}.
+            Last content change: {changed ? when(changed) : "none recorded"}. Last publish: {built ? when(built) : "unknown"}.
           </p>
         </div>
       </div>
+      {(failed || error) && (
+        <div role="alert" className="rounded-2xl border border-danger/30 bg-danger/5 p-5 text-sm text-ink">
+          <p className="font-bold text-danger">{failed ? "The last build failed." : "Publishing could not start."}</p>
+          <p className="mt-1">
+            {failed ? (
+              <>
+                The website still shows the previous version.{" "}
+                <a href={run!.url} target="_blank" rel="noopener noreferrer" className="font-bold underline">See the build log</a>.
+              </>
+            ) : (
+              <>{error}. Changes still go live with the scheduled build, which can take several hours.</>
+            )}
+          </p>
+        </div>
+      )}
       <ol className="grid gap-4">
         {[
           { icon: CheckCircle2, t: "Save", d: "Saving a story, review, post, attorney, page text or setting records the change in the database instantly." },
-          { icon: GitBranch, t: "Automatic build", d: "About every 10 minutes, an automated job checks for changes. If there are any, it rebuilds the website with the latest published content." },
+          { icon: GitBranch, t: "Automatic build", d: "Each save starts a rebuild of the website with the latest published content. A scheduled job also checks for missed changes, but GitHub can delay it by several hours." },
           { icon: Globe2, t: "Live", d: "The new version replaces the old one in a few minutes. Visitors always see a complete, fast, static website." },
         ].map(({ icon: Icon, t, d }) => (
           <li key={t} className="flex gap-4 rounded-2xl border border-line bg-white p-5">
@@ -263,6 +332,20 @@ export function Publishing() {
       <a href="/" target="_blank" className="inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-ink px-5 text-sm font-bold text-paper">
         Open the website <ExternalLink aria-hidden className="size-4" />
       </a>
+      {owner && (
+        <Group title="Publishing token">
+          <p className="text-sm text-stone">
+            {tokenSaved
+              ? "A token is saved. Saves start a rebuild straight away."
+              : "No token is saved, so changes wait for the scheduled build. Create a fine-grained GitHub token for the thalamuxtech/rtlawservices repository with the Actions permission set to read and write, and paste it here."}
+          </p>
+          <div className="flex flex-wrap items-end gap-3">
+            <TextIn label={tokenSaved ? "Replace token" : "GitHub token"} type="password" value={newToken} onChange={setNewToken} placeholder="github_pat_…" className="min-w-64 flex-1" />
+            <Btn onClick={() => saveToken(newToken)} disabled={!newToken.trim()}>Save token</Btn>
+            {tokenSaved && <Btn variant="danger" onClick={() => saveToken("")}>Remove</Btn>}
+          </div>
+        </Group>
+      )}
     </div>
   );
 }

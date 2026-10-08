@@ -66,7 +66,7 @@ export function PagesEditor({ uid }: { uid: string }) {
     try {
       await saveContent("settings", "pages", changesOnly(data), uid);
       setDirty(false);
-      toast("ok", "Page text saved. The website updates with the next publish, usually within 15 minutes.");
+      toast("ok", "Page text saved. The website updates in a few minutes.");
     } catch {
       toast("error", "Could not save the page text.");
     } finally {
@@ -93,7 +93,7 @@ export function PagesEditor({ uid }: { uid: string }) {
     <div className="grid max-w-4xl gap-6">
       <SectionHeader
         title="Page text"
-        lede="Change the wording of the website's pages. The editor shows the text visitors see now. Save, and the change goes live with the next publish."
+        lede="Change the wording of the website's pages. The editor shows the text visitors see now. Save, and the change goes live in a few minutes."
         action={
           <div className="flex flex-wrap items-center gap-2">
             {dirty && <span className="rounded-full bg-brass-pale px-3 py-1.5 text-sm font-bold text-brass-ink">Unsaved changes</span>}

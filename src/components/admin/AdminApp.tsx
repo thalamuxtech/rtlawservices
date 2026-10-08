@@ -471,7 +471,7 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
               {section === "attorneys" && <ContentManager kind="attorneys" rows={attorneys.rows} uid={user.uid} />}
               {section === "pages" && <PagesEditor uid={user.uid} />}
               {section === "settings" && <SiteSettings uid={user.uid} />}
-              {section === "publishing" && <Publishing />}
+              {section === "publishing" && <Publishing uid={user.uid} role={staff.role} />}
               {section === "staff" && <Staff rows={staffRows.rows} uid={user.uid} role={staff.role} />}
             </motion.div>
           </AnimatePresence>

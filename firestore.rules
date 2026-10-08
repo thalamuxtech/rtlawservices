@@ -163,6 +163,13 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
+    // Back-office secrets, such as the token that starts a website build.
+    // Staff read it to publish; only owners may change it.
+    match /private/{id} {
+      allow read: if isStaff();
+      allow write: if isOwner();
+    }
+
     match /staff/{uid} {
       allow read: if request.auth != null && (request.auth.uid == uid || isStaff());
       allow write: if isOwner();

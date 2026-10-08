@@ -7,6 +7,7 @@ import {
 } from "firebase/firestore";
 import { ArrowDown, ArrowUp, CheckCircle2, Loader2, Plus, Trash2, X, XCircle } from "lucide-react";
 import { db } from "@/lib/firebase";
+import { requestPublish } from "@/lib/publish";
 import { cn } from "@/lib/utils";
 
 /* ---------- data ---------- */
@@ -47,9 +48,12 @@ export function useCollection(name: string, order = "createdAt") {
   return { rows, error };
 }
 
-/** Records the time of the last content change, which triggers a site rebuild. */
+/** Records the time of the last content change and starts a site rebuild. */
 export async function touchContent(uid: string) {
   await setDoc(doc(db(), "meta", "content"), { updatedAt: serverTimestamp(), updatedBy: uid }, { merge: true });
+  // Not awaited: the save has succeeded, and the Publishing screen reports any
+  // problem starting the build. The scheduled run remains the fallback.
+  void requestPublish(uid);
 }
 
 /** Firestore rejects undefined values, so drop them before writing. */
