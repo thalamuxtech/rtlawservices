@@ -12,6 +12,7 @@
 // rest. Everything here runs in the visitor's browser.
 
 import { STATUS_CODES } from "./status-codes";
+import { CARD_FORMS, describeEvent, type Category } from "./case-events";
 
 /** Three letters followed by ten digits, for example EAC2190000001. */
 export const RECEIPT = /^[A-Z]{3}\d{10}$/;
@@ -82,19 +83,43 @@ export const codeMeaning = (code?: string) => (code ? STATUS_CODES[code.toUpperC
 
 export type Tone = "positive" | "action" | "negative" | "progress";
 
-export type HistoryItem = { date?: Date; rawDate?: string; title: string; detail?: string; code?: string };
-export type Notice = { title: string; date?: Date; fields: { label: string; value: string }[] };
+export type HistoryItem = {
+  /** When the event happened, as USCIS records it. */
+  date?: Date;
+  rawDate?: string;
+  /** When USCIS entered it in the record, if that differs. */
+  recorded?: Date;
+  title: string;
+  detail?: string;
+  code?: string;
+  id?: string;
+  category?: Category;
+  source?: "published" | "unpublished" | "text";
+  /** Entries the tracker adds: the filing date, and a record change with no event. */
+  kind?: "event" | "filed" | "silent";
+};
+
+export type Notice = { title: string; date?: Date; appointment?: Date; letterId?: string; receipt?: string; fields: { label: string; value: string }[] };
 
 export type CaseRecord = {
   source: "api" | "account";
   receiptNumber: string;
   formType?: string;
+  formName?: string;
+  applicant?: string;
+  channel?: string;
   submitted?: Date;
   modified?: Date;
   statusTitle?: string;
   statusText?: string;
+  statusCategory?: Category;
   closed?: boolean;
   actionRequired?: boolean;
+  /** USCIS flags from the account data, shown only when present. */
+  acked?: boolean;
+  premium?: boolean;
+  groupComplete?: boolean;
+  evidenceOpen?: number;
   history: HistoryItem[];
   notices: Notice[];
 };
@@ -107,6 +132,7 @@ const first = (o: Obj, keys: string[]) => keys.map((k) => str(o[k])).find(Boolea
 /** Reads the date formats USCIS uses: ISO 8601, MM-DD-YYYY and written-out dates. */
 export function parseDate(v?: string): Date | undefined {
   if (!v) return undefined;
+  if (/^\d{10,13}$/.test(v)) return new Date(Number(v) * (v.length === 10 ? 1000 : 1));
   const us = /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(.*)$/.exec(v);
   const d = us ? new Date(`${us[3]}-${us[1].padStart(2, "0")}-${us[2].padStart(2, "0")}${us[4] || "T12:00:00Z"}`) : new Date(/^\d{4}-\d{2}-\d{2}$/.test(v) ? `${v}T12:00:00Z` : v);
   return Number.isNaN(d.getTime()) ? undefined : d;
@@ -118,11 +144,16 @@ function fromApi(c: Obj): CaseRecord {
   const hist = Array.isArray(c.hist_case_status) ? c.hist_case_status : Array.isArray(c.history) ? c.history : [];
   const history: HistoryItem[] = hist.filter(isObj).map((h) => {
     const rawDate = first(h, ["date", "completed_date", "statusDate", "modifiedDate"]);
+    const text = first(h, ["completed_text_en", "text_en", "status_text_en", "statusText", "status"]) ?? "Status update";
+    const info = describeEvent(undefined, text);
     return {
       rawDate,
       date: parseDate(rawDate),
-      title: first(h, ["completed_text_en", "text_en", "status_text_en", "statusText", "status"]) ?? "Status update",
+      title: text,
       detail: first(h, ["completed_desc_en", "desc_en", "status_desc_en", "description"]),
+      category: info.category,
+      source: info.source,
+      kind: "event" as const,
     };
   });
   const record: CaseRecord = {
@@ -136,44 +167,94 @@ function fromApi(c: Obj): CaseRecord {
     history: history.sort(byDate),
     notices: [],
   };
+  record.statusCategory = describeEvent(undefined, record.statusTitle).category;
+  if (record.submitted && !record.history.some((h) => h.category === "filing")) record.history.push({ date: record.submitted, title: "Filed", category: "filing", kind: "filed" });
   return record;
 }
 
 const DATE_KEY = /(date|time|timestamp|at)$/i;
 const label = (k: string) => k.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
 
+const bool = (v: unknown) => (typeof v === "boolean" ? v : undefined);
+const findKey = (o: Obj, re: RegExp) => Object.keys(o).find((k) => re.test(k));
+
 function fromAccount(d: Obj): CaseRecord {
   const events = Array.isArray(d.events) ? d.events.filter(isObj) : [];
   const history: HistoryItem[] = events.map((e) => {
     const code = first(e, ["eventCode", "code"]);
-    const rawDate = first(e, ["eventDateTime", "eventTimestamp", "eventDate", "createdAt", "createdAtTimestamp"]);
-    return { code, rawDate, date: parseDate(rawDate), title: codeMeaning(code) ?? (code ? `Status code ${code}` : "Case event") };
+    const rawDate = first(e, ["eventDateTime", "eventTimestamp", "eventDate"]) ?? first(e, ["createdAtTimestamp", "createdAt"]);
+    const date = parseDate(rawDate);
+    const recorded = parseDate(first(e, ["createdAtTimestamp", "createdAt"]));
+    const info = describeEvent(code);
+    return {
+      code,
+      id: first(e, ["eventId", "id"]),
+      rawDate,
+      date,
+      // Show the entry date only when it is a different day from the event.
+      recorded: recorded && date && Math.abs(recorded.getTime() - date.getTime()) > 12 * 3_600_000 ? recorded : undefined,
+      title: info.title,
+      category: info.category,
+      source: info.source,
+      kind: "event" as const,
+    };
   });
+
   const notices: Notice[] = (Array.isArray(d.notices) ? d.notices.filter(isObj) : []).map((n) => {
+    const skip = new Set(["receiptNumber", "letterId", "generationDate", "appointmentDateTime", "actionType", "noticeType", "letterType", "type", "title"]);
     const fields = Object.entries(n)
-      .filter(([k, v]) => k !== "receiptNumber" && (typeof v === "string" || typeof v === "number") && String(v).trim())
+      .filter(([k, v]) => !skip.has(k) && (typeof v === "string" || typeof v === "number" || typeof v === "boolean") && String(v).trim())
       .map(([k, v]) => {
         const date = DATE_KEY.test(k) ? parseDate(String(v)) : undefined;
-        return { label: label(k), value: date ? date.toLocaleDateString("en-US", { dateStyle: "medium" }) : String(v) };
+        return { label: label(k), value: date ? date.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) : String(v) };
       });
+    const kind = first(n, ["actionType", "noticeType", "letterType", "type", "title"]);
     return {
-      title: first(n, ["actionType", "noticeType", "letterType", "type", "title"]) ?? "Notice",
+      title: kind ? label(kind.replace(/_/g, " ").toLowerCase()) : "Notice",
       date: parseDate(first(n, ["generationDate", "mailingDate", "noticeDate", "createdAt"])),
+      appointment: parseDate(first(n, ["appointmentDateTime", "appointmentDate", "appointmentTimestamp"])),
+      letterId: first(n, ["letterId", "noticeId", "documentId"]),
+      receipt: first(n, ["receiptNumber"]),
       fields,
     };
   });
-  const latest = [...history].sort(byDate)[0];
+
+  const submitted = parseDate(first(d, ["submissionTimestamp", "submissionDate", "submittedDate"]));
+  const modified = parseDate(first(d, ["updatedAtTimestamp", "updatedAt", "modifiedDate"]));
+  const sorted = history.sort(byDate);
+  // The headline is the latest event with a published meaning, else the latest event.
+  const head = sorted.find((h) => h.source === "published") ?? sorted[0];
+
+  const latestEntry = Math.max(0, ...sorted.map((h) => Math.max(h.date?.getTime() ?? 0, h.recorded?.getTime() ?? 0)));
+  if (modified && latestEntry && modified.getTime() - latestEntry > 60_000) sorted.unshift({ date: modified, title: "Case record updated", category: "silent", kind: "silent" });
+  if (submitted) sorted.push({ date: submitted, title: "Application filed", category: "filing", kind: "filed" });
+
+  const premiumKey = findKey(d, /premium/i);
+  const evidenceKey = findKey(d, /(evidenceRequest|rfe)/i);
+  const evidence = evidenceKey ? d[evidenceKey] : undefined;
   return {
     source: "account",
     receiptNumber: first(d, ["receiptNumber", "receipt_number"]) ?? "",
     formType: first(d, ["formType", "form_type"]),
-    submitted: parseDate(first(d, ["submissionDate", "submissionTimestamp", "submittedDate"])),
-    modified: parseDate(first(d, ["updatedAt", "updatedAtTimestamp", "modifiedDate"])),
-    statusTitle: latest?.title,
-    statusText: latest?.code ? `Latest status code ${latest.code}, as published in the USCIS status code list.` : undefined,
-    closed: typeof d.closed === "boolean" ? d.closed : undefined,
-    actionRequired: typeof d.actionRequired === "boolean" ? d.actionRequired : undefined,
-    history: history.sort(byDate),
+    formName: first(d, ["formName", "form_name"]),
+    applicant: first(d, ["applicantName", "beneficiaryName", "name"]),
+    channel: first(d, ["elisChannelType", "channelType", "filingChannel"]),
+    submitted,
+    modified,
+    statusTitle: head?.title,
+    statusText: head?.code
+      ? head.source === "published"
+        ? `USCIS status code ${head.code}, recorded ${head.date ? head.date.toLocaleDateString("en-US", { dateStyle: "long" }) : "on an unknown date"}.`
+        : `USCIS recorded code ${head.code}, which is not in the published code list.`
+      : undefined,
+    statusCategory: head?.category,
+    closed: bool(d.closed),
+    actionRequired: bool(d.actionRequired),
+    acked: bool(d.ackedByAdjudicatorAndCms),
+    premium: premiumKey ? bool(d[premiumKey]) : undefined,
+    groupComplete: bool(d.areAllGroupStatusesComplete),
+    evidenceOpen: Array.isArray(evidence) ? evidence.length : typeof evidence === "boolean" ? Number(evidence) : undefined,
+    history: sorted,
     notices: notices.sort(byDate),
   };
 }
@@ -217,58 +298,48 @@ export function toneOf(text = ""): Tone {
 
 export const STAGES = ["Received", "Biometrics", "In review", "Decision", "Card or document"] as const;
 
-// Stage of each USCIS status code, by the families in the NIEM code list
-// (status-codes.ts). Codes not listed here do not move the stage.
-const CODE_STAGES: [RegExp, number][] = [
-  // Card ordered, produced, mailed or handed over.
-  [/^(LAA|LAB|LBA|LDA|LEA|LEB|LEC)$/, 4],
-  // Approvals, denials, rejections and their notices; petition sent on to the Department of State.
-  [/^(D[A-I]|DAEA|E[A-F]|E[I-R]|EA0|EW0|IEA|IEB|IEE|IFA[A-F]?|IFB|IYB|IYC|AF[A-Z]*|IC|IBC|KO)$/, 3],
-  // Fingerprints and biometrics.
-  [/^(FN|FN[A-I]|FTA[0-9A-Z]*|IMAF|KAE)$/, 1],
-  // Review: evidence requests, interviews, transfers, holds and intent notices.
-  [/^(F[A-Z0-9]*|H[A-Z0-9]*|II|IK[A-Z]*|IM|IP|IU|IV|IX[A-Z]*|IYA|B[A-Z]|CD|K[A-Z0-9]*|TA)$/, 2],
-  // Receipt and intake.
-  [/^(IA[A-Z0-9]*|IAF|A[A-Z0-9]*)$/, 0],
-];
-
-// Stage of a status message in words, for data without codes (the Case Status API).
-const TEXT_STAGES: [RegExp, number][] = [
-  [/(card (is being |was |)(produced|mailed|delivered|picked up)|new card is being produced|card mailed|card personally given|document (was |is being )?(mailed|produced)|delivered to me)/i, 4],
-  [/(approved|approval|denied|denial|decision|notice ordered|rejected|terminated|revoked|withdrawal acknowledg|oath ceremony)/i, 3],
-  [/(fingerprints? (were |was )?(taken|captured)|biometrics? (appointment|services|were taken|was taken)|fingerprint (appointment|processing))/i, 1],
-  [/(review|interview|evidence|transferred|relocated|ready for|pre-adjudicated|adjudicat|intent to|response was received|hold)/i, 2],
-  [/(receiv|receipt|accepted)/i, 0],
-];
-
-function stageOfItem(title: string, code?: string) {
-  if (code) {
-    const hit = CODE_STAGES.find(([re]) => re.test(code.toUpperCase()));
-    if (hit) return hit[1];
-  }
-  return TEXT_STAGES.find(([re]) => re.test(title))?.[1] ?? -1;
-}
+const STAGE_OF: Partial<Record<Category, number>> = {
+  filing: 0, receipt: 0,
+  biometrics: 1, checks: 1,
+  interview: 2, evidence: 2, review: 2, transfer: 2, notice: 2,
+  approved: 3, denied: 3, rejected: 3, decision: 3,
+  card: 4,
+};
 
 /**
  * How far the case appears to have moved: the furthest stage any recorded
- * update reaches, using its USCIS status code where there is one. Returns the
- * update that decided it, so the page can show the basis.
+ * event reaches, by its category. Returns the event that decided it, so the
+ * page can show the basis.
  */
 export function stageOf(c: CaseRecord): { stage: number; basis?: HistoryItem } {
-  const items: HistoryItem[] = [...c.history, ...(c.statusTitle && !c.history.some((h) => h.title === c.statusTitle) ? [{ title: c.statusTitle }] : [])];
   let stage = -1;
   let basis: HistoryItem | undefined;
-  for (const h of items) {
-    const s = stageOfItem(h.title, h.code);
+  for (const h of c.history) {
+    if (h.kind === "silent") continue;
+    const s = h.category ? (STAGE_OF[h.category] ?? -1) : -1;
     if (s > stage || (s === stage && basis && (h.date?.getTime() ?? 0) > (basis.date?.getTime() ?? 0))) {
       stage = s;
       basis = h;
     }
   }
-  // A closed case with a favourable last update has, at least, a decision.
-  if (c.closed && toneOf(c.statusTitle) === "positive" && stage < 3) stage = 3;
+  const head = c.statusCategory ? (STAGE_OF[c.statusCategory] ?? -1) : -1;
+  if (head > stage) {
+    stage = head;
+    basis = { title: c.statusTitle ?? "", category: c.statusCategory };
+  }
   return { stage: Math.max(0, stage), basis };
 }
+
+/** Tone of the case, from its furthest decisive event. */
+export function caseTone(c: CaseRecord): Tone {
+  const cats = new Set(c.history.map((h) => h.category));
+  if (cats.has("denied") || cats.has("rejected")) return "negative";
+  if (cats.has("card") || cats.has("approved")) return "positive";
+  if (c.statusCategory === "evidence" || c.actionRequired) return "action";
+  return toneOf(c.statusTitle);
+}
+
+export { CARD_FORMS };
 
 export const daysBetween = (a: Date, b: Date) => Math.max(0, Math.round((b.getTime() - a.getTime()) / 86_400_000));
 
@@ -288,5 +359,34 @@ export const SAMPLE = {
       { date: "2026-03-20", completed_text_en: "Case Was Updated To Show Fingerprints Were Taken" },
       { date: "2026-02-12", completed_text_en: "Case Was Received" },
     ],
+  },
+};
+
+const ev = (eventId: string, eventCode: string, eventDateTime: string, createdAtTimestamp = eventDateTime) => ({ eventId, eventCode, eventDateTime, createdAtTimestamp });
+
+/** A fictional case in the myUSCIS account format, for trying the detailed view. */
+export const SAMPLE_ACCOUNT = {
+  data: {
+    receiptNumber: "IOE0912345678",
+    formType: "I-485",
+    formName: "Application to Register Permanent Residence or Adjust Status",
+    applicantName: "SAMPLE, ALEX",
+    submissionDate: "2025-03-17",
+    submissionTimestamp: "2025-03-17T00:00:00Z",
+    updatedAtTimestamp: "2026-07-22T20:13:00Z",
+    elisChannelType: "Lockbox",
+    closed: true,
+    ackedByAdjudicatorAndCms: true,
+    areAllGroupStatusesComplete: false,
+    actionRequired: false,
+    events: [
+      ev("example-07", "LDA", "2026-07-22T20:13:00Z", "2026-07-22T20:17:00Z"),
+      ev("example-06", "H008", "2026-07-17T18:43:00Z"),
+      ev("example-05", "FTA0", "2025-04-01T12:31:00Z", "2026-07-16T16:54:00Z"),
+      ev("example-04", "FTA0", "2025-04-01T12:31:00Z"),
+      ev("example-03", "FNB", "2025-04-07T14:20:00Z"),
+      ev("example-02", "IAF", "2025-03-17T00:00:00Z", "2025-03-25T14:22:00Z"),
+    ],
+    notices: [{ generationDate: "2025-03-21T23:38:00Z", appointmentDateTime: "2025-04-07T14:00:00Z", actionType: "APPOINTMENT_SCHEDULED", letterId: "000000001" }],
   },
 };

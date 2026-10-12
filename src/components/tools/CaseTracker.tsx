@@ -1,17 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import Link from "next/link";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  AlertTriangle, ArrowRight, Bookmark, BookOpen, Building2, CalendarDays, Check, ChevronDown, ClipboardPaste, Clock, Copy, ExternalLink,
-  FileText, History, Loader2, Lock, Printer, Search, ShieldCheck, Sparkles, Trash2, Upload, X,
+  AlertTriangle, ArrowRight, Bookmark, BookOpen, Building2, Check, ChevronDown, ClipboardPaste, Clock, ExternalLink,
+  Loader2, Lock, Search, ShieldCheck, Sparkles, Trash2, Upload, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CASE_STATUS_RELAY, CTA } from "@/content/site";
-import {
-  daysBetween, formName, normalizeReceipt, parseCase, RECEIPT, receiptOffice, SAMPLE, STAGES, stageOf, toneOf, type CaseRecord, type Tone,
-} from "@/content/tools/case-status";
+import { CASE_STATUS_RELAY } from "@/content/site";
+import { caseTone, normalizeReceipt, parseCase, RECEIPT, receiptOffice, SAMPLE, SAMPLE_ACCOUNT, type CaseRecord, type Tone } from "@/content/tools/case-status";
+import { CaseResult, TONE } from "./CaseResult";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const STORE = "rt-tracked-cases";
@@ -30,12 +28,6 @@ const ZONES = [
   { id: "UTC", label: "Coordinated Universal Time (UTC)" },
 ];
 
-const TONE: Record<Tone, { label: string; dot: string; ring: string; text: string; bar: string }> = {
-  positive: { label: "Positive step", dot: "bg-success", ring: "ring-success/30", text: "text-success", bar: "from-success/80 to-success/20" },
-  action: { label: "Your response may be needed", dot: "bg-brass", ring: "ring-brass/40", text: "text-brass-ink", bar: "from-brass to-brass/20" },
-  negative: { label: "Adverse decision", dot: "bg-danger", ring: "ring-danger/30", text: "text-danger", bar: "from-danger/80 to-danger/20" },
-  progress: { label: "In progress", dot: "bg-ink", ring: "ring-ink/15", text: "text-ink", bar: "from-ink/70 to-ink/10" },
-};
 
 type Saved = { receipt: string; form?: string; status?: string; tone: Tone; checked: number; record: unknown };
 
@@ -77,7 +69,7 @@ function writeSaved(list: Saved[]) {
 
 /** Saves a looked-up case to this browser's list, newest first, and returns the list. */
 function remember(record: CaseRecord, raw: unknown): Saved[] {
-  const entry: Saved = { receipt: record.receiptNumber, form: record.formType, status: record.statusTitle, tone: toneOf(record.statusTitle), checked: Date.now(), record: raw };
+  const entry: Saved = { receipt: record.receiptNumber, form: record.formType, status: record.statusTitle, tone: caseTone(record), checked: Date.now(), record: raw };
   const next = [entry, ...readSaved().filter((s) => s.receipt !== entry.receipt)];
   writeSaved(next);
   return next;
@@ -104,7 +96,10 @@ export function CaseTracker() {
       const params = new URLSearchParams(window.location.search);
       if (params.get("tab") === "account") setMode("paste");
       if (params.get("tab") === "receipt") setMode("lookup");
-      if (params.has("example")) setResult({ record: parseCase(SAMPLE), raw: SAMPLE, sample: true });
+      if (params.has("example")) {
+        const sample = params.get("example") === "account" ? SAMPLE_ACCOUNT : SAMPLE;
+        setResult({ record: parseCase(sample), raw: sample, sample: true });
+      }
     }, 0);
     return () => clearTimeout(t);
   }, []);
@@ -285,9 +280,28 @@ export function CaseTracker() {
                       {busy ? "Checking with USCIS" : "Check status"}
                     </button>
                   ) : (
-                    <a href="https://egov.uscis.gov/" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-16 items-center justify-center gap-2 rounded-2xl bg-brass px-8 font-bold text-ink transition-colors hover:bg-brass-light">
-                      Check on uscis.gov <ExternalLink aria-hidden className="size-4" />
-                    </a>
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                      <a
+                        href={accountUrl || undefined}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => {
+                          if (!valid) {
+                            e.preventDefault();
+                            return setError("Enter a 13-character receipt number: three letters followed by ten digits.");
+                          }
+                          // The USCIS page opens in a new tab; this page moves to the last step.
+                          setError("");
+                          setMode("paste");
+                        }}
+                        className="inline-flex min-h-16 items-center justify-center gap-2 rounded-2xl bg-brass px-8 font-bold text-ink transition-colors hover:bg-brass-light"
+                      >
+                        <Search aria-hidden className="size-5" /> Get my full timeline
+                      </a>
+                      <a href="https://egov.uscis.gov/" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-line-dark px-6 text-sm font-bold text-paper transition-colors hover:border-brass-light">
+                        Check on uscis.gov <ExternalLink aria-hidden className="size-4" />
+                      </a>
+                    </div>
                   )}
                 </form>
                 <div id="receipt-help" className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-stone-dark">
@@ -300,7 +314,8 @@ export function CaseTracker() {
                 </div>
                 {!CASE_STATUS_RELAY && (
                   <p className="mt-6 max-w-2xl rounded-2xl border border-line-dark bg-ink-raised/60 p-4 text-sm leading-relaxed text-stone-dark">
-                    <strong className="text-paper">Live lookups are being connected to the USCIS Case Status API.</strong> Until then, check on uscis.gov, or use{" "}
+                    <strong className="text-paper">How this works today.</strong> USCIS lets a website show a case directly only through its approved Case Status API, which the firm is connecting.
+                    Until then, <em>Get my full timeline</em> opens your case data on USCIS (sign in first if asked). Copy that page, come back and press <em>Paste and show my case</em>. Or use{" "}
                     <button type="button" onClick={() => setMode("paste")} className="font-bold text-brass-light underline underline-offset-4 hover:text-paper">
                       From my USCIS account
                     </button>{" "}
@@ -403,7 +418,7 @@ export function CaseTracker() {
                   ? "Your receipt number goes only to USCIS, through our secure relay. We keep no copy."
                   : "What you type here stays in your browser."}
             </span>
-            <button type="button" onClick={() => show(SAMPLE, true)} className="inline-flex min-h-11 items-center gap-2 font-bold text-brass-light hover:text-paper">
+            <button type="button" onClick={() => show(SAMPLE_ACCOUNT, true)} className="inline-flex min-h-11 items-center gap-2 font-bold text-brass-light hover:text-paper">
               See an example case <ArrowRight aria-hidden className="size-4" />
             </button>
           </div>
@@ -452,259 +467,11 @@ export function CaseTracker() {
       {/* Results */}
       <div ref={resultsRef} className="scroll-mt-32">
         <AnimatePresence mode="wait">
-          {result && <Result key={result.record.receiptNumber + String(result.sample)} {...result} zone={zone} onClose={() => setResult(null)} />}
+          {result && <CaseResult key={result.record.receiptNumber + String(result.sample)} {...result} zone={zone} onClose={() => setResult(null)} />}
         </AnimatePresence>
       </div>
 
       <Disclaimer />
-    </div>
-  );
-}
-
-function fmt(d: Date | undefined, zone: string, withTime = false) {
-  if (!d) return "Not provided";
-  return d.toLocaleString("en-US", { timeZone: zone || undefined, dateStyle: "medium", ...(withTime ? { timeStyle: "short" } : {}) });
-}
-
-// A date written as YYYY-MM-DD has no time of day, so it is shown without one.
-const hasTime = (raw?: string) => !!raw && /\d{2}:\d{2}/.test(raw);
-
-function Result({ record: c, raw, sample, zone, onClose }: { record: CaseRecord; raw: unknown; sample?: boolean; zone: string; onClose: () => void }) {
-  const tone = toneOf(c.statusTitle);
-  const t = TONE[tone];
-  const { stage, basis } = stageOf(c);
-  const [copied, setCopied] = useState(false);
-  const [now] = useState(() => new Date());
-  const name = formName(c.formType);
-  const office = c.receiptNumber ? receiptOffice(c.receiptNumber) : undefined;
-  const sinceFiled = c.submitted ? daysBetween(c.submitted, now) : undefined;
-  const lastChange = c.modified ?? c.history[0]?.date;
-  const sinceUpdate = lastChange ? daysBetween(lastChange, now) : undefined;
-  const quiet = useMemo(() => {
-    const dated = c.history.filter((h) => h.date).map((h) => h.date!.getTime()).sort((a, b) => a - b);
-    let max = 0;
-    for (let i = 1; i < dated.length; i++) max = Math.max(max, Math.round((dated[i] - dated[i - 1]) / 86_400_000));
-    return max;
-  }, [c.history]);
-
-  const summary = [
-    `Receipt number: ${c.receiptNumber}`,
-    c.formType && `Form: ${c.formType}${name ? ` (${name})` : ""}`,
-    c.statusTitle && `Current status: ${c.statusTitle}`,
-    c.submitted && `Filed: ${fmt(c.submitted, zone)}`,
-    lastChange && `Last update: ${fmt(lastChange, zone)}`,
-    "",
-    ...c.history.map((h) => `${h.rawDate ? fmt(h.date, zone, hasTime(h.rawDate)) : "Undated"}: ${h.title}${h.code ? ` (${h.code})` : ""}`),
-  ].filter((x): x is string => typeof x === "string").join("\n");
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(summary);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {}
-  };
-
-  const needsCounsel = tone === "action" || tone === "negative" || (sinceUpdate ?? 0) > 180;
-
-  return (
-    <motion.section initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.5, ease }} aria-label="Case status" className="grid gap-6 print:gap-4">
-      {sample && (
-        <p className="flex items-center gap-2 rounded-2xl border border-brass/40 bg-brass-pale px-5 py-3 text-sm font-bold text-brass-ink">
-          <Sparkles aria-hidden className="size-4" /> Example case with fictional details. Enter your own receipt number to see your case.
-        </p>
-      )}
-
-      {/* Status */}
-      <div className={cn("relative overflow-hidden rounded-[2rem] border border-line bg-white p-6 ring-1 sm:p-10", t.ring)}>
-        <div aria-hidden className={cn("absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r", t.bar)} />
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <span className={cn("inline-flex items-center gap-2 rounded-full bg-mist px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em]", t.text)}>
-            <span className={cn("size-2 rounded-full", t.dot)} /> {t.label}
-          </span>
-          <div className="flex gap-1 print:hidden">
-            <IconBtn label={copied ? "Copied" : "Copy summary"} onClick={copy}>{copied ? <Check className="size-4" /> : <Copy className="size-4" />}</IconBtn>
-            <IconBtn label="Print" onClick={() => window.print()}><Printer className="size-4" /></IconBtn>
-            <IconBtn label="Close" onClick={onClose}><X className="size-4" /></IconBtn>
-          </div>
-        </div>
-        <p className="eyebrow mt-6 text-brass-ink">Current status</p>
-        <h2 className="font-serif-display mt-2 text-balance text-4xl leading-tight text-ink sm:text-5xl">{c.statusTitle || "Status not provided"}</h2>
-        {c.statusText && <p className="mt-4 max-w-3xl text-lg leading-relaxed text-ink-soft">{c.statusText}</p>}
-        <div className="mt-6 flex flex-wrap gap-2">
-          {c.closed !== undefined && <Tag>{c.closed ? "Case closed" : "Case open"}</Tag>}
-          {c.actionRequired && <Tag warn>USCIS marks an action as required</Tag>}
-          {c.source === "account" && <Tag>From your USCIS account data</Tag>}
-          {c.source === "api" && !sample && <Tag>From the USCIS Case Status API</Tag>}
-        </div>
-
-        <dl className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
-          <Meta icon={FileText} label="Form" value={c.formType || "Not provided"} sub={name} />
-          <Meta icon={Building2} label="Receipt number" value={c.receiptNumber || "Not provided"} sub={office} mono />
-          <Meta icon={CalendarDays} label="Filed" value={fmt(c.submitted, zone)} sub={sinceFiled !== undefined ? `${sinceFiled.toLocaleString()} days ago` : undefined} />
-          <Meta icon={History} label="Last update" value={fmt(lastChange, zone)} sub={sinceUpdate !== undefined ? `${sinceUpdate.toLocaleString()} days ago` : undefined} />
-        </dl>
-      </div>
-
-      {/* Progress */}
-      <div className="rounded-[2rem] border border-line bg-white p-6 sm:p-10">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <h3 className="font-serif-display text-3xl text-ink">Where the case appears to be</h3>
-          <p className="text-sm text-stone">Estimated from the recorded updates, not an official USCIS stage.</p>
-        </div>
-        <ol className="relative mt-10 grid grid-cols-5 gap-2">
-          <div aria-hidden className="absolute left-[10%] right-[10%] top-5 h-0.5 bg-line" />
-          <motion.div aria-hidden initial={{ scaleX: 0 }} animate={{ scaleX: stage / (STAGES.length - 1) }} transition={{ duration: 1.1, ease, delay: 0.2 }} style={{ originX: 0 }} className="absolute left-[10%] right-[10%] top-5 h-0.5 bg-brass" />
-          {STAGES.map((s, i) => {
-            const done = i < stage;
-            const current = i === stage;
-            return (
-              <li key={s} className="relative grid justify-items-center gap-3 text-center" aria-current={current ? "step" : undefined}>
-                <motion.span
-                  initial={{ scale: 0.6, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.25 + i * 0.12, duration: 0.4, ease }}
-                  className={cn("relative grid size-10 place-items-center rounded-full border-2 text-sm font-bold", done ? "border-brass bg-brass text-ink" : current ? "border-brass bg-ink text-brass-light" : "border-line bg-white text-stone")}
-                >
-                  {done ? <Check aria-hidden className="size-4" /> : i + 1}
-                  {current && <span aria-hidden className="absolute inset-0 animate-ping rounded-full border-2 border-brass/50" />}
-                </motion.span>
-                <span className={cn("text-xs font-bold sm:text-sm", i <= stage ? "text-ink" : "text-stone")}>{s}</span>
-              </li>
-            );
-          })}
-        </ol>
-        {basis && (
-          <p className="mt-8 text-sm text-stone">
-            Based on {basis.code ? <>status code <span className="font-mono font-bold text-ink">{basis.code}</span>, </> : null}
-            <strong className="text-ink">{basis.title}</strong>
-            {basis.date ? <>, {fmt(basis.date, zone)}</> : null}.
-          </p>
-        )}
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <Stat value={c.history.length} label={c.history.length === 1 ? "status update recorded" : "status updates recorded"} />
-          <Stat value={sinceUpdate ?? "–"} label="days since the last update" />
-          <Stat value={quiet || "–"} label="days in the longest gap between updates" />
-        </div>
-      </div>
-
-      {/* Timeline */}
-      {c.history.length > 0 && (
-        <div className="rounded-[2rem] border border-line bg-white p-6 sm:p-10">
-          <h3 className="font-serif-display text-3xl text-ink">Timeline</h3>
-          <ol className="relative mt-8 grid gap-0">
-            <div aria-hidden className="absolute bottom-3 left-[7px] top-3 w-px bg-line" />
-            {c.history.map((h, i) => {
-              const next = c.history[i + 1];
-              const gap = h.date && next?.date ? daysBetween(next.date, h.date) : undefined;
-              const ht = toneOf(h.title);
-              return (
-                <motion.li key={`${h.title}-${i}`} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + Math.min(i, 10) * 0.06, duration: 0.4, ease }} className="relative grid gap-1 pb-8 pl-10 last:pb-0">
-                  <span aria-hidden className={cn("absolute left-0 top-1.5 size-[15px] rounded-full border-[3px] border-white ring-1", i === 0 ? cn(TONE[ht].dot, "ring-ink/20") : "bg-sand ring-line")} />
-                  <span className="text-sm text-stone">
-                    {h.date ? fmt(h.date, zone, hasTime(h.rawDate)) : h.rawDate || "Date not provided"}
-                    {gap !== undefined && gap > 0 && <span className="ml-2 rounded-full bg-mist px-2 py-0.5 text-xs">+{gap} days</span>}
-                  </span>
-                  <span className={cn("font-bold", i === 0 ? "text-lg text-ink" : "text-ink-soft")}>{h.title}</span>
-                  {h.code && <span className="font-mono text-xs text-stone">USCIS status code {h.code}</span>}
-                  {h.detail && <span className="max-w-3xl text-sm leading-relaxed text-stone">{h.detail}</span>}
-                </motion.li>
-              );
-            })}
-          </ol>
-        </div>
-      )}
-
-      {/* Notices */}
-      {c.notices.length > 0 && (
-        <div className="rounded-[2rem] border border-line bg-white p-6 sm:p-10">
-          <h3 className="font-serif-display text-3xl text-ink">Notices</h3>
-          <ul className="mt-6 grid gap-4 md:grid-cols-2">
-            {c.notices.map((n, i) => (
-              <li key={i} className="rounded-2xl border border-line bg-mist/50 p-5">
-                <p className="font-bold text-ink">{n.title}</p>
-                {n.date && <p className="text-sm text-stone">{fmt(n.date, zone)}</p>}
-                <dl className="mt-3 grid gap-1 text-sm">
-                  {n.fields.slice(0, 8).map((f) => (
-                    <div key={f.label} className="flex justify-between gap-4">
-                      <dt className="text-stone">{f.label}</dt>
-                      <dd className="text-right text-ink">{f.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Next step */}
-      <div className={cn("on-dark relative overflow-hidden rounded-[2rem] p-6 sm:p-10 print:hidden", needsCounsel ? "bg-ink text-paper" : "bg-ink-raised text-paper")}>
-        <div aria-hidden className="grain absolute inset-0" />
-        <div className="relative flex flex-wrap items-center justify-between gap-6">
-          <div className="max-w-2xl">
-            <p className="eyebrow text-brass-light">{needsCounsel ? "A good moment for advice" : "Questions about your case?"}</p>
-            <p className="font-serif-display mt-2 text-3xl">
-              {tone === "action"
-                ? "A request from USCIS usually has a firm deadline."
-                : tone === "negative"
-                  ? "An adverse decision may still leave options open."
-                  : (sinceUpdate ?? 0) > 180
-                    ? "No update for more than six months can be worth a review."
-                    : "An attorney can explain what this status means for you."}
-            </p>
-            <p className="mt-3 text-stone-dark">A status message is only part of the picture. We can review your notices and the record before you decide what to do.</p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href={CTA.consultation.href} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brass px-6 font-bold text-ink hover:bg-brass-light">
-              Book a consultation <ArrowRight aria-hidden className="size-4" />
-            </Link>
-            <Link href={CTA.evaluation.href} className="inline-flex min-h-12 items-center rounded-full border border-brass-light/50 px-6 font-bold text-brass-light hover:bg-brass-light hover:text-ink">
-              Free evaluation
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      <details className="group rounded-2xl border border-line bg-white p-5 print:hidden">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-ink">
-          Data received from USCIS <ChevronDown aria-hidden className="size-4 transition-transform group-open:rotate-180" />
-        </summary>
-        <pre className="mt-4 max-h-96 overflow-auto rounded-xl bg-ink p-4 text-xs leading-relaxed text-stone-dark">{JSON.stringify(raw, null, 2)}</pre>
-      </details>
-    </motion.section>
-  );
-}
-
-function IconBtn({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button type="button" onClick={onClick} aria-label={label} title={label} className="grid size-11 place-items-center rounded-full text-stone transition-colors hover:bg-mist hover:text-ink">
-      {children}
-    </button>
-  );
-}
-
-function Tag({ children, warn }: { children: React.ReactNode; warn?: boolean }) {
-  return <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold", warn ? "border-brass/50 bg-brass-pale text-brass-ink" : "border-line text-stone")}>{children}</span>;
-}
-
-function Meta({ icon: Icon, label, value, sub, mono }: { icon: typeof FileText; label: string; value: string; sub?: string; mono?: boolean }) {
-  return (
-    <div className="bg-white p-5">
-      <dt className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-stone">
-        <Icon aria-hidden className="size-4 text-brass-ink" /> {label}
-      </dt>
-      <dd className={cn("mt-2 text-lg font-bold text-ink", mono && "font-mono tracking-wider")}>{value}</dd>
-      {sub && <dd className="mt-0.5 text-sm text-stone">{sub}</dd>}
-    </div>
-  );
-}
-
-function Stat({ value, label }: { value: number | string; label: string }) {
-  return (
-    <div className="rounded-2xl bg-mist p-5">
-      <p className="font-serif-display text-4xl text-ink">{typeof value === "number" ? value.toLocaleString() : value}</p>
-      <p className="mt-1 text-sm text-stone">{label}</p>
     </div>
   );
 }
