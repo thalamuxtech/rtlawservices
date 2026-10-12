@@ -178,10 +178,27 @@ function fromAccount(d: Obj): CaseRecord {
   };
 }
 
+const SIGNED_OUT =
+  "It looks like you were not signed in to your USCIS account when this was copied. Sign in at myaccount.uscis.gov first (step 1), then open your case data again.";
+
 /** Reads case data in either format. Throws with a plain message if it cannot. */
 export function parseCase(input: unknown): CaseRecord {
-  const root = typeof input === "string" ? JSON.parse(input) : input;
+  let root = input;
+  if (typeof input === "string") {
+    const text = input.trim();
+    // Copied text sometimes carries words before or after the data; keep the outermost braces.
+    const json = text.slice(Math.max(0, text.indexOf("{")), text.lastIndexOf("}") + 1);
+    try {
+      root = JSON.parse(json || text);
+    } catch {
+      if (/(sign[ -]?in|log[ -]?in|session|password|unauthori[sz]ed|access denied)/i.test(text)) throw new Error(SIGNED_OUT);
+      throw new Error("This is not case data. On the USCIS case data page, select all the text, copy it, and try again.");
+    }
+  }
   if (!isObj(root)) throw new Error("This does not look like case data.");
+  // USCIS answers with an error object when the person is signed out or the case is not theirs.
+  const err = !isObj(root.data) && !isObj(root.case_status) ? first(root, ["error", "message", "error_description"]) ?? (Array.isArray(root.errors) && isObj(root.errors[0]) ? first(root.errors[0], ["message"]) : undefined) : undefined;
+  if (err) throw new Error(/(auth|sign|log|session|token|forbidden|401|403)/i.test(err) ? SIGNED_OUT : `USCIS answered: "${err}". Check the receipt number and that you are signed in to the account that filed it.`);
   if (isObj(root.case_status)) return fromApi(root.case_status);
   const data = isObj(root.data) ? root.data : root;
   if (Array.isArray(data.events) || Array.isArray(data.notices)) return fromAccount(data);
@@ -192,28 +209,65 @@ export function parseCase(input: unknown): CaseRecord {
 /** Sorts a status message into a tone, used only for colour and wording. */
 export function toneOf(text = ""): Tone {
   const t = text.toLowerCase();
-  if (/(denied|rejected|terminated|revoked|withdrawn|abandoned|not approved|dismissed)/.test(t)) return "negative";
-  if (/(request for (initial )?evidence|intent to deny|\brfe\b|noid|evidence was sent|need(s)? more)/.test(t)) return "action";
-  if (/(approved|card was (produced|mailed|delivered|picked up)|card produced|oath ceremony|welcomed|document was (mailed|produced))/.test(t)) return "positive";
+  if (/(denied|denial|rejected|reject\b|terminated|revoked|withdrawn|abandon|not approved|dismissed|undeliverable|destroyed)/.test(t)) return "negative";
+  if (/(request for (initial |additional )?evidence|evidence request|evidence requested|intent to (deny|revoke|rescind|terminate)|\brfe\b|noid|need(s)? more|failed to appear)/.test(t)) return "action";
+  if (/(approved|approval|card (is being |was |)(produced|mailed|delivered|picked up)|new card is being produced|card mailed|card personally given|oath ceremony|welcomed|document was (mailed|produced))/.test(t)) return "positive";
   return "progress";
 }
 
-export const STAGES = ["Received", "Biometrics", "In review", "Decision", "Delivered"] as const;
+export const STAGES = ["Received", "Biometrics", "In review", "Decision", "Card or document"] as const;
 
-const STAGE_RULES: [number, RegExp][] = [
-  [4, /(card was (mailed|delivered|picked up)|delivered|document was mailed|oath ceremony was (completed|held)|card mailed)/i],
-  [3, /(approved|denied|decision|oath ceremony|rejected|notice ordered|terminated)/i],
-  [2, /(review|interview|evidence|transferred|relocated|ready for|pre-adjudicated|adjudicat)/i],
-  [1, /(biometric|fingerprint)/i],
-  [0, /(receiv|receipt|accepted|filed)/i],
+// Stage of each USCIS status code, by the families in the NIEM code list
+// (status-codes.ts). Codes not listed here do not move the stage.
+const CODE_STAGES: [RegExp, number][] = [
+  // Card ordered, produced, mailed or handed over.
+  [/^(LAA|LAB|LBA|LDA|LEA|LEB|LEC)$/, 4],
+  // Approvals, denials, rejections and their notices; petition sent on to the Department of State.
+  [/^(D[A-I]|DAEA|E[A-F]|E[I-R]|EA0|EW0|IEA|IEB|IEE|IFA[A-F]?|IFB|IYB|IYC|AF[A-Z]*|IC|IBC|KO)$/, 3],
+  // Fingerprints and biometrics.
+  [/^(FN|FN[A-I]|FTA[0-9A-Z]*|IMAF|KAE)$/, 1],
+  // Review: evidence requests, interviews, transfers, holds and intent notices.
+  [/^(F[A-Z0-9]*|H[A-Z0-9]*|II|IK[A-Z]*|IM|IP|IU|IV|IX[A-Z]*|IYA|B[A-Z]|CD|K[A-Z0-9]*|TA)$/, 2],
+  // Receipt and intake.
+  [/^(IA[A-Z0-9]*|IAF|A[A-Z0-9]*)$/, 0],
 ];
 
-/** How far the case appears to have moved, judged only from its status messages. */
-export function stageOf(c: CaseRecord) {
-  const texts = [c.statusTitle ?? "", ...c.history.map((h) => h.title)];
+// Stage of a status message in words, for data without codes (the Case Status API).
+const TEXT_STAGES: [RegExp, number][] = [
+  [/(card (is being |was |)(produced|mailed|delivered|picked up)|new card is being produced|card mailed|card personally given|document (was |is being )?(mailed|produced)|delivered to me)/i, 4],
+  [/(approved|approval|denied|denial|decision|notice ordered|rejected|terminated|revoked|withdrawal acknowledg|oath ceremony)/i, 3],
+  [/(fingerprints? (were |was )?(taken|captured)|biometrics? (appointment|services|were taken|was taken)|fingerprint (appointment|processing))/i, 1],
+  [/(review|interview|evidence|transferred|relocated|ready for|pre-adjudicated|adjudicat|intent to|response was received|hold)/i, 2],
+  [/(receiv|receipt|accepted)/i, 0],
+];
+
+function stageOfItem(title: string, code?: string) {
+  if (code) {
+    const hit = CODE_STAGES.find(([re]) => re.test(code.toUpperCase()));
+    if (hit) return hit[1];
+  }
+  return TEXT_STAGES.find(([re]) => re.test(title))?.[1] ?? -1;
+}
+
+/**
+ * How far the case appears to have moved: the furthest stage any recorded
+ * update reaches, using its USCIS status code where there is one. Returns the
+ * update that decided it, so the page can show the basis.
+ */
+export function stageOf(c: CaseRecord): { stage: number; basis?: HistoryItem } {
+  const items: HistoryItem[] = [...c.history, ...(c.statusTitle && !c.history.some((h) => h.title === c.statusTitle) ? [{ title: c.statusTitle }] : [])];
   let stage = -1;
-  for (const t of texts) for (const [s, re] of STAGE_RULES) if (s > stage && re.test(t)) stage = s;
-  return Math.max(0, stage);
+  let basis: HistoryItem | undefined;
+  for (const h of items) {
+    const s = stageOfItem(h.title, h.code);
+    if (s > stage || (s === stage && basis && (h.date?.getTime() ?? 0) > (basis.date?.getTime() ?? 0))) {
+      stage = s;
+      basis = h;
+    }
+  }
+  // A closed case with a favourable last update has, at least, a decision.
+  if (c.closed && toneOf(c.statusTitle) === "positive" && stage < 3) stage = 3;
+  return { stage: Math.max(0, stage), basis };
 }
 
 export const daysBetween = (a: Date, b: Date) => Math.max(0, Math.round((b.getTime() - a.getTime()) / 86_400_000));
@@ -231,7 +285,7 @@ export const SAMPLE = {
     hist_case_status: [
       { date: "2026-09-18", completed_text_en: "Case Is Being Actively Reviewed By USCIS" },
       { date: "2026-06-02", completed_text_en: "Case Was Transferred And A New Office Has Jurisdiction" },
-      { date: "2026-03-20", completed_text_en: "Fingerprint Fee Was Received" },
+      { date: "2026-03-20", completed_text_en: "Case Was Updated To Show Fingerprints Were Taken" },
       { date: "2026-02-12", completed_text_en: "Case Was Received" },
     ],
   },

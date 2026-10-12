@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  AlertTriangle, ArrowRight, BookOpen, Building2, CalendarDays, Check, ChevronDown, ClipboardPaste, Clock, Copy, ExternalLink,
+  AlertTriangle, ArrowRight, Bookmark, BookOpen, Building2, CalendarDays, Check, ChevronDown, ClipboardPaste, Clock, Copy, ExternalLink,
   FileText, History, Loader2, Lock, Printer, Search, ShieldCheck, Sparkles, Trash2, Upload, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,6 +39,26 @@ const TONE: Record<Tone, { label: string; dot: string; ring: string; text: strin
 
 type Saved = { receipt: string; form?: string; status?: string; tone: Tone; checked: number; record: unknown };
 
+const stepBtn =
+  "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-brass/60 px-5 font-bold text-brass-light transition-colors hover:bg-brass hover:text-ink";
+
+const copyHint = "On that page press Ctrl+A, then Ctrl+C (Cmd on a Mac). On a phone, press and hold, choose Select all, then Copy. Come back and press the button.";
+
+function Step({ n, title, text, children }: { n: number; title: string; text: string; children: React.ReactNode }) {
+  return (
+    <li className="flex flex-col gap-4 rounded-2xl border border-line-dark bg-ink-raised/60 p-5">
+      <div className="flex items-start gap-3">
+        <span className="font-serif-display grid size-9 shrink-0 place-items-center rounded-full border border-brass/50 text-brass-light">{n}</span>
+        <span>
+          <span className="block font-bold text-paper">{title}</span>
+          <span className="text-sm leading-relaxed text-stone-dark">{text}</span>
+        </span>
+      </div>
+      <div className="mt-auto">{children}</div>
+    </li>
+  );
+}
+
 const mask = (r: string) => `${r.slice(0, 3)}••••••${r.slice(-4)}`;
 
 function readSaved(): Saved[] {
@@ -64,7 +84,8 @@ function remember(record: CaseRecord, raw: unknown): Saved[] {
 }
 
 export function CaseTracker() {
-  const [mode, setMode] = useState<"lookup" | "paste">("lookup");
+  // Until live lookups are connected, the account steps are the way to a full timeline.
+  const [mode, setMode] = useState<"lookup" | "paste">(CASE_STATUS_RELAY ? "lookup" : "paste");
   const [receipt, setReceipt] = useState("");
   const [pasted, setPasted] = useState("");
   const [busy, setBusy] = useState(false);
@@ -72,6 +93,7 @@ export function CaseTracker() {
   const [result, setResult] = useState<{ record: CaseRecord; raw: unknown; sample?: boolean } | null>(null);
   const [zone, setZone] = useState("");
   const [saved, setSaved] = useState<Saved[]>([]);
+  const [manual, setManual] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -79,7 +101,10 @@ export function CaseTracker() {
     // ?example=1 opens the example case, for sharing a demonstration.
     const t = setTimeout(() => {
       setSaved(readSaved());
-      if (new URLSearchParams(window.location.search).has("example")) setResult({ record: parseCase(SAMPLE), raw: SAMPLE, sample: true });
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("tab") === "account") setMode("paste");
+      if (params.get("tab") === "receipt") setMode("lookup");
+      if (params.has("example")) setResult({ record: parseCase(SAMPLE), raw: SAMPLE, sample: true });
     }, 0);
     return () => clearTimeout(t);
   }, []);
@@ -88,8 +113,9 @@ export function CaseTracker() {
   const valid = RECEIPT.test(clean);
   const office = clean.length >= 3 ? receiptOffice(clean) : undefined;
 
-  const show = (raw: unknown, sample = false) => {
-    const record = parseCase(raw);
+  const show = (raw: unknown, sample = false) => display(parseCase(raw), raw, sample);
+
+  const display = (record: CaseRecord, raw: unknown, sample = false) => {
     setResult({ record, raw, sample });
     setError("");
     if (!sample && record.receiptNumber) setSaved(remember(record, raw));
@@ -114,11 +140,57 @@ export function CaseTracker() {
 
   const analyze = (text = pasted) => {
     try {
-      show(JSON.parse(text.trim()));
+      const record = parseCase(text);
+      display(record, JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)));
     } catch (e) {
-      setError(e instanceof SyntaxError ? "This is not valid case data. Copy the whole page of data, from the first { to the last }, and paste it again." : e instanceof Error ? e.message : "This data could not be read.");
+      setManual(true);
+      setPasted(text);
+      setError(e instanceof Error ? e.message : "This data could not be read.");
     }
   };
+
+  // Reads what the visitor copied on the USCIS page, in one click.
+  const pasteClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text.trim()) return setError("Your clipboard is empty. On the USCIS case data page, select all the text and copy it first.");
+      analyze(text);
+    } catch {
+      setManual(true);
+      setError("Your browser did not let this page read the clipboard. Paste into the box below instead: Ctrl+V on a computer, or press and hold, then Paste, on a phone.");
+    }
+  };
+
+  // Keeps the latest analyze for listeners added once.
+  const analyzeRef = useRef(analyze);
+  useEffect(() => {
+    analyzeRef.current = analyze;
+  });
+
+  useEffect(() => {
+    // Ctrl+V anywhere on the account tab reads the case at once.
+    const onPaste = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (mode !== "paste" || target?.closest("input, textarea")) return;
+      const text = e.clipboardData?.getData("text") ?? "";
+      if (text.trim()) analyzeRef.current(text);
+    };
+    // The one-click reader sends case data from the USCIS site to this page.
+    const onMessage = (e: MessageEvent) => {
+      if (!/^https:\/\/(my|myaccount)\.uscis\.gov$/.test(e.origin)) return;
+      const msg = e.data as { type?: string; data?: unknown } | null;
+      if (msg?.type !== "rt-case-data" || typeof msg.data !== "string") return;
+      (e.source as Window | null)?.postMessage("rt-case-ack", e.origin);
+      setMode("paste");
+      analyzeRef.current(msg.data);
+    };
+    document.addEventListener("paste", onPaste);
+    window.addEventListener("message", onMessage);
+    return () => {
+      document.removeEventListener("paste", onPaste);
+      window.removeEventListener("message", onMessage);
+    };
+  }, [mode]);
 
   const upload = (file?: File) => {
     if (!file) return;
@@ -148,7 +220,7 @@ export function CaseTracker() {
             <div role="tablist" aria-label="How to check" className="inline-grid grid-cols-2 rounded-full border border-line-dark bg-ink-raised/80 p-1">
               {[
                 { id: "lookup" as const, label: "Receipt number", icon: Search },
-                { id: "paste" as const, label: "Paste case data", icon: ClipboardPaste },
+                { id: "paste" as const, label: "From my USCIS account", icon: ClipboardPaste },
               ].map((t) => (
                 <button
                   key={t.id}
@@ -230,46 +302,70 @@ export function CaseTracker() {
                   <p className="mt-6 max-w-2xl rounded-2xl border border-line-dark bg-ink-raised/60 p-4 text-sm leading-relaxed text-stone-dark">
                     <strong className="text-paper">Live lookups are being connected to the USCIS Case Status API.</strong> Until then, check on uscis.gov, or use{" "}
                     <button type="button" onClick={() => setMode("paste")} className="font-bold text-brass-light underline underline-offset-4 hover:text-paper">
-                      Paste case data
+                      From my USCIS account
                     </button>{" "}
-                    to see a full timeline here.
+                    to see a full timeline here in three quick steps.
                   </p>
                 )}
               </motion.div>
             ) : (
-              <motion.div key="paste" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.35, ease }} className="mt-10 grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
-                <ol className="grid content-start gap-5">
-                  {[
-                    { t: "Sign in to your USCIS account", d: <>Open <a className="font-bold text-brass-light underline underline-offset-4 hover:text-paper" href="https://myaccount.uscis.gov/sign-in" target="_blank" rel="noopener noreferrer">myaccount.uscis.gov</a> in this browser and sign in.</> },
-                    {
-                      t: "Open your case data",
-                      d: valid ? (
-                        <>Open <a className="break-all font-bold text-brass-light underline underline-offset-4 hover:text-paper" href={accountUrl} target="_blank" rel="noopener noreferrer">your case data for {mask(clean)}</a>. The page shows text in curly brackets.</>
-                      ) : (
-                        <>Enter your receipt number on the Receipt number tab, and a direct link appears here. You can also paste a response from the USCIS Case Status API.</>
-                      ),
-                    },
-                    { t: "Copy everything and paste it", d: <>Select all the text on that page, copy it, and paste it in the box. Or save it as a file and upload it.</> },
-                  ].map((s, i) => (
-                    <li key={s.t} className="flex gap-4">
-                      <span className="font-serif-display grid size-10 shrink-0 place-items-center rounded-full border border-brass/50 text-lg text-brass-light">{i + 1}</span>
-                      <span>
-                        <span className="block font-bold text-paper">{s.t}</span>
-                        <span className="text-sm leading-relaxed text-stone-dark">{s.d}</span>
-                      </span>
-                    </li>
-                  ))}
+              <motion.div key="paste" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.35, ease }} className="mt-10">
+                <ol className="grid gap-4 lg:grid-cols-3">
+                  <Step n={1} title="Sign in to USCIS" text="Use the account that filed the case, in this same browser.">
+                    <a href="https://myaccount.uscis.gov/sign-in" target="_blank" rel="noopener noreferrer" className={stepBtn}>
+                      Sign in to USCIS <ExternalLink aria-hidden className="size-4" />
+                    </a>
+                  </Step>
+                  <Step n={2} title="Open your case data" text="Enter the receipt number, then open the page of data USCIS keeps for it.">
+                    <div className="grid gap-2">
+                      <input
+                        aria-label="Receipt number"
+                        value={receipt}
+                        onChange={(e) => setReceipt(e.target.value.toUpperCase())}
+                        placeholder="IOE0123456789"
+                        autoComplete="off"
+                        spellCheck={false}
+                        maxLength={20}
+                        className={cn("min-h-12 w-full rounded-xl border bg-ink px-4 font-mono tracking-[0.14em] text-paper placeholder:text-stone-dark/40 focus:border-brass focus:outline-none", valid ? "border-success/60" : "border-line-dark")}
+                      />
+                      <a
+                        href={accountUrl || undefined}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-disabled={!valid}
+                        onClick={(e) => {
+                          if (valid) return;
+                          e.preventDefault();
+                          setError("Enter a 13-character receipt number first: three letters followed by ten digits.");
+                        }}
+                        className={cn(stepBtn, !valid && "cursor-not-allowed opacity-50")}
+                      >
+                        Open my case data <ExternalLink aria-hidden className="size-4" />
+                      </a>
+                    </div>
+                  </Step>
+                  <Step n={3} title="Copy it and bring it here" text={copyHint}>
+                    <button type="button" onClick={pasteClipboard} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brass px-5 font-bold text-ink transition-colors hover:bg-brass-light">
+                      <ClipboardPaste aria-hidden className="size-4" /> Paste and show my case
+                    </button>
+                  </Step>
                 </ol>
-                <div>
+
+                <Bookmarklet />
+
+                <details open={manual} onToggle={(e) => setManual((e.target as HTMLDetailsElement).open)} className="group mt-6 rounded-2xl border border-line-dark bg-ink-raised/40 p-4">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-stone-dark hover:text-paper">
+                    Paste or upload the data yourself, or use a Case Status API response <ChevronDown aria-hidden className="size-4 transition-transform group-open:rotate-180" />
+                  </summary>
                   <label htmlFor="case-data" className="sr-only">Case data</label>
                   <textarea
                     id="case-data"
                     value={pasted}
                     onChange={(e) => setPasted(e.target.value)}
-                    rows={9}
+                    rows={7}
                     spellCheck={false}
-                    placeholder={'{ "case_status": { "receiptNumber": "…", … } }'}
-                    className="w-full rounded-2xl border border-line-dark bg-ink-raised/70 p-4 font-mono text-sm leading-relaxed text-paper placeholder:text-stone-dark/50 focus:border-brass focus:outline-none"
+                    placeholder={'{ "data": { "receiptNumber": "…", "events": [ … ] } }'}
+                    className="mt-4 w-full rounded-2xl border border-line-dark bg-ink-raised/70 p-4 font-mono text-sm leading-relaxed text-paper placeholder:text-stone-dark/50 focus:border-brass focus:outline-none"
                   />
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button type="button" onClick={() => analyze()} disabled={!pasted.trim()} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brass px-6 font-bold text-ink transition-colors hover:bg-brass-light disabled:opacity-50">
@@ -285,7 +381,7 @@ export function CaseTracker() {
                       </button>
                     )}
                   </div>
-                </div>
+                </details>
               </motion.div>
             )}
           </AnimatePresence>
@@ -376,7 +472,7 @@ const hasTime = (raw?: string) => !!raw && /\d{2}:\d{2}/.test(raw);
 function Result({ record: c, raw, sample, zone, onClose }: { record: CaseRecord; raw: unknown; sample?: boolean; zone: string; onClose: () => void }) {
   const tone = toneOf(c.statusTitle);
   const t = TONE[tone];
-  const stage = stageOf(c);
+  const { stage, basis } = stageOf(c);
   const [copied, setCopied] = useState(false);
   const [now] = useState(() => new Date());
   const name = formName(c.formType);
@@ -454,7 +550,7 @@ function Result({ record: c, raw, sample, zone, onClose }: { record: CaseRecord;
       <div className="rounded-[2rem] border border-line bg-white p-6 sm:p-10">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <h3 className="font-serif-display text-3xl text-ink">Where the case appears to be</h3>
-          <p className="text-sm text-stone">Estimated from the status messages, not an official USCIS stage.</p>
+          <p className="text-sm text-stone">Estimated from the recorded updates, not an official USCIS stage.</p>
         </div>
         <ol className="relative mt-10 grid grid-cols-5 gap-2">
           <div aria-hidden className="absolute left-[10%] right-[10%] top-5 h-0.5 bg-line" />
@@ -478,7 +574,14 @@ function Result({ record: c, raw, sample, zone, onClose }: { record: CaseRecord;
             );
           })}
         </ol>
-        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+        {basis && (
+          <p className="mt-8 text-sm text-stone">
+            Based on {basis.code ? <>status code <span className="font-mono font-bold text-ink">{basis.code}</span>, </> : null}
+            <strong className="text-ink">{basis.title}</strong>
+            {basis.date ? <>, {fmt(basis.date, zone)}</> : null}.
+          </p>
+        )}
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
           <Stat value={c.history.length} label={c.history.length === 1 ? "status update recorded" : "status updates recorded"} />
           <Stat value={sinceUpdate ?? "–"} label="days since the last update" />
           <Stat value={quiet || "–"} label="days in the longest gap between updates" />
@@ -606,6 +709,44 @@ function Stat({ value, label }: { value: number | string; label: string }) {
   );
 }
 
+// The one-click reader runs on the USCIS site, signed in as the visitor. It
+// reads the case data page, or fetches the case by receipt number from the same
+// site, opens this tracker and hands the data over by postMessage. Nothing goes
+// through a server or into a web address.
+function readerCode(origin: string) {
+  const js = `(async()=>{const O=${JSON.stringify(origin)};const w=window.open(O+"/case-status-tracker/?from=uscis","_blank");const stop=m=>{if(m)alert(m);if(w)w.close()};let t=(document.body.innerText||"").trim();let ok=false;try{const j=JSON.parse(t.slice(t.indexOf("{"),t.lastIndexOf("}")+1));ok=!!(j.data||j.case_status)}catch(e){}if(!ok){if(location.hostname!=="my.uscis.gov")return stop("Sign in to your USCIS account first. When your account page is open, click RT Case Reader again.");const r=(prompt("Your receipt number, for example IOE0123456789")||"").toUpperCase().replace(/[^A-Z0-9]/g,"");if(!r)return stop();const x=await fetch("/account/case-service/api/cases/"+r,{credentials:"include"});t=await x.text();if(!x.ok)return stop("USCIS did not return this case. Check that you are signed in and that the receipt number belongs to this account.")}let n=0;const h=e=>{if(e.origin===O&&e.data==="rt-case-ack"){clearInterval(i);removeEventListener("message",h)}};addEventListener("message",h);const i=setInterval(()=>{if(++n>60)return clearInterval(i);try{w.postMessage({type:"rt-case-data",data:t},O)}catch(e){}},500)})();`;
+  return `javascript:${encodeURIComponent(js)}`;
+}
+
+const noSubscription = () => () => {};
+
+function Bookmarklet() {
+  const ref = useRef<HTMLAnchorElement>(null);
+  const origin = useSyncExternalStore(noSubscription, () => window.location.origin, () => "");
+  // React does not render javascript: links, so the address is set directly.
+  useEffect(() => {
+    if (ref.current && origin) ref.current.setAttribute("href", readerCode(origin));
+  }, [origin]);
+  return (
+    <div className="mt-6 hidden items-center gap-5 rounded-2xl border border-dashed border-brass/40 p-5 md:flex">
+      <a
+        ref={ref}
+        onClick={(e) => {
+          e.preventDefault();
+          alert("Drag this button to your bookmarks bar. Then, on the USCIS website, signed in, click the bookmark.");
+        }}
+        className="inline-flex min-h-12 shrink-0 cursor-grab items-center gap-2 rounded-full bg-paper px-5 font-bold text-ink shadow-[0_10px_30px_-12px_rgba(0,0,0,0.6)] active:cursor-grabbing"
+      >
+        <Bookmark aria-hidden className="size-4 text-brass-ink" /> RT Case Reader
+      </a>
+      <p className="text-sm leading-relaxed text-stone-dark">
+        <strong className="text-paper">Skip the copying on a computer.</strong> Drag this button to your bookmarks bar once. After you sign in to USCIS,
+        click the bookmark and enter your receipt number. Your case opens here, read only in your browser.
+      </p>
+    </div>
+  );
+}
+
 function Disclaimer() {
   return (
     <section aria-labelledby="disclaimer-heading" className="rounded-[2rem] border border-line bg-mist p-6 sm:p-10">
@@ -638,7 +779,7 @@ function Disclaimer() {
           </p>
           <p>
             <strong className="text-ink">Your privacy.</strong> A receipt number you look up is sent to USCIS through our secure relay to fetch the status,
-            and neither we nor the relay keep a copy. Case data you paste or upload is read only in your browser and is not sent to us or stored on our
+            and neither we nor the relay keep a copy. Case data you paste, upload or send with RT Case Reader is read only in your browser and is not sent to us or stored on our
             servers. Cases you track are saved only in this browser, and you can remove them at any time.
           </p>
         </div>
