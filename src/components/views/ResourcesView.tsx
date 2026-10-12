@@ -5,6 +5,7 @@ import { PageHero } from "@/components/site/PageHero";
 import { BookingBand } from "@/components/home/Sections";
 import { Container } from "@/components/ui/primitives";
 import { useContent } from "@/content/LiveContent";
+import { HEADINGS } from "@/content/headings";
 
 const TOOLS = [
   { href: "/resources/filing-fees/", title: "Filing fees", text: "Current government fees for common forms, from the official U.S. Citizenship and Immigration Services (USCIS) fee schedule." },
@@ -20,8 +21,8 @@ export function ResourcesView() {
   return (
     <>
       <PageHero
-        title="Guides and tools, written for clarity"
-        lede="General information to help you understand the process. For advice on your own situation, book a consultation."
+        title={HEADINGS["/resources/"].title}
+        lede={HEADINGS["/resources/"].lede}
         crumbs={[{ label: "Resources" }]}
       />
       <section className="py-20">

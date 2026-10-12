@@ -9,7 +9,7 @@ import { ButtonLink, Container } from "@/components/ui/primitives";
 import { ILLUSTRATIVE_NOTE } from "@/content/live";
 import { RESULTS_CAVEAT } from "@/content/site";
 import { Missing } from "@/components/views/Missing";
-import { useContent, useContentFresh } from "@/content/LiveContent";
+import { useContent, useContentFresh, useLiveTitle } from "@/content/LiveContent";
 
 const REVIEWED = "September 2026";
 
@@ -17,6 +17,7 @@ export function ExpertiseView({ slug }: { slug: string }) {
   const { ATTORNEYS, SITE, casesFor, getExpertise, reviewsFor } = useContent();
   const fresh = useContentFresh();
   const e = getExpertise(slug);
+  useLiveTitle(e && `${e.title} (${e.codes})`);
   if (!e) return fresh ? <Missing what="page" back={{ label: "All areas of expertise", href: "/expertise/" }} /> : null;
   const lead = ATTORNEYS.find((a) => a.leads.includes(e.slug));
   const results = casesFor(e.slug).slice(0, 3);

@@ -7,6 +7,7 @@ import { ButtonLink, Container } from "@/components/ui/primitives";
 import { type Expertise } from "@/content/expertise";
 import type { Attorney, CaseResult } from "@/content/types";
 import { useContent } from "@/content/LiveContent";
+import { HEADINGS } from "@/content/headings";
 
 const meta = (e: Expertise, CASES: CaseResult[], ATTORNEYS: Attorney[]) => {
   const n = CASES.filter((c) => c.expertise === e.slug).length;
@@ -21,8 +22,8 @@ export function ExpertiseIndexView() {
   return (
     <>
       <PageHero
-        title="Immigration counsel for every stage of the process"
-        lede="Two tracks share one standard of care. Choose the situation that matches yours, or answer three questions to find your path."
+        title={HEADINGS["/expertise/"].title}
+        lede={HEADINGS["/expertise/"].lede}
         crumbs={[{ label: "Expertise" }]}
       >
         <div className="flex flex-wrap gap-3">

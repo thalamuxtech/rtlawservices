@@ -5,6 +5,7 @@ import { Accordion, PageHero } from "@/components/site/PageHero";
 import { BookingBand } from "@/components/home/Sections";
 import { Container } from "@/components/ui/primitives";
 import { useContent } from "@/content/LiveContent";
+import { HEADINGS } from "@/content/headings";
 
 export function FaqView() {
   const { GENERAL_FAQS } = useContent();
@@ -16,8 +17,8 @@ export function FaqView() {
   return (
     <>
       <PageHero
-        title="Questions clients ask before they begin"
-        lede="Answers about working with us and about the system in general. Each practice page has its own questions on that topic."
+        title={HEADINGS["/faq/"].title}
+        lede={HEADINGS["/faq/"].lede}
         crumbs={[{ label: "FAQ" }]}
       />
       <section className="py-20">

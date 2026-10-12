@@ -7,14 +7,15 @@ import { Container } from "@/components/ui/primitives";
 
 import { RESULTS_CAVEAT } from "@/content/site";
 import { useContent } from "@/content/LiveContent";
+import { HEADINGS } from "@/content/headings";
 
 export function CaseResultsView() {
   const { CASES } = useContent();
   return (
     <>
       <PageHero
-        title="Success stories, documented"
-        lede="Each summary shows the client's situation, the obstacle, our approach and how long the matter took. Names and identifying details are removed, and every result is published with the client's consent."
+        title={HEADINGS["/case-results/"].title}
+        lede={HEADINGS["/case-results/"].lede}
         crumbs={[{ label: "Success stories" }]}
       />
       <section className="py-20">

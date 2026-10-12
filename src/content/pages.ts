@@ -27,6 +27,8 @@ export type PagesContent = {
   faqs: FaqGroup[];
   /** Overrides for practice area pages, keyed by slug. */
   expertise: Record<string, Partial<Omit<Expertise, "slug" | "track" | "icon">>>;
+  /** Replacement headline and introduction for page headers, keyed by path (see headings.ts). */
+  headings?: Record<string, { title?: string; lede?: string }>;
 };
 
 export const DEFAULT_PAGES: PagesContent = {
@@ -75,6 +77,7 @@ export const DEFAULT_PAGES: PagesContent = {
   ],
   faqs: [],
   expertise: {},
+  headings: {},
 };
 
 const filled = (v: unknown) => (Array.isArray(v) ? v.length > 0 : typeof v === "string" ? v.trim() !== "" : v != null);
@@ -96,6 +99,7 @@ export function mergePages(published: Partial<PagesContent> = {}) {
     pillars: filled(published.pillars) ? published.pillars! : DEFAULT_PAGES.pillars,
     faqs: published.faqs,
     expertise: published.expertise ?? {},
+    headings: published.headings ?? {},
   };
 }
 

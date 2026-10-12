@@ -8,6 +8,7 @@ import { Container } from "@/components/ui/primitives";
 
 import { GLOSSARY } from "@/content/general";
 import { useContent } from "@/content/LiveContent";
+import { HEADINGS } from "@/content/headings";
 
 const TOOLS = [
   { href: "/check-eligibility/", icon: Gauge, title: "Eligibility self-check", text: "Score your record against EB-1A, O-1A and National Interest Waiver criteria." },
@@ -24,8 +25,8 @@ export function KnowledgeView() {
   return (
     <>
       <PageHero
-        title="Knowledge center"
-        lede="Everything we publish, in one place: interactive tools, plain-language guides with official sources, and quick references for every stage of the process."
+        title={HEADINGS["/knowledge/"].title}
+        lede={HEADINGS["/knowledge/"].lede}
         crumbs={[{ label: "Knowledge center" }]}
       />
 

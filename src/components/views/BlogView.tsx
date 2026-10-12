@@ -5,14 +5,15 @@ import { BlogIndex } from "@/components/site/BlogIndex";
 import { BookingBand } from "@/components/home/Sections";
 import { Container } from "@/components/ui/primitives";
 import { useContent } from "@/content/LiveContent";
+import { HEADINGS } from "@/content/headings";
 
 export function BlogView() {
   const { POSTS } = useContent();
   return (
     <>
       <PageHero
-        title="Immigration updates, with the sources"
-        lede="Policy changes, filing guides and explainers in plain words. Every post lists the official sources it relies on, so you can check them yourself."
+        title={HEADINGS["/blog/"].title}
+        lede={HEADINGS["/blog/"].lede}
         crumbs={[{ label: "Blog" }]}
       />
       <section className="py-16 sm:py-20">

@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SITE } from "@/content/site";
+import { HEADINGS } from "@/content/headings";
+import { useContent } from "@/content/LiveContent";
 import { BlendImage, type HeroImageName } from "@/components/ui/BlendImage";
 
 export function PageHero({
@@ -27,6 +32,12 @@ export function PageHero({
   image?: HeroImageName;
   imagePosition?: string;
 }) {
+  // Staff can reword the header of listed pages in the back office (Page text, Page headings).
+  const path = `/${(usePathname() ?? "").replace(/^\/+|\/+$/g, "")}/`.replace("//", "/");
+  const { PAGES } = useContent();
+  const custom = HEADINGS[path] ? PAGES.headings[path] : undefined;
+  if (custom?.title?.trim()) title = custom.title;
+  if (custom?.lede?.trim() && HEADINGS[path].lede) lede = custom.lede;
   const all = [{ label: "Home", href: "/" }, ...crumbs];
   const ld = {
     "@context": "https://schema.org",

@@ -6,6 +6,7 @@ import { BookingBand } from "@/components/home/Sections";
 import { ButtonLink, Container, Stars } from "@/components/ui/primitives";
 import { ILLUSTRATIVE_NOTE } from "@/content/live";
 import { useContent } from "@/content/LiveContent";
+import { HEADINGS } from "@/content/headings";
 
 export function ReviewsView() {
   const { REVIEWS, REVIEWS_ILLUSTRATIVE } = useContent();
@@ -13,7 +14,7 @@ export function ReviewsView() {
   return (
     <>
       <PageHero
-        title="In our clients' words"
+        title={HEADINGS["/reviews/"].title}
         lede={
           REVIEWS_ILLUSTRATIVE
             ? ILLUSTRATIVE_NOTE

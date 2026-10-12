@@ -3,6 +3,7 @@ import { PageHero } from "@/components/site/PageHero";
 import { EligibilityChecker } from "@/components/evaluation/EligibilityChecker";
 import { BookingBand } from "@/components/home/Sections";
 import { Container } from "@/components/ui/primitives";
+import { HEADINGS } from "@/content/headings";
 
 export const metadata: Metadata = {
   title: "Check your eligibility: EB-1A, O-1A and National Interest Waiver",
@@ -15,8 +16,8 @@ export default function CheckEligibilityPage() {
     <>
       <PageHero
         eyebrow="Eligibility self-check"
-        title="See how your record maps to the legal standard"
-        lede="Tick the criteria your record could meet. The meter scores your answers as you go, and one click sends them to an attorney for a free evaluation."
+        title={HEADINGS["/check-eligibility/"].title}
+        lede={HEADINGS["/check-eligibility/"].lede}
         crumbs={[{ label: "Free evaluation", href: "/free-evaluation/" }, { label: "Check eligibility" }]}
       />
       <section className="py-14 sm:py-20">

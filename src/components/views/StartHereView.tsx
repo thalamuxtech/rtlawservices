@@ -9,6 +9,7 @@ import { Container } from "@/components/ui/primitives";
 
 import { GLOSSARY } from "@/content/general";
 import { useContent } from "@/content/LiveContent";
+import { HEADINGS } from "@/content/headings";
 
 const AGENCIES = [
   { icon: Building, name: "U.S. Citizenship and Immigration Services (USCIS)", text: "Decides most applications filed inside the United States, such as green cards, work permits and citizenship." },
@@ -23,8 +24,8 @@ export function StartHereView() {
       <PageHero
         image="path-forward"
         imagePosition="50% 55%"
-        title="U.S. immigration, explained in plain words"
-        lede="If this is your first time dealing with the U.S. immigration system, begin with this page. It takes about ten minutes to read, and every term is defined as it appears."
+        title={HEADINGS["/start-here/"].title}
+        lede={HEADINGS["/start-here/"].lede}
         crumbs={[{ label: "Start here" }]}
       />
 

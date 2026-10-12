@@ -9,12 +9,13 @@ import { BookingBand } from "@/components/home/Sections";
 import { ButtonLink, Container } from "@/components/ui/primitives";
 import { CTA, RESULTS_CAVEAT } from "@/content/site";
 import { Missing } from "@/components/views/Missing";
-import { useContent, useContentFresh } from "@/content/LiveContent";
+import { useContent, useContentFresh, useLiveTitle } from "@/content/LiveContent";
 
 export function CaseView({ slug }: { slug: string }) {
   const { CASES, getAttorney, getCase, getExpertise } = useContent();
   const fresh = useContentFresh();
   const c = getCase(slug);
+  useLiveTitle(c && `Success story: ${c.title}`);
   if (!c) return fresh ? <Missing what="success story" back={{ label: "All success stories", href: "/case-results/" }} /> : null;
   const attorney = getAttorney(c.attorney);
   const area = getExpertise(c.expertise);

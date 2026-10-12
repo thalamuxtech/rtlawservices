@@ -3,6 +3,7 @@ import { MessageSquare, ReceiptText, Video } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { BookingBand, ProcessRibbon } from "@/components/home/Sections";
 import { Container } from "@/components/ui/primitives";
+import { HEADINGS } from "@/content/headings";
 
 export const metadata: Metadata = {
   title: "How we work",
@@ -21,8 +22,8 @@ export default function HowWeWorkPage() {
       <PageHero
         image="case-preparation"
         imagePosition="62% 45%"
-        title="A clear process, from first call to final decision"
-        lede="Every client follows the same five stages. At any point you can ask which stage you are in and what happens next."
+        title={HEADINGS["/how-we-work/"].title}
+        lede={HEADINGS["/how-we-work/"].lede}
         crumbs={[{ label: "How we work" }]}
       />
       <div className="py-12">

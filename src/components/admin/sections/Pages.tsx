@@ -9,12 +9,14 @@ import { cn } from "@/lib/utils";
 import { BASE_EXPERTISE, type Expertise } from "@/content/expertise";
 import { DEFAULT_GENERAL_FAQS } from "@/content/general";
 import { DEFAULT_PAGES, type PagesContent } from "@/content/pages";
+import { HEADING_LIST } from "@/content/headings";
 import { AreaIn, Btn, ItemsIn, LinesIn, Loading, saveContent, SectionHeader, SelectIn, TextIn, useToast } from "../kit";
 
-type Tab = "home" | "about" | "approach" | "faq" | "expertise" | "firm";
+type Tab = "home" | "headings" | "about" | "approach" | "faq" | "expertise" | "firm";
 
 const TABS: { id: Tab; label: string; page: string }[] = [
   { id: "home", label: "Home page", page: "/" },
+  { id: "headings", label: "Page headings", page: "/" },
   { id: "about", label: "About", page: "/about/" },
   { id: "approach", label: "Process and pillars", page: "/how-we-work/" },
   { id: "faq", label: "FAQ", page: "/faq/" },
@@ -35,6 +37,7 @@ function current(saved: Partial<PagesContent>): PagesContent {
     pillars: pick(saved.pillars, DEFAULT_PAGES.pillars),
     faqs: pick(saved.faqs, DEFAULT_GENERAL_FAQS),
     expertise: saved.expertise ?? {},
+    headings: saved.headings ?? {},
   };
 }
 
@@ -126,7 +129,7 @@ export function PagesEditor({ uid }: { uid: string }) {
         <a href={page} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-1.5 font-bold text-brass-ink hover:text-ink">
           Open this page on the website <ExternalLink aria-hidden className="size-4" />
         </a>
-        {tab !== "expertise" && (
+        {tab !== "expertise" && tab !== "headings" && (
           <button type="button" onClick={restore} className="inline-flex min-h-11 items-center gap-1.5 font-bold text-stone hover:text-ink">
             <RotateCcw aria-hidden className="size-4" /> Restore original wording
           </button>
@@ -210,10 +213,12 @@ export function PagesEditor({ uid }: { uid: string }) {
 
           {tab === "expertise" && <ExpertiseEditor value={data.expertise} onChange={(v) => patch("expertise", v)} />}
 
+          {tab === "headings" && <HeadingsEditor value={data.headings ?? {}} onChange={(v) => patch("headings", v)} />}
+
           {tab === "firm" && (
             <Group title="Firm details">
               <TextIn label="Tagline" value={data.firm.tagline} onChange={(v) => patch("firm", { ...data.firm, tagline: v })} />
-              <AreaIn label="Description for search engines and link previews" hint="About 150 to 160 characters reads best in search results." rows={3} value={data.firm.description} onChange={(v) => patch("firm", { ...data.firm, description: v })} />
+              <AreaIn label="Description for search engines and link previews" hint="About 150 to 160 characters reads best in search results. Search engines and link previews pick up a change after the automatic rebuild." rows={3} value={data.firm.description} onChange={(v) => patch("firm", { ...data.firm, description: v })} />
               <p className="text-sm text-stone">{data.firm.description.length} characters</p>
             </Group>
           )}
@@ -234,9 +239,9 @@ function changesOnly(data: PagesContent): DocumentData {
   for (const k of Object.keys(data) as (keyof PagesContent)[]) {
     const v = data[k] as unknown;
     const d = base[k] as unknown;
-    if (k === "expertise") {
-      const edited = Object.fromEntries(Object.entries(data.expertise).filter(([, o]) => o && Object.keys(o).length));
-      if (Object.keys(edited).length) out.expertise = edited;
+    if (k === "expertise" || k === "headings") {
+      const edited = Object.fromEntries(Object.entries(data[k] ?? {}).filter(([, o]) => o && Object.keys(o).length));
+      if (Object.keys(edited).length) out[k] = edited;
     } else if (Array.isArray(v)) {
       if (!same(v, d)) out[k] = v;
     } else {
@@ -245,6 +250,54 @@ function changesOnly(data: PagesContent): DocumentData {
     }
   }
   return out;
+}
+
+type HeadingOverrides = NonNullable<PagesContent["headings"]>;
+
+/** The headline and introduction at the top of each page. */
+function HeadingsEditor({ value, onChange }: { value: HeadingOverrides; onChange: (v: HeadingOverrides) => void }) {
+  const [path, setPath] = useState(HEADING_LIST[0].path);
+  const base = HEADING_LIST.find((h) => h.path === path)!;
+  const over = value[path] ?? {};
+  const edited = Object.keys(over).length > 0;
+  // An empty or unchanged field keeps the original wording.
+  const set = (field: "title" | "lede", v: string) => {
+    const next = { ...over, [field]: v };
+    if (!v.trim() || v === base[field]) delete next[field];
+    const all = { ...value, [path]: next };
+    if (!Object.keys(next).length) delete all[path];
+    onChange(all);
+  };
+  const reset = () => {
+    if (!confirm(`Restore the original heading for ${base.label}? Your change is saved only when you choose Save changes.`)) return;
+    const all = { ...value };
+    delete all[path];
+    onChange(all);
+  };
+
+  return (
+    <>
+      <div className="flex flex-wrap items-end gap-3">
+        <SelectIn label="Page" value={path} onChange={setPath} options={HEADING_LIST.map((h) => ({ value: h.path, label: `${h.label}${value[h.path] ? " (edited)" : ""}` }))} className="min-w-64 flex-1" />
+        <a href={path} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-brass-ink hover:text-ink">
+          Open page <ExternalLink aria-hidden className="size-4" />
+        </a>
+        {edited && (
+          <button type="button" onClick={reset} className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-stone hover:text-ink">
+            <RotateCcw aria-hidden className="size-4" /> Restore original
+          </button>
+        )}
+      </div>
+      <Group title={`${base.label} page header`}>
+        <AreaIn label="Headline" rows={2} value={over.title ?? base.title} onChange={(v) => set("title", v)} />
+        {base.lede !== undefined ? (
+          <AreaIn label="Introduction" rows={4} value={over.lede ?? base.lede} onChange={(v) => set("lede", v)} />
+        ) : (
+          <p className="text-sm text-stone">The introduction on this page is written from live figures, so only the headline can be changed here.</p>
+        )}
+      </Group>
+    </>
+  );
 }
 
 type Over = PagesContent["expertise"][string];

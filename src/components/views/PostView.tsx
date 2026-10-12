@@ -7,7 +7,7 @@ import { Markdown, headings } from "@/components/site/Markdown";
 import { BookingBand } from "@/components/home/Sections";
 import { Container } from "@/components/ui/primitives";
 import { Missing } from "@/components/views/Missing";
-import { useContent, useContentFresh } from "@/content/LiveContent";
+import { useContent, useContentFresh, useLiveTitle } from "@/content/LiveContent";
 import { SITE } from "@/content/site";
 
 const fmt = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
@@ -16,6 +16,7 @@ export function PostView({ slug }: { slug: string }) {
   const { POSTS, getPost } = useContent();
   const fresh = useContentFresh();
   const p = getPost(slug);
+  useLiveTitle(p?.title);
   if (!p) return fresh ? <Missing what="post" back={{ label: "All posts", href: "/blog/" }} /> : null;
   const toc = headings(p.body);
   const related = POSTS.filter((x) => x.slug !== p.slug && x.category === p.category).concat(POSTS.filter((x) => x.slug !== p.slug && x.category !== p.category)).slice(0, 3);

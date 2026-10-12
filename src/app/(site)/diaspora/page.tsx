@@ -3,6 +3,7 @@ import { Clock3, FileCheck2, Landmark, Video } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { BookingBand } from "@/components/home/Sections";
 import { ButtonLink, Container } from "@/components/ui/primitives";
+import { HEADINGS } from "@/content/headings";
 
 export const metadata: Metadata = {
   title: "Clients outside the United States",
@@ -22,8 +23,8 @@ export default function DiasporaPage() {
       <PageHero
         image="global-connection"
         imagePosition="62% 45%"
-        title="A U.S. firm you can reach from anywhere"
-        lede="If you live outside the United States, or your family does, distance should not make the process harder to follow."
+        title={HEADINGS["/diaspora/"].title}
+        lede={HEADINGS["/diaspora/"].lede}
         crumbs={[{ label: "Clients abroad" }]}
       >
         <ButtonLink href="/book/">Book in your time zone</ButtonLink>

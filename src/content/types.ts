@@ -15,6 +15,10 @@ export type Attorney = {
   bio: string[];
   initials: string;
   photoUrl?: string;
+  /** Fingerprint of the uploaded portrait, so the website can tell when it changed. */
+  photoHash?: string;
+  /** Firestore document ID, used to load a portrait uploaded since the last build. */
+  _id?: string;
   order?: number;
   demo: boolean;
 };
@@ -36,6 +40,10 @@ export type CaseResult = {
   featured?: boolean;
   /** Public URL of the redacted approval document image, if one was uploaded. */
   documentUrl?: string;
+  /** Fingerprint of the uploaded approval document. */
+  documentHash?: string;
+  /** Firestore document ID, used to load a document uploaded since the last build. */
+  _id?: string;
   /** Form shown on the sample document when no image exists, for example "I-140". */
   form?: string;
   /** Success-story details, shown as a table: field, position, approval date, processing time and so on. */

@@ -7,6 +7,7 @@ import { Accordion } from "@/components/site/PageHero";
 import { EvaluationForm } from "@/components/evaluation/EvaluationForm";
 import { ButtonLink, Container } from "@/components/ui/primitives";
 import { useContent } from "@/content/LiveContent";
+import { HEADINGS } from "@/content/headings";
 
 const steps = (days: number) => [
   { icon: FileSearch, title: "Tell us about you", text: "Answer a short questionnaire and, if you like, attach your CV. It takes about five minutes." },
@@ -31,7 +32,7 @@ export function FreeEvaluationView() {
         image="case-preparation"
         imagePosition="62% 45%"
         eyebrow="Free evaluation"
-        title="Find out where you stand, from an attorney, at no cost"
+        title={HEADINGS["/free-evaluation/"].title}
         lede={`Send your background and an immigration attorney will assess which routes fit, usually within ${days} business day${days > 1 ? "s" : ""}. No fee, and no obligation.`}
         crumbs={[{ label: "Free evaluation" }]}
         aside={

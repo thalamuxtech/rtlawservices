@@ -5,6 +5,7 @@ import { PageHero } from "@/components/site/PageHero";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { ButtonLink, Container } from "@/components/ui/primitives";
 import { useContent } from "@/content/LiveContent";
+import { HEADINGS } from "@/content/headings";
 
 export function ContactView() {
   const { SITE } = useContent();
@@ -16,8 +17,8 @@ export function ContactView() {
   return (
     <>
       <PageHero
-        title="We are here to help"
-        lede="The fastest way to get advice is to book a consultation. For anything else, call, email or send a message below."
+        title={HEADINGS["/contact/"].title}
+        lede={HEADINGS["/contact/"].lede}
         crumbs={[{ label: "Contact" }]}
       >
         <div className="flex flex-wrap gap-3">

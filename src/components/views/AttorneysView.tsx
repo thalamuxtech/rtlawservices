@@ -5,14 +5,15 @@ import { AttorneyCard } from "@/components/site/cards";
 import { BookingBand } from "@/components/home/Sections";
 import { Container } from "@/components/ui/primitives";
 import { useContent } from "@/content/LiveContent";
+import { HEADINGS } from "@/content/headings";
 
 export function AttorneysView() {
   const { ATTORNEYS } = useContent();
   return (
     <>
       <PageHero
-        title="The people who will handle your case"
-        lede="Each client works with a named attorney from the first consultation. Every profile lists bar admissions, languages and the matters that attorney leads."
+        title={HEADINGS["/attorneys/"].title}
+        lede={HEADINGS["/attorneys/"].lede}
         crumbs={[{ label: "Attorneys" }]}
       />
       <section className="py-20">

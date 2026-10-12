@@ -79,6 +79,10 @@ function saveImage(dataUrl, name) {
 const INTERNAL = new Set(["_id", "status", "updatedAt", "updatedBy", "documentImage", "photo"]);
 const strip = (row) => Object.fromEntries(Object.entries(row).filter(([k]) => !INTERNAL.has(k)));
 
+// Same fingerprint as src/lib/live-content.ts, so the website can tell which
+// images changed after this build.
+const imageHash = (dataUrl) => (dataUrl ? createHash("sha256").update(dataUrl).digest("hex").slice(0, 16) : undefined);
+
 async function main() {
   let live = { source: "none" };
   try {
@@ -96,8 +100,8 @@ async function main() {
       source: "firestore",
       site: site ? strip(site) : undefined,
       pages: pages ? strip(pages) : undefined,
-      attorneys: attorneys.map((a) => ({ ...strip(a), slug: a.slug || a._id, photoUrl: saveImage(a.photo, `attorney-${a._id}`) })),
-      cases: cases.map((c) => ({ ...strip(c), slug: c.slug || c._id, documentUrl: saveImage(c.documentImage, `approval-${c._id}`) })),
+      attorneys: attorneys.map((a) => ({ ...strip(a), slug: a.slug || a._id, _id: a._id, photoHash: imageHash(a.photo), photoUrl: saveImage(a.photo, `attorney-${a._id}`) })),
+      cases: cases.map((c) => ({ ...strip(c), slug: c.slug || c._id, _id: c._id, documentHash: imageHash(c.documentImage), documentUrl: saveImage(c.documentImage, `approval-${c._id}`) })),
       reviews: reviews.map((r) => ({ ...strip(r), id: r._id })),
       posts: posts.map((p) => ({ ...strip(p), slug: p.slug || p._id })),
     };

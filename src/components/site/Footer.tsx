@@ -36,7 +36,9 @@ export function Footer() {
         <div className="grid gap-12 border-b border-line-dark py-16 lg:grid-cols-[1.2fr_2fr]">
           <div>
             <Logo tone="dark" className="w-[260px]" />
-            <p className="mt-6 max-w-sm leading-relaxed">
+            {/* The tagline is edited in the back office (Page text, Firm details). */}
+            <p className="font-serif-display mt-6 max-w-sm text-xl text-paper">{SITE.tagline}</p>
+            <p className="mt-3 max-w-sm leading-relaxed">
               Immigration counsel from Maryland for families, professionals and employers across the United States.
             </p>
             <ul className="mt-8 grid gap-3 text-[0.95rem]">
