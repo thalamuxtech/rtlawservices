@@ -20,6 +20,9 @@ export default function CaseStatusPage() {
         printed on the receipt notice, Form I-797C.
       </p>
       <p><OfficialLink href="https://egov.uscis.gov/">Check status on uscis.gov</OfficialLink></p>
+      <p>
+        You can also follow a case with our <a href="/case-status-tracker/">case status tracker</a>, which lays every update out as a timeline.
+      </p>
       <h2>Common messages</h2>
       <ul>
         <li><strong>Case was received</strong>: USCIS accepted the filing and issued a receipt.</li>

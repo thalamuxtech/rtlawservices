@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, CalendarRange, Compass, Gauge, Hourglass, Receipt, Search } from "lucide-react";
+import { BookOpen, CalendarRange, Compass, Gauge, Hourglass, Radar, Receipt, Search } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { BookingBand } from "@/components/home/Sections";
 import { Container } from "@/components/ui/primitives";
@@ -11,6 +11,7 @@ import { useContent } from "@/content/LiveContent";
 import { HEADINGS } from "@/content/headings";
 
 const TOOLS = [
+  { href: "/case-status-tracker/", icon: Radar, title: "Case status tracker", text: "Follow any USCIS case by receipt number, with a clear timeline of every update." },
   { href: "/check-eligibility/", icon: Gauge, title: "Eligibility self-check", text: "Score your record against EB-1A, O-1A and National Interest Waiver criteria." },
   { href: "/start-here/#path-finder", icon: Compass, title: "Path finder", text: "Three questions that point you to the right route." },
   { href: "/resources/filing-fees/", icon: Receipt, title: "Filing fees", text: "Government fees from the current U.S. Citizenship and Immigration Services (USCIS) schedule." },

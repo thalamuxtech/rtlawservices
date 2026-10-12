@@ -1,0 +1,14 @@
+name = "rt-case-status"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Sandbox endpoints from the USCIS Developer Portal. Replace both with the
+# production URLs USCIS supplies once production access is granted.
+[vars]
+USCIS_TOKEN_URL = "https://api-int.uscis.gov/oauth/accesstoken"
+USCIS_CASE_URL = "https://api-int.uscis.gov/case-status"
+ALLOWED_ORIGINS = "https://rtlawservice.web.app,https://rtlawservice.firebaseapp.com,http://localhost:3000"
+
+# Secrets, never committed:
+#   npx wrangler secret put USCIS_CLIENT_ID
+#   npx wrangler secret put USCIS_CLIENT_SECRET

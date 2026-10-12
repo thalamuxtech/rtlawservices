@@ -66,7 +66,8 @@ export function deriveSite(LIVE_SITE: Partial<SiteSettings>, ATTORNEYS: Attorney
       links: [
         { label: "Knowledge center", href: "/knowledge/", description: "Guides, tools and references in one place" },
         { label: "Blog", href: "/blog/", description: "Policy updates and guides, with sources" },
-        { label: "Check eligibility", href: "/check-eligibility/", description: "Score your record for EB-1A, O-1A or NIW" },
+        { label: "Case status tracker", href: "/case-status-tracker/", description: "Follow any USCIS case by receipt number" },
+      { label: "Check eligibility", href: "/check-eligibility/", description: "Score your record for EB-1A, O-1A or NIW" },
         { label: "Filing fees", href: "/resources/filing-fees/", description: "Current government fees for common forms" },
         { label: "Processing times", href: "/resources/processing-times/", description: "How to read official timelines" },
         { label: "Visa Bulletin", href: "/resources/visa-bulletin/", description: "Priority dates, explained" },
@@ -103,3 +104,10 @@ export const RESULTS_CAVEAT =
 
 export const NO_RELATIONSHIP =
   "Using this website, requesting a free evaluation or sending us information does not create an attorney-client relationship. Please do not send confidential details until we confirm that we can represent you.";
+
+/**
+ * Address of the case status relay (workers/case-status). Empty until the relay
+ * is deployed and the GitHub variable NEXT_PUBLIC_CASE_STATUS_RELAY is set;
+ * the tracker then offers live lookups by receipt number.
+ */
+export const CASE_STATUS_RELAY = process.env.NEXT_PUBLIC_CASE_STATUS_RELAY ?? "";

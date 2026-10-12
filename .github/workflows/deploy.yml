@@ -47,6 +47,9 @@ jobs:
         run: npm run typecheck
       - if: steps.content.outputs.changed == 'true'
         run: npm run build
+        env:
+          # Address of the case status relay (workers/case-status), set as a repository variable.
+          NEXT_PUBLIC_CASE_STATUS_RELAY: ${{ vars.NEXT_PUBLIC_CASE_STATUS_RELAY }}
 
       - if: steps.content.outputs.changed == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0

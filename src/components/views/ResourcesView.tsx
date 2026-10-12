@@ -11,6 +11,7 @@ const TOOLS = [
   { href: "/resources/filing-fees/", title: "Filing fees", text: "Current government fees for common forms, from the official U.S. Citizenship and Immigration Services (USCIS) fee schedule." },
   { href: "/resources/processing-times/", title: "Processing times", text: "How to read official processing times and what affects them." },
   { href: "/resources/visa-bulletin/", title: "The Visa Bulletin", text: "What the monthly bulletin shows and how to find your place in line." },
+  { href: "/case-status-tracker/", title: "Case status tracker", text: "Follow any U.S. Citizenship and Immigration Services (USCIS) case by receipt number, with a timeline of every update." },
   { href: "/resources/case-status/", title: "Case status", text: "How to check a USCIS case and understand the result." },
 ];
 

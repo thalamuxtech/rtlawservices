@@ -95,4 +95,11 @@ export const HEADING_LIST: Heading[] = [
   },
 ];
 
+HEADING_LIST.push({
+  path: "/case-status-tracker/",
+  label: "Case status tracker",
+  title: "Follow your USCIS case, step by step",
+  lede: "Enter a receipt number for any U.S. Citizenship and Immigration Services (USCIS) form and see the current status, every recorded update and how long each stage has taken, in one clear timeline.",
+});
+
 export const HEADINGS: Record<string, Heading> = Object.fromEntries(HEADING_LIST.map((h) => [h.path, h]));
