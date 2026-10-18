@@ -184,6 +184,51 @@ export const BASE_EXPERTISE: Expertise[] = [
     ],
   },
   {
+    slug: "work-travel-documents",
+    track: "individuals",
+    icon: "idcard",
+    title: "Work permits and travel documents",
+    codes: "EAD, I-765, I-131",
+    summary: "Employment Authorization Documents, advance parole, reentry permits and refugee travel documents.",
+    intro:
+      "Many people in the United States need permission to work or to travel while a case is pending. A work permit, formally an Employment Authorization Document (EAD), proves permission to work for a set period. Travel documents let certain applicants and permanent residents leave and return without abandoning a case or a status. We confirm the right category, file on time and plan around travel.",
+    newToThis:
+      "Advance parole is permission, granted before departure, to return to the United States after travel abroad. A person with a pending green card application who leaves without it generally abandons the application, with exceptions for some workers in H or L status.",
+    whoFor: [
+      "Green card applicants who need to work or travel while the case is pending",
+      "Asylum applicants, TPS holders and others eligible for work permits",
+      "Permanent residents planning a long stay abroad",
+      "Refugees and asylees who need to travel",
+    ],
+    howWeHelp: [
+      { title: "Right category", text: "We identify the eligibility category, which controls the evidence, the fee and how long the card is valid." },
+      { title: "Renewal timing", text: "We file renewals early, because automatic extensions ended for most renewal applications filed on or after 30 October 2025." },
+      { title: "Travel planning", text: "We advise on advance parole, reentry permits and refugee travel documents, and on the risks of travel in each case." },
+      { title: "Errors and delays", text: "We correct card errors and follow up on cases that exceed normal processing times." },
+    ],
+    forms: [
+      { code: "I-765", name: "Application for Employment Authorization" },
+      { code: "I-131", name: "Application for Travel Documents, Parole Documents, and Arrival/Departure Records" },
+    ],
+    timeline:
+      "Work permits commonly take a few months, and times vary by category. Since December 2025, new work permits in several categories, including pending green card and asylum applicants, are valid for at most 18 months, so renewals come around more often. A reentry permit is generally valid for up to two years.",
+    checklist: [
+      "Current work permit or travel document, if renewing",
+      "Receipt notice for the underlying case",
+      "Passport and I-94 record",
+      "Two passport-style photographs",
+      "For a reentry permit: proof of permanent residence and planned travel dates",
+    ],
+    faqs: [
+      { q: "When can I file a renewal?", a: "Generally up to 180 days before the current card expires." },
+      { q: "Is my card extended while the renewal is pending?", a: "For most renewals filed on or after 30 October 2025, no. A gap in work authorization can affect employment, so early filing matters." },
+      { q: "What is a reentry permit?", a: "A travel document for permanent residents who plan to stay abroad for a year or more. It helps show that the person did not intend to give up permanent residence. You must apply while in the United States, and biometrics are usually taken before you leave." },
+      { q: "Does a reentry permit protect my path to citizenship?", a: "No. It helps preserve permanent residence, but long absences can still break the continuous residence that naturalization requires." },
+      { q: "Can I travel with a pending green card application?", a: "Only with advance parole, unless you maintain H or L status or another exception applies. Leaving without it generally abandons the application." },
+      { q: "What if my card has an error?", a: "Errors made by U.S. Citizenship and Immigration Services (USCIS) can be corrected without a new fee. Report them promptly." },
+    ],
+  },
+  {
     slug: "appeals-waivers",
     track: "individuals",
     icon: "scale",
@@ -896,51 +941,6 @@ export const BASE_EXPERTISE: Expertise[] = [
       { q: "Can I travel abroad?", a: "Only with permission granted before you leave, requested on Form I-131. Travel without it can end TPS." },
       { q: "What happens when a designation ends?", a: "TPS and related work permits end on the date set in the termination notice, unless a court orders otherwise. Holders should review other options well before that date." },
       { q: "Can a person with a criminal record get TPS?", a: "A felony, or two or more misdemeanours, committed in the United States generally makes a person ineligible, and other bars also apply." },
-    ],
-  },
-  {
-    slug: "work-travel-documents",
-    track: "relief",
-    icon: "idcard",
-    title: "Work permits and travel documents",
-    codes: "EAD, I-765, I-131",
-    summary: "Employment Authorization Documents, advance parole, reentry permits and refugee travel documents.",
-    intro:
-      "Many people in the United States need permission to work or to travel while a case is pending. A work permit, formally an Employment Authorization Document (EAD), proves permission to work for a set period. Travel documents let certain applicants and permanent residents leave and return without abandoning a case or a status. We confirm the right category, file on time and plan around travel.",
-    newToThis:
-      "Advance parole is permission, granted before departure, to return to the United States after travel abroad. A person with a pending green card application who leaves without it generally abandons the application, with exceptions for some workers in H or L status.",
-    whoFor: [
-      "Green card applicants who need to work or travel while the case is pending",
-      "Asylum applicants, TPS holders and others eligible for work permits",
-      "Permanent residents planning a long stay abroad",
-      "Refugees and asylees who need to travel",
-    ],
-    howWeHelp: [
-      { title: "Right category", text: "We identify the eligibility category, which controls the evidence, the fee and how long the card is valid." },
-      { title: "Renewal timing", text: "We file renewals early, because automatic extensions ended for most renewal applications filed on or after 30 October 2025." },
-      { title: "Travel planning", text: "We advise on advance parole, reentry permits and refugee travel documents, and on the risks of travel in each case." },
-      { title: "Errors and delays", text: "We correct card errors and follow up on cases that exceed normal processing times." },
-    ],
-    forms: [
-      { code: "I-765", name: "Application for Employment Authorization" },
-      { code: "I-131", name: "Application for Travel Documents, Parole Documents, and Arrival/Departure Records" },
-    ],
-    timeline:
-      "Work permits commonly take a few months, and times vary by category. Since December 2025, new work permits in several categories, including pending green card and asylum applicants, are valid for at most 18 months, so renewals come around more often. A reentry permit is generally valid for up to two years.",
-    checklist: [
-      "Current work permit or travel document, if renewing",
-      "Receipt notice for the underlying case",
-      "Passport and I-94 record",
-      "Two passport-style photographs",
-      "For a reentry permit: proof of permanent residence and planned travel dates",
-    ],
-    faqs: [
-      { q: "When can I file a renewal?", a: "Generally up to 180 days before the current card expires." },
-      { q: "Is my card extended while the renewal is pending?", a: "For most renewals filed on or after 30 October 2025, no. A gap in work authorization can affect employment, so early filing matters." },
-      { q: "What is a reentry permit?", a: "A travel document for permanent residents who plan to stay abroad for a year or more. It helps show that the person did not intend to give up permanent residence. You must apply while in the United States, and biometrics are usually taken before you leave." },
-      { q: "Does a reentry permit protect my path to citizenship?", a: "No. It helps preserve permanent residence, but long absences can still break the continuous residence that naturalization requires." },
-      { q: "Can I travel with a pending green card application?", a: "Only with advance parole, unless you maintain H or L status or another exception applies. Leaving without it generally abandons the application." },
-      { q: "What if my card has an error?", a: "Errors made by U.S. Citizenship and Immigration Services (USCIS) can be corrected without a new fee. Report them promptly." },
     ],
   },
   {

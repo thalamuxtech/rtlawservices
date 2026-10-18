@@ -58,7 +58,7 @@ export function ExpertiseIndexView() {
         <Container className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
           <div>
             <h2 className="font-serif-display text-4xl text-ink sm:text-5xl">{TRACK_LABELS.relief}</h2>
-            <p className="mt-4 max-w-sm text-lg leading-relaxed text-stone">Humanitarian protection, status for students and residents, and the work and travel documents that keep a case on track.</p>
+            <p className="mt-4 max-w-sm text-lg leading-relaxed text-stone">Humanitarian protection, and status for students and permanent residents.</p>
           </div>
           <ExpertiseIndex items={byTrack("relief")} meta={describe} />
         </Container>
