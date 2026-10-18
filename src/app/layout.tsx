@@ -21,7 +21,7 @@ const lato = Lato({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: {
-    default: "RT Law Services | Immigration Law Firm in Maryland, Serving the U.S.",
+    default: "RT Law Services | Immigration Law Firm Serving Clients Across the U.S.",
     template: "%s | RT Law Services",
   },
   description: SITE.description,
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE.name,
-    title: "RT Law Services | Immigration counsel from Maryland",
+    title: "RT Law Services | Immigration counsel across the United States",
     description: SITE.description,
     url: SITE.url,
     locale: "en_US",

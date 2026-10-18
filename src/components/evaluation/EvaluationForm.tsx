@@ -67,8 +67,11 @@ export function EvaluationForm() {
       draft = JSON.parse(localStorage.getItem(STORE) || "null");
     } catch {}
     const matter = params.get("matter") || "";
-    const pro = ["extraordinary-ability", "national-interest-waiver", "h-1b", "l-1", "investors-founders", "employers"].includes(matter);
-    const fam = ["family", "citizenship", "spousal-work-authorization", "appeals-waivers", "consular-processing"].includes(matter);
+    const pro = ["extraordinary-ability", "national-interest-waiver", "h-1b", "l-1", "investors-founders", "employers", "j-1", "business-due-diligence"].includes(matter);
+    const fam = [
+      "family", "citizenship", "spousal-work-authorization", "appeals-waivers", "consular-processing",
+      "vawa", "u-t-visas", "asylum", "refugees", "temporary-protected-status", "work-travel-documents", "permanent-residence", "students",
+    ].includes(matter);
     const next: Answers = { ...(draft ?? {}) };
     if (!next.track && (pro || fam)) next.track = pro ? "professional" : "family";
     if (Object.keys(next).length) setA((cur) => ({ ...cur, ...next }));

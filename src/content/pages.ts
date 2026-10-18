@@ -35,7 +35,7 @@ export const DEFAULT_PAGES: PagesContent = {
   firm: {
     tagline: "Committed to helping our clients succeed",
     description:
-      "RT Law Services is a Maryland immigration law firm serving families, professionals and employers across the United States, with clear guidance for first-time applicants and exacting work on employment and extraordinary ability petitions.",
+      "RT Law Services is an immigration law firm serving families, professionals and employers across the United States, with clear guidance for first-time applicants and exacting work on employment and extraordinary ability petitions.",
   },
   home: {
     eyebrow: "RT Law Services, immigration counsel",

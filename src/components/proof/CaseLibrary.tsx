@@ -38,7 +38,7 @@ export function CaseLibrary({ cases }: { cases: CaseResult[] }) {
               setCategory("all");
             }}
           >
-            {t === "all" ? "All results" : t === "individuals" ? "Individuals and families" : "Professionals and employers"}
+            {t === "all" ? "All results" : t === "individuals" ? "Individuals and families" : "Business and employment-based"}
           </button>
         ))}
       </div>

@@ -13,7 +13,7 @@ export const SEED_ATTORNEYS: Attorney[] = [
     title: "Managing Attorney",
     admissions: [],
     education: ["Boston University School of Law", "Ethan Hathaway Financial Training Institute, London"],
-    languages: ["English", "Yoruba"],
+    languages: ["English"],
     memberships: ["Association of Investment Advisers and Portfolio Managers of Nigeria", "Nigerian Chartered Institute of Management (Associate Member)"],
     leads: ["family", "citizenship", "appeals-waivers", "consular-processing", "estates"],
     bio: [
@@ -93,7 +93,7 @@ const BASE_CASES: CaseResult[] = [
     form: "DS-260",
     title: "Immigrant visas for both parents abroad",
     track: "individuals", category: "Family abroad", expertise: "consular-processing",
-    clientProfile: "U.S. citizen in Maryland sponsoring both parents in West Africa.",
+    clientProfile: "U.S. citizen sponsoring both parents in West Africa.",
     challenge: "Civil documents showed inconsistent spellings of the parents' names.",
     approach: "We secured affidavits and corrected records before the National Visa Center stage, then prepared both parents for the embassy interview by video.",
     outcome: "Both immigrant visas issued at the first interview.", headline: "Visas issued, first interview",
@@ -267,7 +267,7 @@ const STORY: Record<string, Pick<CaseResult, "details" | "evidence" | "testimoni
       { label: "Filing to approval", value: "5 weeks" },
       { label: "Approval period", value: "One year" },
     ],
-    evidence: ["Signed commercial lease for the Maryland office", "Corporate ownership documents", "One-year staffing and business plan", "Proof of funding transfer"],
+    evidence: ["Signed commercial lease for the new U.S. office", "Corporate ownership documents", "One-year staffing and business plan", "Proof of funding transfer"],
   },
 };
 

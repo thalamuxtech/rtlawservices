@@ -59,7 +59,7 @@ export default function HomePage() {
       <section className="border-t border-line bg-mist py-24 sm:py-32" id="expertise">
         <Container>
           <SectionHeading
-            title="Eleven matter types, two tracks"
+            title="Immigration matters, in three tracks"
             lede="Each page explains who the route suits, the forms involved, the evidence that matters and a realistic timeline."
           />
           <div className="mt-12">

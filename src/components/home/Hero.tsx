@@ -66,8 +66,8 @@ export function Hero() {
             style={{ ["--d" as string]: "1050ms" }}
             className="rise mt-12 max-w-xl border-t border-line-dark pt-6 text-[0.95rem] leading-relaxed text-stone-dark"
           >
-            Based in Maryland and serving clients across the United States and abroad. Consultations by video, phone or in
-            person, booked online in your own time zone.
+            Serving clients across the United States and abroad. Consultations by video or phone, booked online in your
+            own time zone.
           </p>
         </div>
 

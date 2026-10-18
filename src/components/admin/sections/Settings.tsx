@@ -56,7 +56,6 @@ export function SiteSettings({ uid }: { uid: string }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <TextIn label="Phone" value={s.phone} onChange={(v) => set({ phone: v })} />
           <TextIn label="Email" type="email" value={s.email} onChange={(v) => set({ email: v })} />
-          <TextIn label="Location line" value={s.location} onChange={(v) => set({ location: v })} className="sm:col-span-2" />
           <TextIn
             label="Responsible attorney"
             hint="Maryland Rule 19-307.2 requires the name of at least one attorney responsible for the website's content."

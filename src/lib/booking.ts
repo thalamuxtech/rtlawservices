@@ -8,12 +8,13 @@ export const FIRM_TZ = "America/New_York";
 export const MIN_NOTICE_HOURS = 24;
 export const HORIZON_DAYS = 30;
 
+// "office" remains in the type so bookings made before in-office meetings were
+// withdrawn still display; it is no longer offered.
 export type Mode = "video" | "phone" | "office";
 
 export const MODES: { id: Mode; label: string; detail: string }[] = [
   { id: "video", label: "Video", detail: "Secure video link sent with the confirmation" },
   { id: "phone", label: "Phone", detail: "We call you at the number you provide" },
-  { id: "office", label: "In office", detail: "At our Maryland office" },
 ];
 
 export const MATTERS = [

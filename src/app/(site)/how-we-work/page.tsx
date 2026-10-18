@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 const DETAILS = [
-  { icon: Video, title: "The consultation", text: "A focused meeting by video, phone or in the office. We review your goals and documents, explain the routes that fit and answer your questions. You leave with a recommended next step and a written fee quote." },
+  { icon: Video, title: "The consultation", text: "A focused meeting by video or phone. We review your goals and documents, explain the routes that fit and answer your questions. You leave with a recommended next step and a written fee quote." },
   { icon: ReceiptText, title: "Fees", text: "We agree the fee in writing before any work begins. Government filing fees are separate and paid directly to the agency. Our filing fees page lists the current government amounts." },
   { icon: MessageSquare, title: "Keeping you informed", text: "Your named attorney updates you at each milestone: filing, receipts, biometrics, any government request, the interview and the decision. We aim to reply to messages within one business day." },
 ];

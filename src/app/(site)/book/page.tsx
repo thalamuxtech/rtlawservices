@@ -7,7 +7,7 @@ import { HEADINGS } from "@/content/headings";
 
 export const metadata: Metadata = {
   title: "Book a consultation",
-  description: "Choose a matter, a format and a time shown in your own time zone. Video, phone or in-office consultations.",
+  description: "Choose a matter, a format and a time shown in your own time zone. Video or phone consultations.",
 };
 
 export default function BookPage() {

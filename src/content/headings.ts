@@ -38,7 +38,7 @@ export const HEADING_LIST: Heading[] = [
     path: "/expertise/",
     label: "Expertise",
     title: "Immigration counsel for every stage of the process",
-    lede: "Two tracks share one standard of care. Choose the situation that matches yours, or answer three questions to find your path.",
+    lede: "Every area of practice shares one standard of care. Choose the situation that matches yours, or answer three questions to find your path.",
   },
   {
     path: "/faq/",

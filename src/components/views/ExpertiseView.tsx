@@ -22,7 +22,8 @@ export function ExpertiseView({ slug }: { slug: string }) {
   const lead = ATTORNEYS.find((a) => a.leads.includes(e.slug));
   const results = casesFor(e.slug).slice(0, 3);
   const reviews = reviewsFor(e.slug).slice(0, 2);
-  const pro = e.track === "professionals";
+  // The eligibility checker scores EB-1A, O-1A and National Interest Waiver records only.
+  const pro = ["extraordinary-ability", "national-interest-waiver"].includes(e.slug);
   const faqLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -149,10 +150,13 @@ export function ExpertiseView({ slug }: { slug: string }) {
               <h2 className="font-serif-display text-4xl text-ink">Forms involved</h2>
               <ul className="mt-8 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
                 {e.forms.map((f) => (
-                  <li key={f.code} className="flex items-center gap-5 p-5">
-                    <FileText aria-hidden className="size-5 shrink-0 text-brass-ink" />
-                    <span className="w-24 shrink-0 font-bold text-ink">{f.code}</span>
-                    <span className="text-stone">{f.name}</span>
+                  <li key={f.code} className="flex items-start gap-4 p-5 sm:items-center sm:gap-5">
+                    <FileText aria-hidden className="mt-0.5 size-5 shrink-0 text-brass-ink sm:mt-0" />
+                    {/* Stacked on phones so long form names keep the full width. */}
+                    <span className="grid min-w-0 gap-0.5 sm:flex sm:items-center sm:gap-5">
+                      <span className="font-bold text-ink sm:w-24 sm:shrink-0">{f.code}</span>
+                      <span className="text-stone">{f.name}</span>
+                    </span>
                   </li>
                 ))}
               </ul>

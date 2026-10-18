@@ -3,7 +3,15 @@
 
 import { applyOverrides, withOverrides, type Pages } from "./pages";
 
-export type Track = "individuals" | "professionals" | "other";
+export type Track = "individuals" | "professionals" | "relief" | "other";
+
+/** Menu and section names for each track. */
+export const TRACK_LABELS: Record<Track, string> = {
+  individuals: "Individuals and families",
+  professionals: "Business and employment-based",
+  relief: "Other relief and services",
+  other: "Planning for global families",
+};
 
 export type Faq = { q: string; a: string };
 
@@ -22,7 +30,9 @@ export type Expertise = {
   timeline: string;
   checklist: string[];
   faqs: Faq[];
-  icon: "users" | "flag" | "briefcase" | "scale" | "globe" | "star" | "award" | "building" | "plane" | "trending" | "factory" | "landmark";
+  icon:
+    | "users" | "flag" | "briefcase" | "scale" | "globe" | "star" | "award" | "building" | "plane" | "trending" | "factory" | "landmark"
+    | "shield" | "heart" | "umbrella" | "tent" | "calendar" | "idcard" | "house" | "graduation" | "book" | "search";
 };
 
 export const BASE_EXPERTISE: Expertise[] = [
@@ -84,7 +94,7 @@ export const BASE_EXPERTISE: Expertise[] = [
     slug: "citizenship",
     track: "individuals",
     icon: "flag",
-    title: "Citizenship",
+    title: "Citizenship and naturalization",
     codes: "N-400, N-600",
     summary: "Become a U.S. citizen through naturalization, or confirm citizenship your child already holds.",
     intro:
@@ -561,6 +571,471 @@ export const BASE_EXPERTISE: Expertise[] = [
       { q: "Can an employee change jobs during the green card process?", a: "In some situations, once the I-485 has been pending 180 days, the portability rules allow a move to a same or similar job." },
       { q: "Do you handle I-9 audits?", a: "Yes. We review records, correct errors where allowed and represent employers in Immigration and Customs Enforcement inspections." },
       { q: "Can you work with our existing HR systems?", a: "Yes. We agree a reporting format at the start so HR always knows where each case stands." },
+    ],
+  },
+  {
+    slug: "j-1",
+    track: "professionals",
+    icon: "book",
+    title: "Exchange visitors",
+    codes: "J-1, DS-2019, I-612",
+    summary: "J-1 programs for scholars, researchers, physicians and trainees, and waivers of the two-year home residence requirement.",
+    intro:
+      "The J-1 visa supports exchange programs run by sponsors that the U.S. Department of State designates, such as universities, hospitals and training organizations. Many J-1 visitors later want to change status or seek a green card, and some must first meet or waive a requirement to spend two years in their home country. We review whether that requirement applies, plan the waiver where one is needed and coordinate with sponsors and employers.",
+    newToThis:
+      "A J-1 visitor enters on Form DS-2019, a document issued by the program sponsor. Section 212(e) of the Immigration and Nationality Act (INA) requires some J-1 visitors to live in their home country for two years after the program before they can hold H or L status or become permanent residents.",
+    whoFor: [
+      "Research scholars, professors and postdoctoral researchers",
+      "Foreign medical graduates in U.S. residency or fellowship programs",
+      "Trainees and interns planning their next status",
+      "J-1 visitors unsure whether the two-year rule applies, and J-2 spouses who want to work",
+    ],
+    howWeHelp: [
+      { title: "Two-year rule review", text: "We read every DS-2019, visa stamp and funding record to judge whether the requirement applies, including the effect of the Exchange Visitor Skills List revised in December 2024." },
+      { title: "Waiver strategy", text: "We compare the five waiver bases: a no-objection statement, a request from an interested U.S. government agency, the Conrad 30 program for physicians, persecution, and exceptional hardship to a U.S. citizen or permanent resident spouse or child." },
+      { title: "Next status", text: "We plan the move from J-1 to H-1B, O-1 or a green card, so the waiver and the next petition are timed together." },
+      { title: "Family members", text: "We prepare work permit applications for J-2 spouses." },
+    ],
+    forms: [
+      { code: "DS-2019", name: "Certificate of Eligibility for Exchange Visitor (J-1) Status" },
+      { code: "DS-3035", name: "J Visa Waiver Recommendation Application" },
+      { code: "I-612", name: "Application for Waiver of the Foreign Residence Requirement" },
+      { code: "I-765", name: "Application for Employment Authorization (J-2 spouses)" },
+    ],
+    timeline:
+      "Waiver cases commonly take several months to more than a year, depending on the basis. Every waiver passes through the Department of State's Waiver Review Division, and hardship and persecution waivers also need a decision from U.S. Citizenship and Immigration Services (USCIS).",
+    checklist: [
+      "Every Form DS-2019 issued, including amendments",
+      "J-1 visa stamps and I-94 records",
+      "Funding letters or grant records for each program",
+      "Passport and a current CV",
+      "For hardship waivers: evidence about the U.S. citizen or permanent resident spouse or child",
+    ],
+    faqs: [
+      { q: "Does the two-year rule apply to me?", a: "It applies when a U.S. or foreign government funded the program, when the visitor's field appears on the Exchange Visitor Skills List for their country, or when the visitor came for graduate medical education or training. The DS-2019 and visa stamp often carry a preliminary note, but that note is not the final word." },
+      { q: "Did the 2024 Skills List change affect me?", a: "Possibly. The Department of State published a revised list on 9 December 2024 that removed many countries, and it also applies to people who started their programs earlier. If the Skills List was the only reason you were subject to the rule, you may no longer be subject. Government funding and graduate medical training still trigger the rule." },
+      { q: "Can I change to H-1B inside the United States while the rule applies?", a: "No. A person subject to the requirement cannot change to H or L status, or adjust to permanent residence, until the requirement is met or waived. The rule does not bar O-1 status, although the O-1 visa generally has to be obtained abroad." },
+      { q: "What is a no-objection statement?", a: "A letter from the visitor's home government saying it does not object to the visitor staying in the United States. It is not available to physicians who came for graduate medical training." },
+      { q: "What is the Conrad 30 program?", a: "A program that lets each state's health agency request waivers for up to 30 foreign physicians a year who agree to work full time for three years in an area with a shortage of health professionals." },
+      { q: "Can a J-2 spouse work?", a: "Yes, once USCIS approves a work permit application. The J-2 spouse's income may not be used to support the J-1 visitor." },
+    ],
+  },
+  {
+    slug: "business-due-diligence",
+    track: "professionals",
+    icon: "search",
+    title: "Business purchase due diligence",
+    codes: "Due diligence, E-2, EB-5",
+    summary: "A legal review of a business before you buy it, including whether it can support an E-2 or EB-5 investment.",
+    intro:
+      "Before buying a business, a buyer should confirm what it owns, what it owes and what risks come with it. Lawyers call this review due diligence. For investors who plan to base an E-2 or EB-5 case on the purchase, the review also asks whether the business can meet the immigration rules on the size, source and use of the investment. We review the records, coordinate the financial review with accountants and structure the purchase so the deal and the immigration filing fit together.",
+    newToThis:
+      "Due diligence is the investigation a buyer carries out before a purchase becomes binding. It usually covers the legal, financial and operational records of the business, and its findings shape the price, the contract terms and the decision to proceed.",
+    whoFor: [
+      "Investors buying an existing business for an E-2 treaty investor visa",
+      "EB-5 investors reviewing a direct investment or a regional center project",
+      "Founders acquiring a U.S. company or a franchise",
+      "Buyers who want the purchase to depend on visa approval",
+    ],
+    howWeHelp: [
+      { title: "Legal review", text: "We examine company records, ownership, contracts, leases, licences and permits, and search for liens, lawsuits and judgments." },
+      { title: "Financial coordination", text: "We work with the buyer's accountant, who tests the financial statements and tax filings against the seller's claims." },
+      { title: "Employment and compliance", text: "We review staff records, including Form I-9 compliance, since some deal structures pass the seller's liabilities to the buyer." },
+      { title: "Immigration fit", text: "We assess whether the investment is substantial and at risk, whether the business is real, operating and more than marginal, and whether the source of funds can be documented." },
+      { title: "Deal structure", text: "We advise on asset or share purchase, escrow and conditions that let the buyer withdraw if the visa is refused." },
+    ],
+    forms: [],
+    timeline: "A focused review commonly takes two to six weeks, depending on the size of the business and how quickly the seller provides records.",
+    checklist: [
+      "Letter of intent or draft purchase agreement",
+      "Three years of financial statements and tax returns, where available",
+      "Lease, licences and key contracts",
+      "Organizational documents and ownership records",
+      "Employee list and payroll records",
+      "Records showing the source of the buyer's funds",
+    ],
+    faqs: [
+      { q: "What is due diligence?", a: "The investigation a buyer carries out before a purchase becomes binding. It checks what the seller has described and looks for risks that should change the price, the contract or the decision to buy." },
+      { q: "Why does it matter for an E-2 visa?", a: "An E-2 investment must be substantial, committed and at risk, and the business must be real and operating rather than marginal. A purchase that fails these tests can lead to a refused visa after the money is spent, so the review comes first." },
+      { q: "Can the purchase depend on the visa?", a: "Often, yes. Purchase funds can be held in escrow and released only if the visa is approved, which keeps them committed while limiting the loss if it is refused. The escrow terms need careful drafting." },
+      { q: "Asset purchase or share purchase?", a: "In an asset purchase, the buyer selects the assets and generally leaves most liabilities with the seller. In a share purchase, the buyer takes over the company as a whole, including its history. Tax and licensing questions also affect the choice." },
+      { q: "Is a franchise a good E-2 investment?", a: "It can be. A franchise system offers records and a tested model that support a business plan, but the franchise agreement and fees deserve the same review as any other purchase." },
+      { q: "Do you value the business?", a: "No. Valuation is work for an accountant or a qualified appraiser. We coordinate with them and handle the legal and immigration questions." },
+    ],
+  },
+  {
+    slug: "vawa",
+    track: "relief",
+    icon: "shield",
+    title: "VAWA self-petitions",
+    codes: "I-360, I-485",
+    summary: "A confidential path to a green card for survivors of abuse by a U.S. citizen or permanent resident spouse, parent or adult child.",
+    intro:
+      "The Violence Against Women Act (VAWA) lets certain survivors of battery or extreme cruelty apply for immigration status on their own, without the abuser's knowledge or help. Despite its name, the law protects people of any gender. We prepare the self-petition with care for safety and privacy, and plan the step to a green card.",
+    newToThis:
+      "A self-petition is a petition the applicant files for themselves. Under VAWA it takes the place of the petition the abusive U.S. citizen or permanent resident relative could have filed. Federal law limits what immigration authorities may disclose about a VAWA case, and it bars them from relying only on information supplied by the abuser.",
+    whoFor: [
+      "Spouses and former spouses of abusive U.S. citizens or permanent residents",
+      "Children abused by a U.S. citizen or permanent resident parent",
+      "Parents abused by an adult U.S. citizen son or daughter",
+      "Parents whose child was abused by their U.S. citizen or permanent resident spouse",
+    ],
+    howWeHelp: [
+      { title: "Safety and privacy first", text: "We agree how and where to contact you, and we use a safe mailing address for notices." },
+      { title: "Evidence of the relationship and the abuse", text: "We gather police reports, protective orders, medical records and statements from shelters, counsellors and people who know you. Formal records help, but they are not required." },
+      { title: "Remaining requirements", text: "We document good moral character, shared residence with the abuser and, for spouses, that the marriage was entered in good faith." },
+      { title: "Green card step", text: "We prepare the green card application and work permit request, together with the self-petition where the law allows." },
+    ],
+    forms: [
+      { code: "I-360", name: "Petition for Amerasian, Widow(er), or Special Immigrant" },
+      { code: "I-485", name: "Application to Register Permanent Residence or Adjust Status" },
+      { code: "I-765", name: "Application for Employment Authorization" },
+      { code: "I-751", name: "Petition to Remove Conditions on Residence, with an abuse waiver" },
+    ],
+    timeline:
+      "VAWA self-petitions commonly take more than a year to decide, and times vary widely. U.S. Citizenship and Immigration Services (USCIS) may first issue a prima facie determination, a preliminary finding that the petition appears to qualify, which can help with access to some public benefits.",
+    checklist: [
+      "Proof of the abuser's U.S. citizenship or permanent residence, if available",
+      "Marriage certificate or birth certificates showing the relationship",
+      "Evidence that you lived with the abuser",
+      "Evidence of the abuse, such as police reports, protective orders, medical or counselling records and statements",
+      "Your personal statement",
+      "Police clearances from places you have lived",
+    ],
+    faqs: [
+      { q: "Will the abuser find out?", a: "USCIS does not contact the abuser about a VAWA self-petition, and federal law protects the confidentiality of the case. We plan communication so that notices reach you safely." },
+      { q: "Do I need a police report?", a: "No. USCIS accepts any credible evidence. Police reports and protective orders help, but statements, medical records, photographs and messages can also show abuse." },
+      { q: "Can men file under VAWA?", a: "Yes. The law applies regardless of gender." },
+      { q: "What if we are divorced?", a: "A former spouse can generally still self-petition if the petition is filed within two years of the divorce and the divorce is connected to the abuse." },
+      { q: "Can I work while the case is pending?", a: "Once the self-petition is approved, you may request a work permit. A person who files the green card application at the same time can also apply for a work permit based on that application." },
+      { q: "What if I have a conditional green card?", a: "A conditional resident abused by the U.S. citizen or permanent resident spouse can ask to remove the conditions alone, with a waiver based on battery or extreme cruelty." },
+    ],
+  },
+  {
+    slug: "u-t-visas",
+    track: "relief",
+    icon: "heart",
+    title: "U and T visas",
+    codes: "I-918, I-914",
+    summary: "Status for victims of serious crimes who help law enforcement, and for survivors of human trafficking.",
+    intro:
+      "The U visa protects victims of certain serious crimes who suffered substantial physical or mental abuse and who have helped, or are willing to help, law enforcement. The T visa protects survivors of severe forms of human trafficking. Both can lead to a green card after three years. We request the law enforcement certification where it is needed, document the harm and prepare any waivers the case requires.",
+    newToThis:
+      "A certifying agency, such as a police department, prosecutor or judge, signs Form I-918 Supplement B to confirm that a U visa applicant was helpful to an investigation or prosecution. Congress caps U visas for principal applicants at 10,000 a year, so most applicants wait years for a visa to become available.",
+    whoFor: [
+      "Victims of qualifying crimes such as domestic violence, sexual assault, felonious assault and extortion",
+      "Survivors of labour or sex trafficking",
+      "Family members who may apply as derivatives",
+      "Applicants who need a waiver of inadmissibility",
+    ],
+    howWeHelp: [
+      { title: "Certification", text: "We request Form I-918 Supplement B from the certifying agency for a U visa. For a T visa, where a certification is optional, we document cooperation in other ways." },
+      { title: "Evidence of harm", text: "We gather medical, counselling and personal evidence of the abuse suffered." },
+      { title: "Waivers", text: "We prepare Form I-192, which can forgive many grounds of inadmissibility in these cases." },
+      { title: "Family members", text: "We include qualifying relatives and later prepare the green card applications." },
+    ],
+    forms: [
+      { code: "I-918", name: "Petition for U Nonimmigrant Status, with Supplements A and B" },
+      { code: "I-914", name: "Application for T Nonimmigrant Status" },
+      { code: "I-192", name: "Application for Advance Permission to Enter as a Nonimmigrant" },
+      { code: "I-485", name: "Application to Register Permanent Residence or Adjust Status" },
+    ],
+    timeline:
+      "Because of the annual cap, U visa cases can take many years. U.S. Citizenship and Immigration Services (USCIS) may grant a work permit and deferred action earlier, through its bona fide determination process, to petitioners whose filings appear complete and credible. T visas have their own cap of 5,000 a year, which has not been the limiting factor in recent years, but processing is still slow.",
+    checklist: [
+      "Form I-918 Supplement B signed by a certifying agency, for a U visa",
+      "Police reports, court records or protective orders",
+      "Medical or counselling records describing the harm",
+      "Personal statement",
+      "Passport or other identity documents",
+      "Records of any arrests or immigration violations, for the waiver",
+    ],
+    faqs: [
+      { q: "Which crimes qualify for a U visa?", a: "The law lists more than 25 categories, including domestic violence, sexual assault, kidnapping, felonious assault, trafficking, extortion, witness tampering and obstruction of justice. An attempt, conspiracy or solicitation to commit these crimes can also qualify." },
+      { q: "Must the crime have happened in the United States?", a: "Generally yes, or it must have violated U.S. law in a way that gives U.S. courts jurisdiction." },
+      { q: "Does the certification guarantee approval?", a: "No. Supplement B is required evidence, but USCIS decides eligibility separately." },
+      { q: "Is a certification required for a T visa?", a: "No. Applicants generally must comply with reasonable requests from law enforcement, but a law enforcement declaration is optional evidence. Some survivors are exempt, such as those under 18 and those unable to cooperate because of trauma." },
+      { q: "Can I get a green card?", a: "Yes. After three years of continuous presence in U or T status, many holders can apply to adjust status. A T visa holder may apply sooner once the investigation or prosecution is complete." },
+      { q: "Can family members be included?", a: "Yes. Spouses and children may qualify. Applicants under 21 may also include parents and unmarried siblings under 18." },
+    ],
+  },
+  {
+    slug: "asylum",
+    track: "relief",
+    icon: "umbrella",
+    title: "Asylum",
+    codes: "I-589",
+    summary: "Protection for people who fear persecution in their home country, before USCIS or in immigration court.",
+    intro:
+      "Asylum protects people who were persecuted, or fear persecution, because of race, religion, nationality, political opinion or membership in a particular social group. A person in the United States can apply with U.S. Citizenship and Immigration Services (USCIS), known as affirmative asylum, or before an immigration judge as a defence to removal, known as defensive asylum. We build the claim around a detailed declaration, country evidence and witness statements, and prepare the client for the interview or hearing.",
+    newToThis:
+      "An asylee is a person granted asylum. Asylum lets a person live and work in the United States, bring certain family members and later apply for a green card. Two related protections, withholding of removal and protection under the Convention Against Torture (CAT), have stricter standards but no filing deadline.",
+    whoFor: [
+      "People in the United States who fear return to their country",
+      "Applicants close to the one-year filing deadline",
+      "People in removal proceedings before an immigration court",
+      "Asylees who want to bring a spouse or children",
+    ],
+    howWeHelp: [
+      { title: "Deadline and eligibility review", text: "We check the one-year deadline, its exceptions and the bars that can block asylum." },
+      { title: "Declaration and evidence", text: "We help the applicant write a full, consistent account and support it with documents, expert reports and evidence of country conditions." },
+      { title: "Interview and court preparation", text: "We prepare the applicant for the asylum office interview or the court hearing, and we attend with them." },
+      { title: "Family and next steps", text: "We file Form I-730 for qualifying relatives and, after one year as an asylee, the green card application." },
+    ],
+    forms: [
+      { code: "I-589", name: "Application for Asylum and for Withholding of Removal" },
+      { code: "I-765", name: "Application for Employment Authorization" },
+      { code: "I-730", name: "Refugee/Asylee Relative Petition" },
+      { code: "I-485", name: "Application to Register Permanent Residence or Adjust Status" },
+    ],
+    timeline:
+      "USCIS reports more than 1.3 million affirmative asylum applications pending, and many applicants wait years for an interview. Applicants may request a work permit 150 days after filing a complete application, and USCIS can grant it once 180 days have passed on the asylum clock.",
+    checklist: [
+      "Passport and other identity documents",
+      "Evidence of persecution or threats, such as letters, photographs, medical records and police or court records",
+      "Proof of membership in a group, party or religion, where relevant",
+      "Statements from witnesses",
+      "Evidence of the date of your last arrival in the United States",
+      "Certified translations of documents not in English",
+    ],
+    faqs: [
+      { q: "When must I apply?", a: "Generally within one year of your last arrival in the United States. Exceptions exist for changed circumstances that affect eligibility and for extraordinary circumstances that caused the delay, and the application must then be filed within a reasonable time." },
+      { q: "What is the difference between affirmative and defensive asylum?", a: "Affirmative asylum is filed with USCIS by a person who is not in removal proceedings. Defensive asylum is requested before an immigration judge of the Executive Office for Immigration Review (EOIR) as a defence against removal." },
+      { q: "Can I work while my case is pending?", a: "You can apply for a work permit 150 days after filing a complete application, and it cannot be granted until 180 days have passed on the asylum clock. Delays you cause, such as rescheduling an interview, stop the clock. Since December 2025, these work permits are valid for a shorter period than before." },
+      { q: "Are there fees?", a: "Yes. A federal law enacted in July 2025 added a fee for asylum applications, an annual fee while a case is pending and fees for related work permits. We confirm the current amounts before filing." },
+      { q: "Can I travel while my case is pending?", a: "Leaving the United States without advance parole generally abandons the application. Returning to the country you fear can undermine the claim, even with permission." },
+      { q: "Can my family join me?", a: "A spouse and unmarried children under 21 who are in the United States can be included in the application. Once asylum is granted, an asylee can file Form I-730 for qualifying relatives within two years of the grant." },
+    ],
+  },
+  {
+    slug: "refugees",
+    track: "relief",
+    icon: "tent",
+    title: "Refugees and family reunification",
+    codes: "I-730, I-485",
+    summary: "Green cards, travel documents and family reunification for refugees admitted to the United States.",
+    intro:
+      "Refugee status is granted outside the United States, through the U.S. Refugee Admissions Program (USRAP). Once admitted, refugees must apply for a green card after one year, and they can petition to reunite with a spouse and children. We help refugees and their families with these filings and with the documents they need to travel. Refugee admissions from abroad have been sharply limited since January 2025, so we confirm current policy for each family.",
+    newToThis:
+      "A refugee applies for protection from outside the United States and arrives already holding refugee status. An asylee applies from inside the United States or at a port of entry. The grounds for protection are the same.",
+    whoFor: [
+      "Refugees approaching one year in the United States",
+      "Refugees and asylees who want to bring a spouse or unmarried children under 21",
+      "Refugees who need a refugee travel document",
+      "Former refugees preparing for citizenship",
+    ],
+    howWeHelp: [
+      { title: "Green card filing", text: "We prepare the green card application that refugees must file after one year of physical presence, including any waivers." },
+      { title: "Family reunification", text: "We file Form I-730 follow-to-join petitions within two years of admission and assemble proof of the family relationship." },
+      { title: "Travel documents", text: "We prepare refugee travel document applications and explain the risks of travel to the country of persecution." },
+      { title: "Citizenship planning", text: "We calculate when a former refugee can naturalize, since a refugee's permanent residence generally dates back to the day of arrival." },
+    ],
+    forms: [
+      { code: "I-485", name: "Application to Register Permanent Residence or Adjust Status" },
+      { code: "I-730", name: "Refugee/Asylee Relative Petition" },
+      { code: "I-131", name: "Application for Travel Documents (refugee travel document)" },
+      { code: "I-602", name: "Application by Refugee for Waiver of Inadmissibility Grounds" },
+    ],
+    timeline:
+      "U.S. Citizenship and Immigration Services (USCIS) data for April to June 2026 show a median of about 18 months for refugee green card applications completed in that quarter. Follow-to-join petitions vary widely, especially for relatives abroad.",
+    checklist: [
+      "Form I-94 showing admission as a refugee",
+      "Passport or travel document, if any",
+      "Birth and marriage certificates, for family reunification",
+      "Medical examination record (Form I-693)",
+      "Court records for any arrest",
+    ],
+    faqs: [
+      { q: "Do refugees have to apply for a green card?", a: "Yes. The law requires refugees to apply for permanent residence after one year of physical presence in the United States. USCIS charges no filing fee for this application." },
+      { q: "When does my permanent residence start?", a: "For a refugee, permanent residence is generally recorded as of the date of arrival in the United States, which can shorten the wait for citizenship." },
+      { q: "How long do I have to file Form I-730?", a: "Generally two years from your admission as a refugee, or from the grant of asylum for an asylee. USCIS may excuse a late filing for humanitarian reasons." },
+      { q: "Can I travel abroad?", a: "Travel on a refugee travel document rather than your home country's passport. Returning to the country you fled, or using its passport, can raise questions about your status." },
+      { q: "Can new refugees still be resettled?", a: "Admissions have been suspended since January 2025, with limited exceptions, and the ceiling for fiscal year 2026 is the lowest in the program's history. Policy continues to change, so we check the current rules for each case." },
+    ],
+  },
+  {
+    slug: "temporary-protected-status",
+    track: "relief",
+    icon: "calendar",
+    title: "Temporary Protected Status",
+    codes: "TPS, I-821",
+    summary: "Registration, re-registration and work permits for nationals of countries designated for Temporary Protected Status.",
+    intro:
+      "The Secretary of Homeland Security can designate a country for Temporary Protected Status (TPS) when conditions there, such as armed conflict or a natural disaster, prevent its nationals from returning safely. Eligible nationals in the United States can stay and work while the designation lasts. Designations, extensions and terminations have changed often since 2025, and several have been challenged in court, so we confirm the current position for each country before filing.",
+    newToThis:
+      "TPS is a temporary status. It does not lead to a green card by itself, but it does not stop a person from seeking another status for which they qualify.",
+    whoFor: [
+      "Nationals of designated countries who meet the residence and presence dates",
+      "TPS holders filing during a re-registration period",
+      "TPS holders who need a work permit",
+      "Holders whose country's designation is ending and who want to review other options",
+    ],
+    howWeHelp: [
+      { title: "Eligibility", text: "We check nationality, the required dates of continuous residence and physical presence, and the criminal and other bars." },
+      { title: "Timely filing", text: "We file within the registration period set in the Federal Register notice, including late initial filing where a basis exists." },
+      { title: "Work permits", text: "We prepare the work permit application and explain how long the card will be valid." },
+      { title: "Planning ahead", text: "Where a designation ends, we review other routes, such as family petitions, asylum or employment-based options." },
+    ],
+    forms: [
+      { code: "I-821", name: "Application for Temporary Protected Status" },
+      { code: "I-765", name: "Application for Employment Authorization" },
+      { code: "I-131", name: "Application for Travel Documents" },
+    ],
+    timeline:
+      "Each designation sets its own registration period in the Federal Register. Under a 2025 law, work permits for TPS holders requested on or after 22 July 2025 are generally limited to one year or the end of the TPS period, whichever is shorter.",
+    checklist: [
+      "Passport or national identity document proving nationality",
+      "Evidence of continuous residence since the required date",
+      "Evidence of physical presence since the required date",
+      "Prior TPS approval notices, if re-registering",
+      "Court records for any arrest",
+    ],
+    faqs: [
+      { q: "Does TPS lead to a green card?", a: "Not by itself. A TPS holder may qualify for a green card through another route, such as a family or employment petition." },
+      { q: "What if I miss the re-registration period?", a: "U.S. Citizenship and Immigration Services (USCIS) may accept a late re-registration for good cause. Late initial registration is available only in limited situations." },
+      { q: "Can I travel abroad?", a: "Only with permission granted before you leave, requested on Form I-131. Travel without it can end TPS." },
+      { q: "What happens when a designation ends?", a: "TPS and related work permits end on the date set in the termination notice, unless a court orders otherwise. Holders should review other options well before that date." },
+      { q: "Can a person with a criminal record get TPS?", a: "A felony, or two or more misdemeanours, committed in the United States generally makes a person ineligible, and other bars also apply." },
+    ],
+  },
+  {
+    slug: "work-travel-documents",
+    track: "relief",
+    icon: "idcard",
+    title: "Work permits and travel documents",
+    codes: "EAD, I-765, I-131",
+    summary: "Employment Authorization Documents, advance parole, reentry permits and refugee travel documents.",
+    intro:
+      "Many people in the United States need permission to work or to travel while a case is pending. A work permit, formally an Employment Authorization Document (EAD), proves permission to work for a set period. Travel documents let certain applicants and permanent residents leave and return without abandoning a case or a status. We confirm the right category, file on time and plan around travel.",
+    newToThis:
+      "Advance parole is permission, granted before departure, to return to the United States after travel abroad. A person with a pending green card application who leaves without it generally abandons the application, with exceptions for some workers in H or L status.",
+    whoFor: [
+      "Green card applicants who need to work or travel while the case is pending",
+      "Asylum applicants, TPS holders and others eligible for work permits",
+      "Permanent residents planning a long stay abroad",
+      "Refugees and asylees who need to travel",
+    ],
+    howWeHelp: [
+      { title: "Right category", text: "We identify the eligibility category, which controls the evidence, the fee and how long the card is valid." },
+      { title: "Renewal timing", text: "We file renewals early, because automatic extensions ended for most renewal applications filed on or after 30 October 2025." },
+      { title: "Travel planning", text: "We advise on advance parole, reentry permits and refugee travel documents, and on the risks of travel in each case." },
+      { title: "Errors and delays", text: "We correct card errors and follow up on cases that exceed normal processing times." },
+    ],
+    forms: [
+      { code: "I-765", name: "Application for Employment Authorization" },
+      { code: "I-131", name: "Application for Travel Documents, Parole Documents, and Arrival/Departure Records" },
+    ],
+    timeline:
+      "Work permits commonly take a few months, and times vary by category. Since December 2025, new work permits in several categories, including pending green card and asylum applicants, are valid for at most 18 months, so renewals come around more often. A reentry permit is generally valid for up to two years.",
+    checklist: [
+      "Current work permit or travel document, if renewing",
+      "Receipt notice for the underlying case",
+      "Passport and I-94 record",
+      "Two passport-style photographs",
+      "For a reentry permit: proof of permanent residence and planned travel dates",
+    ],
+    faqs: [
+      { q: "When can I file a renewal?", a: "Generally up to 180 days before the current card expires." },
+      { q: "Is my card extended while the renewal is pending?", a: "For most renewals filed on or after 30 October 2025, no. A gap in work authorization can affect employment, so early filing matters." },
+      { q: "What is a reentry permit?", a: "A travel document for permanent residents who plan to stay abroad for a year or more. It helps show that the person did not intend to give up permanent residence. You must apply while in the United States, and biometrics are usually taken before you leave." },
+      { q: "Does a reentry permit protect my path to citizenship?", a: "No. It helps preserve permanent residence, but long absences can still break the continuous residence that naturalization requires." },
+      { q: "Can I travel with a pending green card application?", a: "Only with advance parole, unless you maintain H or L status or another exception applies. Leaving without it generally abandons the application." },
+      { q: "What if my card has an error?", a: "Errors made by U.S. Citizenship and Immigration Services (USCIS) can be corrected without a new fee. Report them promptly." },
+    ],
+  },
+  {
+    slug: "permanent-residence",
+    track: "relief",
+    icon: "house",
+    title: "Permanent residence",
+    codes: "I-90, I-751, I-485",
+    summary: "Keeping a green card current: renewals, removing conditions, adjustment of status and protecting residence during travel.",
+    intro:
+      "A green card holder, formally a lawful permanent resident, keeps that status unless it is abandoned or taken away, but the card itself expires, and some residents hold conditional status. We help residents renew or replace cards, remove conditions on time, protect their status during long trips and resolve problems that arise along the way.",
+    newToThis:
+      "A green card is usually valid for ten years. A conditional green card, valid for two years, goes to spouses in marriages less than two years old when residence is granted, and to immigrant investors. Both must later file to remove the conditions.",
+    whoFor: [
+      "Residents whose card is expiring, lost, damaged or wrong",
+      "Conditional residents within 90 days of the card's two-year expiry",
+      "Conditional residents whose marriage ended or became abusive",
+      "Residents who have spent, or plan to spend, long periods abroad",
+    ],
+    howWeHelp: [
+      { title: "Renewals and replacements", text: "We file Form I-90 to renew or replace a card, or to correct an error on it." },
+      { title: "Removing conditions", text: "We file Form I-751 jointly with the spouse, or alone with a waiver where the marriage ended, the spouse died or there was abuse." },
+      { title: "Travel and abandonment", text: "We review travel history, prepare reentry permits and, after long absences, advise on returning resident visas." },
+      { title: "Adjustment of status", text: "For people in the United States who qualify for a green card, we prepare Form I-485 with the supporting petition." },
+    ],
+    forms: [
+      { code: "I-90", name: "Application to Replace Permanent Resident Card" },
+      { code: "I-751", name: "Petition to Remove Conditions on Residence" },
+      { code: "I-485", name: "Application to Register Permanent Residence or Adjust Status" },
+      { code: "DS-117", name: "Application to Determine Returning Resident Status" },
+    ],
+    timeline:
+      "U.S. Citizenship and Immigration Services (USCIS) data for April to June 2026 show median processing times of about 5.5 months for Form I-90 and about 22.6 months for Form I-751. While Form I-751 is pending, the receipt notice extends conditional residence for the period it states.",
+    checklist: [
+      "Current or expired green card",
+      "Passport and a list of trips abroad",
+      "For Form I-751: joint evidence of the marriage, such as leases, tax returns, bank accounts and children's birth certificates",
+      "For a waiver: divorce decree, death certificate or evidence of abuse",
+      "Court records for any arrest",
+    ],
+    faqs: [
+      { q: "Does my status end when my card expires?", a: "No. Permanent residence continues, but you need a valid card as proof of status for work, travel and other purposes. You can renew within six months before the card expires." },
+      { q: "When do I file Form I-751?", a: "During the 90 days before the conditional card expires. Missing the window can end conditional status, although USCIS may accept a late filing with a written explanation of good cause." },
+      { q: "What if we divorced before filing?", a: "You can file alone with a waiver, showing that the marriage was entered in good faith." },
+      { q: "How long can I stay abroad?", a: "Trips of more than six months may raise questions, and an absence of one year or more without a reentry permit generally creates a presumption that residence was abandoned. Your intentions and ties to the United States also matter." },
+      { q: "What is a returning resident visa?", a: "An SB-1 visa for permanent residents who stayed abroad longer than a year, or beyond the validity of a reentry permit, for reasons outside their control. The applicant must prove that the delay was beyond their control." },
+    ],
+  },
+  {
+    slug: "students",
+    track: "relief",
+    icon: "graduation",
+    title: "Students",
+    codes: "F-1, OPT, STEM OPT",
+    summary: "Student visas, practical training, changes of status and the move from study to work.",
+    intro:
+      "The F-1 visa lets international students study full time at a school certified by the Student and Exchange Visitor Program (SEVP). Students can gain work experience through practical training, and many later move to H-1B or another status. We help students and their families with visa applications, status problems and the plan from graduation to work.",
+    newToThis:
+      "Form I-20 is the document a school issues to admit an F-1 student. The school's Designated School Official (DSO) keeps the student's record in the Student and Exchange Visitor Information System (SEVIS).",
+    whoFor: [
+      "Admitted students applying for an F-1 visa",
+      "Students in the United States changing to or from F-1 status",
+      "Graduates applying for Optional Practical Training (OPT) or the STEM OPT extension",
+      "Students who fell out of status and need reinstatement",
+    ],
+    howWeHelp: [
+      { title: "Visa and change of status", text: "We prepare visa applications and, where it makes sense, changes of status inside the United States." },
+      { title: "Practical training", text: "We review OPT and STEM OPT timing and the employer's obligations." },
+      { title: "Status problems", text: "We advise on reduced course loads, transfers, unauthorized employment and reinstatement." },
+      { title: "From study to work", text: "We plan the move to H-1B, O-1 or a green card, including the cap-gap extension that can bridge OPT and H-1B." },
+    ],
+    forms: [
+      { code: "I-20", name: "Certificate of Eligibility for Nonimmigrant Student Status" },
+      { code: "DS-160", name: "Online Nonimmigrant Visa Application" },
+      { code: "I-765", name: "Application for Employment Authorization (OPT)" },
+      { code: "I-539", name: "Application to Extend/Change Nonimmigrant Status" },
+      { code: "I-983", name: "Training Plan for STEM OPT Students" },
+    ],
+    timeline:
+      "Visa interview waits depend on the U.S. embassy or consulate. Post-completion OPT can be requested up to 90 days before the program end date and no later than 60 days after it. A change of status filed with U.S. Citizenship and Immigration Services (USCIS) commonly takes several months.",
+    checklist: [
+      "Form I-20 and SEVIS fee receipt",
+      "Passport and visa",
+      "Proof of financial support",
+      "Admission letter and transcripts",
+      "For OPT: the DSO's recommendation in SEVIS",
+      "For STEM OPT: Form I-983 signed by the employer",
+    ],
+    faqs: [
+      { q: "How many hours can I work on campus?", a: "Up to 20 hours a week while school is in session, and full time during official breaks." },
+      { q: "What is the difference between CPT and OPT?", a: "Curricular Practical Training (CPT) is work that forms part of the curriculum and is authorized by the school. Optional Practical Training (OPT) is temporary work in the field of study and requires a work permit from USCIS." },
+      { q: "How long is OPT?", a: "Up to 12 months at each degree level. Graduates in qualifying science, technology, engineering and mathematics (STEM) fields may extend it by 24 months with an employer enrolled in E-Verify." },
+      { q: "What is cap-gap?", a: "An extension of F-1 status, and often of work permission, for students whose employer filed a timely H-1B cap petition. Rules effective in January 2025 extend this protection until 1 April of the following year." },
+      { q: "Can I start school while a change of status is pending?", a: "It depends on your current status. Visitor (B-1 or B-2) status, for example, does not allow study before the change is approved." },
+      { q: "What if I fell out of status?", a: "USCIS may reinstate a student who has been out of status for less than five months, or longer in exceptional circumstances, if the violation was beyond the student's control or leaving would cause extreme hardship. Leaving and returning with a new I-20 is another route." },
     ],
   },
   {

@@ -30,7 +30,7 @@ export function TwoDoors() {
             <span className="mt-auto pt-10 font-bold text-ink">Read the guide</span>
           </Link>
           <Link href="/expertise/#professionals" className="on-dark group flex flex-col rounded-3xl bg-ink p-9 transition-colors duration-300 hover:bg-ink-raised sm:p-12">
-            <p className="eyebrow text-brass-light">Professionals, founders and employers</p>
+            <p className="eyebrow text-brass-light">Business and employment-based</p>
             <h3 className="font-serif-display mt-3 text-4xl text-paper decoration-1 underline-offset-8 group-hover:underline sm:text-5xl">
               Petitions built as arguments
             </h3>
@@ -260,7 +260,7 @@ export function BookingBand() {
         <div>
           <h2 className="font-serif-display text-4xl text-balance sm:text-6xl" data-reveal>Tell us where you are. We will show you the way forward.</h2>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-stone-dark">
-            Send your details for a free evaluation by an attorney, or book a consultation by video, phone or in person at a time that suits your time zone.
+            Send your details for a free evaluation by an attorney, or book a consultation by video or phone at a time that suits your time zone.
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
             <ButtonLink href={CTA.evaluation.href}>Request a free evaluation</ButtonLink>

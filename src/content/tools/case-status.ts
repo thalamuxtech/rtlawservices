@@ -262,6 +262,15 @@ function fromAccount(d: Obj): CaseRecord {
 const SIGNED_OUT =
   "It looks like you were not signed in to your USCIS account when this was copied. Sign in at myaccount.uscis.gov first (step 1), then open your case data again.";
 
+/** Why case data could not be read, so the tracker can say what to do next. */
+export type CaseDataProblem = "signed-out" | "not-case-data" | "uscis-error" | "no-status";
+
+export class CaseDataError extends Error {
+  constructor(readonly kind: CaseDataProblem, message: string) {
+    super(message);
+  }
+}
+
 /** Reads case data in either format. Throws with a plain message if it cannot. */
 export function parseCase(input: unknown): CaseRecord {
   let root = input;
@@ -272,19 +281,22 @@ export function parseCase(input: unknown): CaseRecord {
     try {
       root = JSON.parse(json || text);
     } catch {
-      if (/(sign[ -]?in|log[ -]?in|session|password|unauthori[sz]ed|access denied)/i.test(text)) throw new Error(SIGNED_OUT);
-      throw new Error("This is not case data. On the USCIS case data page, select all the text, copy it, and try again.");
+      if (/(sign[ -]?in|log[ -]?in|session|password|unauthori[sz]ed|access denied)/i.test(text)) throw new CaseDataError("signed-out", SIGNED_OUT);
+      throw new CaseDataError("not-case-data", "This is not case data. On the USCIS case data page, select all the text, copy it, and try again.");
     }
   }
-  if (!isObj(root)) throw new Error("This does not look like case data.");
+  if (!isObj(root)) throw new CaseDataError("not-case-data", "This does not look like case data.");
   // USCIS answers with an error object when the person is signed out or the case is not theirs.
   const err = !isObj(root.data) && !isObj(root.case_status) ? first(root, ["error", "message", "error_description"]) ?? (Array.isArray(root.errors) && isObj(root.errors[0]) ? first(root.errors[0], ["message"]) : undefined) : undefined;
-  if (err) throw new Error(/(auth|sign|log|session|token|forbidden|401|403)/i.test(err) ? SIGNED_OUT : `USCIS answered: "${err}". Check the receipt number and that you are signed in to the account that filed it.`);
+  if (err) {
+    if (/(auth|sign|log|session|token|forbidden|401|403)/i.test(err)) throw new CaseDataError("signed-out", SIGNED_OUT);
+    throw new CaseDataError("uscis-error", `USCIS answered: "${err}". Check the receipt number and that you are signed in to the account that filed it.`);
+  }
   if (isObj(root.case_status)) return fromApi(root.case_status);
   const data = isObj(root.data) ? root.data : root;
   if (Array.isArray(data.events) || Array.isArray(data.notices)) return fromAccount(data);
   if ("current_case_status_text_en" in data || "hist_case_status" in data) return fromApi(data);
-  throw new Error("No case status was found in this data. Paste the full response, starting with the first curly bracket.");
+  throw new CaseDataError("no-status", "No case status was found in this data. Paste the full response, starting with the first curly bracket.");
 }
 
 /** Sorts a status message into a tone, used only for colour and wording. */

@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 import { CTA } from "@/content/site";
 import { CATEGORIES, type Category } from "@/content/tools/case-events";
+import { QueueInsight } from "./QueueInsight";
 import { CARD_FORMS, caseTone, daysBetween, formName, receiptOffice, stageOf, type CaseRecord, type HistoryItem, type Tone } from "@/content/tools/case-status";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -244,18 +245,35 @@ export function CaseResult({ record: c, raw, sample, zone, onClose }: { record: 
 
       {/* Progress */}
       <Card title="Adjudication progress" icon={CircleDashed} aside="Estimated from the recorded events, not an official USCIS stage.">
-        <ol className="relative mt-4 grid gap-3" style={{ gridTemplateColumns: `repeat(${a.milestones.length}, minmax(0, 1fr))` }}>
-          <div aria-hidden className="absolute left-[8%] right-[8%] top-5 h-0.5 bg-line" />
+        {/* A vertical list on phones, one row of steps from the sm breakpoint up. */}
+        <ol
+          className="relative mt-4 grid gap-4 sm:grid-cols-[repeat(var(--steps),minmax(0,1fr))] sm:gap-3"
+          style={{ "--steps": a.milestones.length } as React.CSSProperties}
+        >
+          <div aria-hidden className="absolute left-[8%] right-[8%] top-5 hidden h-0.5 bg-line sm:block" />
           <motion.div
             aria-hidden
             initial={{ scaleX: 0 }}
             animate={{ scaleX: Math.max(0, doneCount - 1) / Math.max(1, a.milestones.length - 1) }}
             transition={{ duration: 1.1, ease, delay: 0.2 }}
             style={{ originX: 0 }}
-            className="absolute left-[8%] right-[8%] top-5 h-0.5 bg-brass"
+            className="absolute left-[8%] right-[8%] top-5 hidden h-0.5 bg-brass sm:block"
+          />
+          <div aria-hidden className="absolute bottom-5 left-5 top-5 w-0.5 -translate-x-1/2 bg-line sm:hidden" />
+          <motion.div
+            aria-hidden
+            initial={{ scaleY: 0 }}
+            animate={{ scaleY: Math.max(0, doneCount - 1) / Math.max(1, a.milestones.length - 1) }}
+            transition={{ duration: 1.1, ease, delay: 0.2 }}
+            style={{ originY: 0 }}
+            className="absolute bottom-5 left-5 top-5 w-0.5 -translate-x-1/2 bg-brass sm:hidden"
           />
           {a.milestones.map((m, i) => (
-            <li key={m.label} className="relative grid justify-items-center gap-2 text-center" aria-current={m.state === "current" ? "step" : undefined}>
+            <li
+              key={m.label}
+              className="relative grid grid-cols-[2.5rem_1fr] items-center gap-x-4 text-left sm:grid-cols-1 sm:justify-items-center sm:gap-2 sm:text-center"
+              aria-current={m.state === "current" ? "step" : undefined}
+            >
               <motion.span
                 initial={{ scale: 0.6, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -268,8 +286,10 @@ export function CaseResult({ record: c, raw, sample, zone, onClose }: { record: 
                 {m.state === "done" ? <Check aria-hidden className="size-4" /> : m.state === "skipped" ? "–" : i + 1}
                 {m.state === "current" && <span aria-hidden className="absolute inset-0 animate-ping rounded-full border-2 border-brass/50" />}
               </motion.span>
-              <span className={cn("text-xs font-bold sm:text-sm", m.state === "todo" ? "text-stone" : "text-ink")}>{m.label}</span>
-              <span className="text-[0.7rem] leading-tight text-stone sm:text-xs">{m.note ?? (m.date ? d(m.date, false) : m.state === "current" ? "Next" : "")}</span>
+              <span className="grid gap-0.5 sm:contents">
+                <span className={cn("text-sm font-bold", m.state === "todo" ? "text-stone" : "text-ink")}>{m.label}</span>
+                <span className="text-xs leading-tight text-stone">{m.note ?? (m.date ? d(m.date, false) : m.state === "current" ? "Next" : "")}</span>
+              </span>
             </li>
           ))}
         </ol>
@@ -281,6 +301,10 @@ export function CaseResult({ record: c, raw, sample, zone, onClose }: { record: 
           </p>
         )}
       </Card>
+
+      {/* National figures and the place-in-line estimate. A closed case with no
+          recorded decision is treated as finished at its last update. */}
+      <QueueInsight form={c.formType} filed={c.submitted} decided={a.decisionDate ?? (c.closed ? a.lastChange : undefined)} now={now} />
 
       {/* Summary */}
       <div className="on-dark relative overflow-hidden rounded-[2rem] bg-ink p-6 text-paper sm:p-10">

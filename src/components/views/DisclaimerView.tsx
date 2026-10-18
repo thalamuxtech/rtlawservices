@@ -9,7 +9,7 @@ export function DisclaimerView() {
   return (
     <InfoPage title="Disclaimer" lede="Please read this notice before relying on information on this website." crumb="Disclaimer" parent={{ label: "Legal", href: "/legal/disclaimer/" }}>
       <h2>Attorney advertising</h2>
-      <p>This website may be considered attorney advertising under the rules of professional conduct that apply to lawyers in Maryland and other jurisdictions.</p>
+      <p>This website may be considered attorney advertising under the rules of professional conduct that apply in the jurisdictions where our attorneys are admitted.</p>
       <h2>No legal advice</h2>
       <p>The content of this website is general information. It is not legal advice for any individual case and may not reflect the most recent changes in law or policy. Do not act on it without advice from a lawyer about your own situation.</p>
       <h2>No attorney-client relationship</h2>

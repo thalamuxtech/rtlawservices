@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Mail, MapPin, Phone } from "lucide-react";
+import { Clock, Globe2, Mail, Phone } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { ButtonLink, Container } from "@/components/ui/primitives";
@@ -12,7 +12,7 @@ export function ContactView() {
   const items = [
     { icon: Phone, label: "Phone", value: SITE.phone, href: SITE.phoneHref },
     { icon: Mail, label: "Email", value: SITE.email, href: `mailto:${SITE.email}` },
-    { icon: MapPin, label: "Office", value: SITE.location },
+    { icon: Globe2, label: "Where we work", value: "Clients across the United States and abroad, by video or phone" },
   ];
   return (
     <>

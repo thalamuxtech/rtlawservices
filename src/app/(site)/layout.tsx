@@ -14,7 +14,7 @@ const jsonLd = {
   url: SITE.url,
   telephone: SITE.phone,
   email: SITE.email,
-  areaServed: [{ "@type": "State", name: "Maryland" }, { "@type": "Country", name: "United States" }],
+  areaServed: [{ "@type": "Country", name: "United States" }],
   knowsAbout: ["Immigration law", "Family-based immigration", "Naturalization", "Employment-based immigration", "Estate planning"],
   openingHours: ["Mo-Fr 09:00-17:00", "Sa 10:00-14:00"],
 };

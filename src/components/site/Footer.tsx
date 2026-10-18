@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Lock, Mail, MapPin, Phone } from "lucide-react";
+import { Lock, Mail, Phone } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { useContent } from "@/content/LiveContent";
 import { NO_RELATIONSHIP } from "@/content/site";
@@ -11,7 +11,8 @@ export function Footer() {
   const year = new Date().getFullYear();
   const cols = [
     { title: "Individuals", links: byTrack("individuals").map((e) => ({ label: e.title, href: `/expertise/${e.slug}/` })) },
-    { title: "Professionals", links: byTrack("professionals").map((e) => ({ label: e.title, href: `/expertise/${e.slug}/` })) },
+    { title: "Business and employment", links: byTrack("professionals").map((e) => ({ label: e.title, href: `/expertise/${e.slug}/` })) },
+    { title: "Relief and services", links: [...byTrack("relief"), ...byTrack("other")].map((e) => ({ label: e.title, href: `/expertise/${e.slug}/` })) },
     {
       title: "Firm",
       links: [
@@ -39,7 +40,7 @@ export function Footer() {
             {/* The tagline is edited in the back office (Page text, Firm details). */}
             <p className="font-serif-display mt-6 max-w-sm text-xl text-paper">{SITE.tagline}</p>
             <p className="mt-3 max-w-sm leading-relaxed">
-              Immigration counsel from Maryland for families, professionals and employers across the United States.
+              Immigration counsel for families, professionals and employers across the United States and abroad.
             </p>
             <ul className="mt-8 grid gap-3 text-[0.95rem]">
               <li>
@@ -52,12 +53,9 @@ export function Footer() {
                   <Mail aria-hidden className="size-4 text-brass" /> {SITE.email}
                 </a>
               </li>
-              <li className="flex items-center gap-3">
-                <MapPin aria-hidden className="size-4 text-brass" /> {SITE.location}
-              </li>
             </ul>
           </div>
-          <div className="grid gap-10 sm:grid-cols-3">
+          <div className="grid gap-10 sm:grid-cols-2 xl:grid-cols-4">
             {cols.map((c) => (
               <div key={c.title}>
                 <p className="eyebrow mb-4 text-brass-light">{c.title}</p>
@@ -84,7 +82,7 @@ export function Footer() {
             </p>
             <p>
               Responsible attorney:{" "}
-              {SITE.responsibleAttorney}. Office: {SITE.region}.
+              {SITE.responsibleAttorney}.
             </p>
           </div>
           <div className="flex flex-wrap items-start gap-x-6 gap-y-2 lg:justify-end">

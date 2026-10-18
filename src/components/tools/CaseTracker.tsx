@@ -3,13 +3,14 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  AlertTriangle, ArrowRight, Bookmark, BookOpen, Building2, Check, ChevronDown, ClipboardPaste, Clock, ExternalLink,
-  Loader2, Lock, Search, ShieldCheck, Sparkles, Trash2, Upload, X,
+  AlertTriangle, ArrowRight, Bookmark, BookOpen, Building2, Check, CheckCircle2, ChevronDown, ClipboardPaste, Clock, ExternalLink,
+  Loader2, Lock, LogIn, RefreshCw, Search, ShieldCheck, Sparkles, Trash2, Upload, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CASE_STATUS_RELAY } from "@/content/site";
-import { caseTone, normalizeReceipt, parseCase, RECEIPT, receiptOffice, SAMPLE, SAMPLE_ACCOUNT, type CaseRecord, type Tone } from "@/content/tools/case-status";
+import { CaseDataError, caseTone, normalizeReceipt, parseCase, RECEIPT, receiptOffice, SAMPLE, SAMPLE_ACCOUNT, type CaseRecord, type Tone } from "@/content/tools/case-status";
 import { CaseResult, TONE } from "./CaseResult";
+import { UscisInsights } from "./UscisInsights";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const STORE = "rt-tracked-cases";
@@ -30,6 +31,17 @@ const ZONES = [
 
 
 type Saved = { receipt: string; form?: string; status?: string; tone: Tone; checked: number; record: unknown };
+
+/**
+ * Where the hand-over from the USCIS website stands. "waiting" starts when the
+ * visitor opens their case data on USCIS; the other phases describe what was
+ * found on the clipboard when they came back.
+ */
+type Handoff =
+  | { phase: "idle" }
+  | { phase: "waiting"; expected?: string }
+  | { phase: "signed-out" | "not-data" | "uscis-error"; expected?: string; message: string }
+  | { phase: "done"; expected?: string; receipt: string };
 
 const stepBtn =
   "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-brass/60 px-5 font-bold text-brass-light transition-colors hover:bg-brass hover:text-ink";
@@ -86,6 +98,8 @@ export function CaseTracker() {
   const [zone, setZone] = useState("");
   const [saved, setSaved] = useState<Saved[]>([]);
   const [manual, setManual] = useState(false);
+  const [handoff, setHandoff] = useState<Handoff>({ phase: "idle" });
+  const lastText = useRef("");
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -133,27 +147,50 @@ export function CaseTracker() {
     }
   };
 
-  const analyze = (text = pasted) => {
+  /**
+   * Reads case data and reports the outcome. Text from the clipboard updates
+   * the hand-over panel; text typed into the box also shows the error there.
+   */
+  const analyze = (text = pasted, from: "clipboard" | "box" = "box") => {
+    lastText.current = text;
+    const expected = handoff.phase === "idle" ? undefined : handoff.expected;
     try {
       const record = parseCase(text);
       display(record, JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)));
+      setHandoff({ phase: "done", expected, receipt: record.receiptNumber });
     } catch (e) {
-      setManual(true);
-      setPasted(text);
-      setError(e instanceof Error ? e.message : "This data could not be read.");
+      const kind = e instanceof CaseDataError ? e.kind : "not-case-data";
+      const message = e instanceof Error ? e.message : "This data could not be read.";
+      setHandoff({ phase: kind === "signed-out" ? "signed-out" : kind === "uscis-error" ? "uscis-error" : "not-data", expected, message });
+      if (from === "box") {
+        setManual(true);
+        setPasted(text);
+        setError(message);
+      }
     }
   };
 
   // Reads what the visitor copied on the USCIS page, in one click.
   const pasteClipboard = async () => {
+    setError("");
     try {
       const text = await navigator.clipboard.readText();
-      if (!text.trim()) return setError("Your clipboard is empty. On the USCIS case data page, select all the text and copy it first.");
-      analyze(text);
+      if (!text.trim()) {
+        const expected = handoff.phase === "idle" ? undefined : handoff.expected;
+        return setHandoff({ phase: "not-data", expected, message: "Your clipboard is empty. On the USCIS case data page, select all the text and copy it first." });
+      }
+      analyze(text, "clipboard");
     } catch {
       setManual(true);
       setError("Your browser did not let this page read the clipboard. Paste into the box below instead: Ctrl+V on a computer, or press and hold, then Paste, on a phone.");
     }
+  };
+
+  /** Called when the visitor opens their case on USCIS; this page then waits for them to come back. */
+  const startHandoff = () => {
+    setError("");
+    setMode("paste");
+    setHandoff({ phase: "waiting", expected: valid ? clean : undefined });
   };
 
   // Keeps the latest analyze for listeners added once.
@@ -162,13 +199,38 @@ export function CaseTracker() {
     analyzeRef.current = analyze;
   });
 
+  // When the visitor returns from the USCIS tab, read the clipboard by itself if
+  // the browser already allows it (Chrome and Edge remember the permission after
+  // the first click). Otherwise the panel offers a single button.
+  const waiting = handoff.phase !== "idle" && handoff.phase !== "done";
+  useEffect(() => {
+    if (!waiting) return;
+    const check = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const status = await navigator.permissions.query({ name: "clipboard-read" as PermissionName });
+        if (status.state !== "granted") return;
+        const text = await navigator.clipboard.readText();
+        if (text.trim() && text !== lastText.current) analyzeRef.current(text, "clipboard");
+      } catch {
+        // Browsers without this permission use the button instead.
+      }
+    };
+    document.addEventListener("visibilitychange", check);
+    window.addEventListener("focus", check);
+    return () => {
+      document.removeEventListener("visibilitychange", check);
+      window.removeEventListener("focus", check);
+    };
+  }, [waiting]);
+
   useEffect(() => {
     // Ctrl+V anywhere on the account tab reads the case at once.
     const onPaste = (e: ClipboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (mode !== "paste" || target?.closest("input, textarea")) return;
       const text = e.clipboardData?.getData("text") ?? "";
-      if (text.trim()) analyzeRef.current(text);
+      if (text.trim()) analyzeRef.current(text, "clipboard");
     };
     // The one-click reader sends case data from the USCIS site to this page.
     const onMessage = (e: MessageEvent) => {
@@ -177,7 +239,7 @@ export function CaseTracker() {
       if (msg?.type !== "rt-case-data" || typeof msg.data !== "string") return;
       (e.source as Window | null)?.postMessage("rt-case-ack", e.origin);
       setMode("paste");
-      analyzeRef.current(msg.data);
+      analyzeRef.current(msg.data, "clipboard");
     };
     document.addEventListener("paste", onPaste);
     window.addEventListener("message", onMessage);
@@ -205,17 +267,17 @@ export function CaseTracker() {
   const accountUrl = valid ? `https://my.uscis.gov/account/case-service/api/cases/${clean}` : "";
 
   return (
-    <div className="grid gap-12">
+    <div className="grid min-w-0 gap-12 [&>*]:min-w-0">
       {/* Input */}
       <div className="on-dark relative overflow-hidden rounded-[2rem] bg-ink p-6 text-paper shadow-[0_50px_120px_-50px_rgba(20,24,31,0.7)] sm:p-10">
         <div aria-hidden className="grain absolute inset-0" />
         <div aria-hidden className="absolute -right-32 -top-32 size-[460px] rounded-full bg-[radial-gradient(circle,rgba(177,151,107,0.22),transparent_65%)]" />
         <div className="relative">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div role="tablist" aria-label="How to check" className="inline-grid grid-cols-2 rounded-full border border-line-dark bg-ink-raised/80 p-1">
+            <div role="tablist" aria-label="How to check" className="grid w-full grid-cols-2 rounded-full sm:inline-grid sm:w-auto border border-line-dark bg-ink-raised/80 p-1">
               {[
-                { id: "lookup" as const, label: "Receipt number", icon: Search },
-                { id: "paste" as const, label: "From my USCIS account", icon: ClipboardPaste },
+                { id: "lookup" as const, label: "Receipt number", short: "Receipt", icon: Search },
+                { id: "paste" as const, label: "From my USCIS account", short: "USCIS account", icon: ClipboardPaste },
               ].map((t) => (
                 <button
                   key={t.id}
@@ -226,18 +288,19 @@ export function CaseTracker() {
                     setMode(t.id);
                     setError("");
                   }}
-                  className={cn("relative inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold transition-colors sm:px-6", mode === t.id ? "text-ink" : "text-stone-dark hover:text-paper")}
+                  className={cn("relative inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-3 text-sm font-bold whitespace-nowrap transition-colors sm:px-6", mode === t.id ? "text-ink" : "text-stone-dark hover:text-paper")}
                 >
                   {mode === t.id && <motion.span layoutId="tracker-tab" className="absolute inset-0 rounded-full bg-brass" transition={{ type: "spring", stiffness: 380, damping: 34 }} />}
                   <t.icon aria-hidden className="relative size-4" />
-                  <span className="relative">{t.label}</span>
+                  <span className="relative sm:hidden">{t.short}</span>
+                  <span className="relative hidden sm:inline">{t.label}</span>
                 </button>
               ))}
             </div>
-            <label className="flex items-center gap-2 text-sm text-stone-dark">
+            <label className="flex w-full min-w-0 items-center gap-2 text-sm text-stone-dark sm:w-auto">
               <Clock aria-hidden className="size-4 text-brass-light" />
               <span className="sr-only sm:not-sr-only">Show times in</span>
-              <select value={zone} onChange={(e) => setZone(e.target.value)} className="min-h-11 rounded-full border border-line-dark bg-ink-raised px-4 text-paper focus:border-brass focus:outline-none">
+              <select value={zone} onChange={(e) => setZone(e.target.value)} className="min-h-11 w-full min-w-0 rounded-full border sm:w-auto border-line-dark bg-ink-raised px-4 text-paper focus:border-brass focus:outline-none">
                 {ZONES.map((z) => (
                   <option key={z.id} value={z.id}>{z.label}</option>
                 ))}
@@ -290,9 +353,8 @@ export function CaseTracker() {
                             e.preventDefault();
                             return setError("Enter a 13-character receipt number: three letters followed by ten digits.");
                           }
-                          // The USCIS page opens in a new tab; this page moves to the last step.
-                          setError("");
-                          setMode("paste");
+                          // The USCIS page opens in a new tab; this page waits for the visitor to come back.
+                          startHandoff();
                         }}
                         className="inline-flex min-h-16 items-center justify-center gap-2 rounded-2xl bg-brass px-8 font-bold text-ink transition-colors hover:bg-brass-light"
                       >
@@ -325,6 +387,13 @@ export function CaseTracker() {
               </motion.div>
             ) : (
               <motion.div key="paste" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.35, ease }} className="mt-10">
+                <HandoffPanel
+                  state={handoff}
+                  onRead={pasteClipboard}
+                  accountUrl={handoff.phase !== "idle" && handoff.expected ? `https://my.uscis.gov/account/case-service/api/cases/${handoff.expected}` : accountUrl}
+                  onView={() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                  onDismiss={() => setHandoff({ phase: "idle" })}
+                />
                 <ol className="grid gap-4 lg:grid-cols-3">
                   <Step n={1} title="Sign in to USCIS" text="Use the account that filed the case, in this same browser.">
                     <a href="https://myaccount.uscis.gov/sign-in" target="_blank" rel="noopener noreferrer" className={stepBtn}>
@@ -349,7 +418,7 @@ export function CaseTracker() {
                         rel="noopener noreferrer"
                         aria-disabled={!valid}
                         onClick={(e) => {
-                          if (valid) return;
+                          if (valid) return startHandoff();
                           e.preventDefault();
                           setError("Enter a 13-character receipt number first: three letters followed by ten digits.");
                         }}
@@ -471,8 +540,115 @@ export function CaseTracker() {
         </AnimatePresence>
       </div>
 
+      <UscisInsights />
+
       <Disclaimer />
     </div>
+  );
+}
+
+const signInUrl = "https://myaccount.uscis.gov/sign-in";
+
+function HandoffPanel({
+  state, onRead, accountUrl, onView, onDismiss,
+}: { state: Handoff; onRead: () => void; accountUrl: string; onView: () => void; onDismiss: () => void }) {
+  if (state.phase === "idle") return null;
+  const tone =
+    state.phase === "done" ? "border-success/60 bg-success/15" : state.phase === "waiting" ? "border-brass/50 bg-ink-raised/80" : "border-[#c8642a]/60 bg-[#c8642a]/10";
+  const again = accountUrl ? (
+    <a href={accountUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line-dark px-5 text-sm font-bold text-paper hover:border-brass-light">
+      Open my case data again <ExternalLink aria-hidden className="size-4" />
+    </a>
+  ) : null;
+  return (
+    <motion.div
+      key={state.phase}
+      role="status"
+      aria-live="polite"
+      initial={{ opacity: 0, y: -8, scale: 0.99 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.35, ease }}
+      className={cn("relative mb-6 overflow-hidden rounded-2xl border p-5 sm:p-6", tone)}
+    >
+      <button type="button" onClick={onDismiss} aria-label="Dismiss" className="absolute right-2 top-2 grid size-10 place-items-center rounded-full text-stone-dark hover:text-paper">
+        <X aria-hidden className="size-4" />
+      </button>
+
+      {state.phase === "waiting" && (
+        <div className="flex flex-wrap items-center gap-5 pr-8">
+          <span aria-hidden className="relative grid size-12 shrink-0 place-items-center rounded-full bg-brass/20">
+            <span className="absolute inset-0 animate-ping rounded-full bg-brass/25" />
+            <ClipboardPaste className="relative size-5 text-brass-light" />
+          </span>
+          <div className="min-w-[220px] flex-1">
+            <p className="font-bold text-paper">
+              Waiting for your case{state.expected ? <> <span className="font-mono tracking-wider text-brass-light">{state.expected}</span></> : null}
+            </p>
+            <p className="mt-1 text-sm text-stone-dark">
+              In the USCIS tab, select all and copy (Ctrl+A, then Ctrl+C). Come back and press the button. Once your browser allows it, this page checks by itself
+              when you return.
+            </p>
+          </div>
+          <button type="button" onClick={onRead} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brass px-6 font-bold text-ink hover:bg-brass-light">
+            <ClipboardPaste aria-hidden className="size-4" /> Show my case
+          </button>
+        </div>
+      )}
+
+      {state.phase === "signed-out" && (
+        <div className="grid gap-4 pr-8">
+          <p className="flex items-center gap-2 font-bold text-paper">
+            <LogIn aria-hidden className="size-5 text-[#f0b48c]" /> You are not signed in to USCIS
+          </p>
+          <p className="text-sm text-stone-dark">
+            What you copied is the USCIS sign-in page, not your case. Sign in with the account that filed the case, in this same browser, then open your case
+            data again and copy it.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <a href={signInUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-brass px-5 text-sm font-bold text-ink hover:bg-brass-light">
+              Sign in to USCIS <ExternalLink aria-hidden className="size-4" />
+            </a>
+            {again}
+            <button type="button" onClick={onRead} className="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-bold text-stone-dark hover:text-paper">
+              <RefreshCw aria-hidden className="size-4" /> Check again
+            </button>
+          </div>
+        </div>
+      )}
+
+      {(state.phase === "not-data" || state.phase === "uscis-error") && (
+        <div className="grid gap-4 pr-8">
+          <p className="flex items-center gap-2 font-bold text-paper">
+            <AlertTriangle aria-hidden className="size-5 text-[#f0b48c]" />
+            {state.phase === "uscis-error" ? "USCIS did not return this case" : "Your case has not been copied yet"}
+          </p>
+          <p className="text-sm text-stone-dark">{state.message}</p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={onRead} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-brass px-5 text-sm font-bold text-ink hover:bg-brass-light">
+              <RefreshCw aria-hidden className="size-4" /> Check again
+            </button>
+            {again}
+          </div>
+        </div>
+      )}
+
+      {state.phase === "done" && (
+        <div className="flex flex-wrap items-center gap-5 pr-8">
+          <CheckCircle2 aria-hidden className="size-8 shrink-0 text-[#8fd3b0]" />
+          <div className="min-w-[220px] flex-1">
+            <p className="font-bold text-paper">Case copied. All status details are shown below.</p>
+            <p className="mt-1 text-sm text-stone-dark">
+              {state.expected && state.receipt && state.expected !== state.receipt
+                ? `Note: the copied case is ${state.receipt}, not ${state.expected}. Check that you opened the right case.`
+                : "Status, full history, notices and how your case compares with national figures."}
+            </p>
+          </div>
+          <button type="button" onClick={onView} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-paper px-6 font-bold text-ink hover:bg-brass-light">
+            View my case <ArrowRight aria-hidden className="size-4" />
+          </button>
+        </div>
+      )}
+    </motion.div>
   );
 }
 
@@ -536,6 +712,11 @@ function Disclaimer() {
             paste in. USCIS may update its records later than events happen, and its messages can be brief, delayed or incomplete. Descriptions of status
             codes come from the published National Information Exchange Model (NIEM) code list and may not reflect how USCIS uses a code in a given case.
             The progress stage and day counts are estimates drawn from those messages and do not predict when USCIS will decide your case.
+          </p>
+          <p>
+            <strong className="text-ink">National figures and estimates.</strong> Pending counts, approvals, denials and median times come from the quarterly
+            reports USCIS publishes for each form. The place in line and months left are estimates from a simple model of those national totals. USCIS does not
+            publish an individual case&rsquo;s position, and these estimates are not a USCIS figure or a promise of timing.
           </p>
         </div>
         <div className="grid gap-4">

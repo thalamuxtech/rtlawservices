@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import type { Timestamp } from "firebase/firestore";
 import { ArrowLeft, CalendarCheck, CalendarPlus, Check, Loader2, Phone, Video, Building2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/primitives";
+import { TRACK_LABELS } from "@/content/expertise";
 import { NO_RELATIONSHIP } from "@/content/site";
 import { useContent } from "@/content/LiveContent";
 import { store } from "@/lib/store";
@@ -15,6 +16,14 @@ import { cn, focusStep } from "@/lib/utils";
 const noopSubscribe = () => () => {};
 const STEPS = ["Matter", "Format", "Time", "Details", "Review"] as const;
 const MODE_ICONS = { video: Video, phone: Phone, office: Building2 };
+
+// Matters are listed in the same groups as the Expertise menu, so a long list stays easy to scan on a phone.
+const MATTER_GROUPS = [
+  { track: "individuals", label: TRACK_LABELS.individuals },
+  { track: "professionals", label: TRACK_LABELS.professionals },
+  { track: "relief", label: TRACK_LABELS.relief },
+  { track: "other", label: "Wills, trusts and general questions" },
+] as const;
 
 type Details = {
   name: string; email: string; phone: string; country: string; language: string; otherParties: string; notes: string; source: string;
@@ -235,33 +244,42 @@ export function BookingFlow() {
               {step === 0 && (
                 <fieldset>
                   <legend className="font-serif-display text-3xl text-ink sm:text-4xl">What would you like to discuss?</legend>
-                  <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                    {matters.map((m) => (
-                      <label
-                        key={m.id}
-                        className={cn(
-                          "flex min-h-16 items-center justify-between gap-4 rounded-2xl border bg-white p-4 transition-colors duration-300 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ink",
-                          matter === m.id ? "border-ink shadow-[inset_0_0_0_1px_var(--color-ink)]" : "border-line hover:border-ink/40",
-                        )}
-                      >
-                        <input type="radio" name="matter" value={m.id} checked={matter === m.id} onChange={() => setMatter(m.id)} className="sr-only" />
-                        <span>
-                          <span className="block font-bold text-ink">{m.label}</span>
-                          <span className="block text-xs font-bold text-stone">{m.codes}</span>
-                        </span>
-                        <span className={cn("grid size-6 shrink-0 place-items-center rounded-full border", matter === m.id ? "border-ink bg-ink text-paper" : "border-line")}>
-                          {matter === m.id && <Check aria-hidden className="size-3.5" />}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
+                  {MATTER_GROUPS.map((g) => {
+                    const list = matters.filter((m) => m.track === g.track);
+                    if (!list.length) return null;
+                    return (
+                      <div key={g.track} className="mt-8">
+                        <p className="eyebrow mb-3 text-brass-ink">{g.label}</p>
+                        <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
+                          {list.map((m) => (
+                            <label
+                              key={m.id}
+                              className={cn(
+                                "flex min-h-14 items-center justify-between gap-4 rounded-2xl border bg-white p-3.5 transition-colors duration-300 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ink sm:min-h-16 sm:p-4",
+                                matter === m.id ? "border-ink shadow-[inset_0_0_0_1px_var(--color-ink)]" : "border-line hover:border-ink/40",
+                              )}
+                            >
+                              <input type="radio" name="matter" value={m.id} checked={matter === m.id} onChange={() => setMatter(m.id)} className="sr-only" />
+                              <span>
+                                <span className="block font-bold text-ink">{m.label}</span>
+                                <span className="block text-xs font-bold text-stone">{m.codes}</span>
+                              </span>
+                              <span className={cn("grid size-6 shrink-0 place-items-center rounded-full border", matter === m.id ? "border-ink bg-ink text-paper" : "border-line")}>
+                                {matter === m.id && <Check aria-hidden className="size-3.5" />}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </fieldset>
               )}
 
               {step === 1 && (
                 <fieldset>
                   <legend className="font-serif-display text-3xl text-ink sm:text-4xl">How would you like to meet?</legend>
-                  <div className="mt-8 grid gap-3 sm:grid-cols-3">
+                  <div className="mt-8 grid gap-3 sm:grid-cols-2">
                     {MODES.map((m) => {
                       const Icon = MODE_ICONS[m.id];
                       return (
@@ -291,7 +309,7 @@ export function BookingFlow() {
                   <h2 className="font-serif-display text-3xl text-ink sm:text-4xl">Choose a time</h2>
                   <p className="mt-3 text-stone">
                     Times shown in your time zone: <strong className="text-ink">{tzLabel(tz)}</strong>
-                    {tz !== FIRM_TZ && <> (our office uses Eastern Time)</>}.
+                    {tz !== FIRM_TZ && <> (our schedule runs on Eastern Time)</>}.
                   </p>
                   {submitError && <p role="alert" className="mt-4 rounded-xl bg-danger/10 p-4 text-sm font-bold text-danger">{submitError}</p>}
                   <div className="mt-8 -mx-1 flex gap-2 overflow-x-auto px-1 pb-3" role="group" aria-label="Available days">
@@ -406,7 +424,7 @@ export function BookingFlow() {
                       ["Matter", matterInfo?.label],
                       ["Format", `${MODES.find((m) => m.id === mode)?.label}, ${duration} minutes`],
                       ["When", `${fmtDayLong(day)} at ${fmtTime(slot, tz)} (${tzLabel(tz, slot)})`],
-                      ...(tz !== FIRM_TZ ? [["Office time", `${fmtTime(slot, FIRM_TZ)} Eastern Time`]] : []),
+                      ...(tz !== FIRM_TZ ? [["Firm time", `${fmtTime(slot, FIRM_TZ)} Eastern Time`]] : []),
                       ["Attorney", attorneyName ?? "Assigned by the firm"],
                       ["Name", details.name],
                       ["Email", details.email],

@@ -24,7 +24,7 @@ export function AttorneysView() {
           <div className="mt-14 max-w-3xl rounded-2xl border border-line bg-mist p-6 text-sm leading-relaxed text-stone">
             <strong className="text-ink">About admissions.</strong> Immigration law is federal, so an attorney admitted in
             any U.S. state may represent clients before U.S. Citizenship and Immigration Services (USCIS) nationwide.
-            Attorneys not admitted in Maryland limit their practice to federal immigration law, and each profile says so.
+            Where an attorney&rsquo;s practice is limited to federal immigration law, the profile says so.
           </div>
         </Container>
       </section>

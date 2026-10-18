@@ -2,6 +2,7 @@
 // these defaults, so a new phone number changes in one place. deriveSite runs at
 // build time and again in the browser when newer content is published.
 
+import { BASE_EXPERTISE } from "./expertise";
 import { ATTORNEYS, CASES, LIVE_SITE } from "./live";
 import { PAGES, type Pages } from "./pages";
 import type { Attorney, CaseResult, SiteSettings } from "./types";
@@ -28,8 +29,6 @@ export function deriveSite(LIVE_SITE: Partial<SiteSettings>, ATTORNEYS: Attorney
     phone,
     phoneHref: `tel:${phone.replace(/[^\d+]/g, "")}`,
     email: LIVE_SITE.email || "clientservice@rtlawservices.com",
-    location: LIVE_SITE.location || "Maryland, serving clients nationwide",
-    region: "Maryland",
     hours: LIVE_SITE.hours?.length
       ? LIVE_SITE.hours
       : [
@@ -51,7 +50,7 @@ export function deriveSite(LIVE_SITE: Partial<SiteSettings>, ATTORNEYS: Attorney
       ? LIVE_SITE.stats
       : [
           { value: new Date().getFullYear() - 2015, suffix: "+", label: "Years serving families across borders, since RT began in 2015" },
-          { value: 12, label: "Practice guides covering family, professional and estate matters" },
+          { value: BASE_EXPERTISE.length, label: "Practice guides covering family, business, humanitarian and estate matters" },
           { value: 1, label: "Business day target to answer a free evaluation request" },
         ],
   };

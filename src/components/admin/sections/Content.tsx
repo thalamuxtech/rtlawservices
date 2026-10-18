@@ -381,7 +381,7 @@ function Editor({ kind, r, set }: { kind: Kind; r: Row; set: (p: Partial<Row>) =
       </div>
       <TextIn label="Title" value={r.title} onChange={(v) => set({ title: v, ...(r.id ? {} : { slug: slugify(v) }) })} />
       <div className="grid gap-4 sm:grid-cols-2">
-        <SelectIn label="Track" value={r.track} onChange={(v) => set({ track: v })} options={[{ value: "individuals", label: "Individuals and families" }, { value: "professionals", label: "Professionals and employers" }]} />
+        <SelectIn label="Track" value={r.track} onChange={(v) => set({ track: v })} options={[{ value: "individuals", label: "Individuals and families" }, { value: "professionals", label: "Business and employment-based" }]} />
         <SelectIn label="Practice area" value={r.expertise} onChange={(v) => set({ expertise: v })} options={EXPERTISE_OPTIONS} />
         <TextIn label="Category label" value={r.category} onChange={(v) => set({ category: v })} />
         <TextIn label="Year of decision" type="number" value={r.year} onChange={(v) => set({ year: Number(v) })} />

@@ -8,7 +8,7 @@ import { ChevronDown, Menu, Phone, X } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { ButtonLink } from "@/components/ui/primitives";
 import { EXPERTISE_ICONS } from "@/components/ui/icons";
-import type { Expertise } from "@/content/expertise";
+import { TRACK_LABELS, type Expertise } from "@/content/expertise";
 import { useContent } from "@/content/LiveContent";
 import { CTA, type NavGroup } from "@/content/site";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,8 @@ export function Header() {
   const { SITE, NAV, byTrack } = useContent();
   const individuals = byTrack("individuals");
   const professionals = byTrack("professionals");
+  const relief = byTrack("relief");
+  const planning = byTrack("other");
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   // Menus are keyed to the route they were opened on, so navigating closes them.
@@ -60,7 +62,7 @@ export function Header() {
     <header className="sticky top-0 z-40">
       <div className="hidden bg-ink text-[0.8rem] text-stone-dark md:block">
         <div className="container-luxe flex h-9 items-center justify-between">
-          <p>{SITE.announcement || "Based in Maryland. Serving clients across the United States and abroad."}</p>
+          <p>{SITE.announcement || "Immigration counsel for clients across the United States and abroad."}</p>
           <div className="flex items-center gap-6">
             {SITE.hours[0] && (
               <span>
@@ -89,12 +91,14 @@ export function Header() {
             {NAV.map((g) => {
               if (g.label === "Expertise") {
                 return (
-                  <div key={g.label} className="relative" onMouseEnter={() => enter("expertise")} onMouseLeave={leave}>
+                  // Not positioned, so the wide menu centres on the sticky header rather than on this button.
+                  <div key={g.label} onMouseEnter={() => enter("expertise")} onMouseLeave={leave}>
                     <TopButton label={g.label} open={open === "expertise"} current={groupActive(g)} onClick={() => setOpen(open === "expertise" ? null : "expertise")} controls="menu-expertise" />
                     <Dropdown id="menu-expertise" show={open === "expertise"} wide>
-                      <div className="grid grid-cols-2">
-                        <MegaColumn title="Individuals and families" items={individuals} />
-                        <MegaColumn title="Professionals and employers" items={professionals} dark />
+                      <div className="grid grid-cols-[1fr_1fr_minmax(0,17.5rem)]">
+                        <MegaColumn title={TRACK_LABELS.individuals} items={individuals} />
+                        <MegaColumn title={TRACK_LABELS.professionals} items={professionals} dark />
+                        <CompactColumn title={TRACK_LABELS.relief} items={relief} extra={planning} />
                       </div>
                       <div className="flex items-center justify-between border-t border-line bg-mist px-7 py-4 text-sm">
                         <span className="text-stone">Not sure where you fit? Answer three questions.</span>
@@ -195,7 +199,7 @@ function Dropdown({ id, show, wide, children }: { id: string; show: boolean; wid
           transition={{ duration: 0.25, ease }}
           className={cn(
             "absolute top-full z-50 mt-3 origin-top overflow-hidden rounded-2xl border border-line bg-paper shadow-[0_40px_80px_-30px_rgba(20,24,31,0.45)]",
-            wide ? "left-1/2 w-[min(880px,92vw)] -translate-x-1/2" : "left-0 w-80",
+            wide ? "left-1/2 mt-0 w-[min(1120px,96vw)] -translate-x-1/2" : "left-0 w-80",
           )}
         >
           {children}
@@ -238,18 +242,44 @@ function MegaColumn({ title, items, dark }: { title: string; items: Expertise[];
   );
 }
 
+/** A narrow column: one line per item, codes beneath in small type. */
+function CompactColumn({ title, items, extra }: { title: string; items: Expertise[]; extra: Expertise[] }) {
+  const row = (e: Expertise) => {
+    const Icon = EXPERTISE_ICONS[e.icon];
+    return (
+      <li key={e.slug}>
+        <Link href={`/expertise/${e.slug}/`} className="group flex items-start gap-2.5 rounded-lg px-2 py-1.5 transition-colors duration-300 hover:bg-ink focus-visible:bg-ink">
+          <Icon aria-hidden className="mt-[3px] size-4 shrink-0 text-brass-ink transition-colors duration-300 group-hover:text-brass-light group-focus-visible:text-brass-light" />
+          <span className="min-w-0">
+            <span className="block text-[0.9rem] font-bold leading-snug text-ink transition-colors duration-300 group-hover:text-paper group-focus-visible:text-paper">{e.title}</span>
+            <span className="block text-[0.74rem] font-bold text-stone transition-colors duration-300 group-hover:text-stone-dark group-focus-visible:text-stone-dark">{e.codes}</span>
+          </span>
+        </Link>
+      </li>
+    );
+  };
+  return (
+    <div className="border-l border-line bg-mist/60 px-4 py-7">
+      <p className="eyebrow mb-3 px-2 text-brass-ink">{title}</p>
+      <ul className="grid gap-0.5">{items.map(row)}</ul>
+      {extra.length > 0 && <ul className="mt-3 grid gap-0.5 border-t border-line pt-3">{extra.map(row)}</ul>}
+    </div>
+  );
+}
+
 function MobileMenu({ onClose }: { onClose: () => void }) {
   const { SITE, NAV, byTrack } = useContent();
-  const individuals = byTrack("individuals");
-  const professionals = byTrack("professionals");
   const [section, setSection] = useState<string | null>(null);
-  const groups: { label: string; href?: string; links?: { label: string; href: string }[] }[] = [
+  // Practice areas sit under the same track headings as the desktop menu.
+  const tracks = (["individuals", "professionals", "relief"] as const).map((t) => ({ title: TRACK_LABELS[t], items: byTrack(t) }));
+  tracks[tracks.length - 1].items = [...tracks[tracks.length - 1].items, ...byTrack("other")];
+  const groups: { label: string; href?: string; links?: { label: string; href: string; heading?: boolean }[] }[] = [
     { label: "Home", href: "/" },
     {
       label: "Expertise",
       links: [
         { label: "All areas of expertise", href: "/expertise/" },
-        ...[...individuals, ...professionals].map((e) => ({ label: e.title, href: `/expertise/${e.slug}/` })),
+        ...tracks.flatMap((t) => [{ label: t.title, href: "", heading: true }, ...t.items.map((e) => ({ label: e.title, href: `/expertise/${e.slug}/` }))]),
       ],
     },
     ...NAV.filter((g) => g.label !== "Expertise").map((g) => ({ label: g.label, href: g.href, links: g.links })),
@@ -301,13 +331,19 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
                       transition={{ duration: 0.35, ease }}
                       className="overflow-hidden"
                     >
-                      {g.links.map((l) => (
-                        <li key={l.href}>
-                          <Link href={l.href} onClick={onClose} className="-mx-3 flex min-h-11 items-center rounded-xl px-4 text-lg text-stone-dark transition-colors duration-300 hover:bg-paper hover:text-ink">
+                      {g.links.map((l) =>
+                        l.heading ? (
+                          <li key={l.label} className="eyebrow mt-5 px-1 pb-1 text-brass-light">
                             {l.label}
-                          </Link>
-                        </li>
-                      ))}
+                          </li>
+                        ) : (
+                          <li key={l.href}>
+                            <Link href={l.href} onClick={onClose} className="-mx-3 flex min-h-11 items-center rounded-xl px-4 text-lg text-stone-dark transition-colors duration-300 hover:bg-paper hover:text-ink">
+                              {l.label}
+                            </Link>
+                          </li>
+                        ),
+                      )}
                       <li className="h-4" />
                     </motion.ul>
                   )}

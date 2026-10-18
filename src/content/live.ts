@@ -31,7 +31,11 @@ export function deriveLive(live: LiveData) {
   const fromStore = live.source === "firestore";
   const pick = <T,>(remote: T[] | undefined, seed: T[]) => (fromStore && remote && remote.length ? remote : seed);
 
-  const ATTORNEYS: Attorney[] = visible(pick(live.attorneys, SEED_ATTORNEYS)).sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+  // The firm does not offer consultations in Yoruba (decided 17 October 2026), so
+  // the language is left off profiles even where an older record still lists it.
+  const ATTORNEYS: Attorney[] = visible(pick(live.attorneys, SEED_ATTORNEYS))
+    .map((a) => ({ ...a, languages: (a.languages ?? []).filter((l) => !/yoruba/i.test(l)) }))
+    .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
   const CASES: CaseResult[] = visible(pick(live.cases, SEED_CASES));
   const REVIEWS: Review[] = pick(live.reviews, SEED_REVIEWS).sort((a, b) => b.date.localeCompare(a.date));
   const POSTS: Post[] = pick(live.posts, SEED_POSTS).sort((a, b) => b.published.localeCompare(a.published));

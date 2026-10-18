@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ExpertiseIndex } from "@/components/site/ExpertiseIndex";
-import type { Track } from "@/content/expertise";
+import { TRACK_LABELS, type Track } from "@/content/expertise";
 import { useContent } from "@/content/LiveContent";
 import { cn } from "@/lib/utils";
 
 const TABS: { id: Track; label: string }[] = [
-  { id: "individuals", label: "Individuals and families" },
-  { id: "professionals", label: "Professionals and employers" },
+  { id: "individuals", label: TRACK_LABELS.individuals },
+  { id: "professionals", label: TRACK_LABELS.professionals },
+  { id: "relief", label: TRACK_LABELS.relief },
 ];
 
 export function ExpertiseTabs() {
@@ -18,7 +19,7 @@ export function ExpertiseTabs() {
 
   return (
     <div>
-      <div role="tablist" aria-label="Areas of expertise" className="grid w-full grid-cols-2 rounded-2xl border border-line bg-white p-1.5 sm:inline-flex sm:w-auto sm:rounded-full">
+      <div role="tablist" aria-label="Areas of expertise" className="grid w-full grid-cols-1 rounded-2xl min-[420px]:grid-cols-3 border border-line bg-white p-1.5 sm:inline-flex sm:w-auto sm:rounded-full">
         {TABS.map((t) => (
           <button
             key={t.id}
