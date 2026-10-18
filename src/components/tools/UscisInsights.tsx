@@ -5,10 +5,10 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   Area, AreaChart, Bar, CartesianGrid, ComposedChart, Line, LineChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis,
 } from "recharts";
-import { ArrowDownRight, ArrowUpRight, CalendarDays, ChartNoAxesCombined, ListOrdered, Radar, Table2 } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, CalendarDays, ExternalLink, FileSpreadsheet, ChartNoAxesCombined, ListOrdered, Radar, Table2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  approvalRate, clearanceMonths, compact, estimateQueue, latestIndex, previous, QUARTERS, quarterSpan, roughly, STAT_GROUPS, STAT_ROWS, STATS_SOURCE,
+  approvalRate, clearanceMonths, compact, estimateQueue, latestIndex, previous, QUARTERS, quarterSpan, reportUrl, roughly, STAT_GROUPS, STAT_ROWS, STATS_SOURCE,
   statRow, type Point, type StatRow,
 } from "@/content/tools/uscis-stats";
 import { CountUp, HowEstimated, QueueGauge, SERIES, TipCard } from "./stats-kit";
@@ -44,7 +44,7 @@ export function UscisInsights() {
     setGroup(r.group);
   };
 
-  const series = QUARTERS.map((q, k) => ({ ...(row.series[k] ?? {}), label: q.label, derived: q.derived })) as (Partial<Point> & { label: string; derived: boolean })[];
+  const series = QUARTERS.map((q, k) => ({ ...(row.series[k] ?? {}), label: q.label, derived: q.derived, source: q.source })) as Series;
   const anyDerived = QUARTERS.some((q) => q.derived);
 
   return (
@@ -63,6 +63,25 @@ export function UscisInsights() {
             Official national figures for {STAT_ROWS.length} forms and categories, from {quarterSpan(QUARTERS[0])} to{" "}
             {quarterSpan(latestQuarter)}. Choose a form to compare decisions, backlog and speed over time.
           </p>
+          <div className="mt-5 flex max-w-3xl flex-wrap items-start gap-x-5 gap-y-2 rounded-2xl border border-line-dark bg-ink-raised/60 px-4 py-3 text-sm text-stone-dark">
+            <span className="min-w-0 flex-1 basis-64">
+              <strong className="text-paper">Source:</strong> {STATS_SOURCE.publisher},{" "}
+              <a href={STATS_SOURCE.url} target="_blank" rel="noopener noreferrer" className="font-bold text-brass-light underline underline-offset-4 hover:text-paper">
+                {STATS_SOURCE.title}
+              </a>
+              , published quarterly on uscis.gov.
+            </span>
+            {latestQuarter.source && (
+              <a
+                href={reportUrl(latestQuarter.source)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-line-dark px-4 font-bold text-paper hover:border-brass-light"
+              >
+                <FileSpreadsheet aria-hidden className="size-4 text-brass-light" /> Latest report ({latestQuarter.label}) <ExternalLink aria-hidden className="size-3.5" />
+              </a>
+            )}
+          </div>
 
           {/* Filters, one row above everything they scope */}
           <div className="mt-8 flex flex-wrap items-center gap-2">
@@ -286,13 +305,15 @@ function QuarterTip({ active, payload, label }: { active?: boolean; payload?: re
   return <TipCard title={String(label)} rows={rows.length ? rows : [{ label: "", value: "Not reported" }]} note={derived ? "Worked out from fiscal-year totals." : undefined} />;
 }
 
-function DataTable({ series }: { series: (Partial<Point> & { label: string; derived: boolean })[] }) {
+type Series = (Partial<Point> & { label: string; derived: boolean; source: string | null })[];
+
+function DataTable({ series }: { series: Series }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-line">
-      <table className="w-full min-w-[640px] text-right text-sm">
+      <table className="w-full min-w-[760px] text-right text-sm">
         <thead className="bg-mist text-xs text-stone">
           <tr>
-            {["Quarter", "Received", "Approved", "Denied", "Completed", "Pending", "Median months"].map((h, k) => (
+            {["Quarter", "Received", "Approved", "Denied", "Completed", "Pending", "Median months", "Source"].map((h, k) => (
               <th key={h} scope="col" className={cn("px-4 py-3 font-bold", k === 0 && "text-left")}>{h}</th>
             ))}
           </tr>
@@ -307,11 +328,20 @@ function DataTable({ series }: { series: (Partial<Point> & { label: string; deri
               <td className="px-4 py-2.5">{fmt(s.completed)}</td>
               <td className="px-4 py-2.5">{fmt(s.pending)}</td>
               <td className="px-4 py-2.5">{s.median ? s.median.toFixed(1) : "Not reported"}</td>
+              <td className="px-4 py-2.5">
+                {s.source ? (
+                  <a href={reportUrl(s.source)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-bold text-brass-ink underline underline-offset-4 hover:text-ink">
+                    USCIS report <ExternalLink aria-hidden className="size-3" />
+                  </a>
+                ) : (
+                  "Not available"
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
-      <p className="border-t border-line px-4 py-2 text-xs text-stone">* Worked out from fiscal-year totals in the next report.</p>
+      <p className="border-t border-line px-4 py-2 text-xs text-stone">* Worked out from fiscal-year totals in the next report, which the source link opens.</p>
     </div>
   );
 }

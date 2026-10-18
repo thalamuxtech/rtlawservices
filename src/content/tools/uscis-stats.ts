@@ -17,6 +17,9 @@ type Raw = { title: string; publisher: string; url: string; quarters: Quarter[];
 const DATA = raw as unknown as Raw;
 
 export const STATS_SOURCE = { title: DATA.title, publisher: DATA.publisher, url: DATA.url };
+
+/** Direct link to one quarterly report spreadsheet on uscis.gov. */
+export const reportUrl = (file: string) => `https://www.uscis.gov/sites/default/files/document/data/${file}`;
 export const QUARTERS = DATA.quarters;
 export const STAT_ROWS = DATA.rows;
 export const STAT_GROUPS = [...new Set(STAT_ROWS.map((r) => r.group))];
