@@ -100,7 +100,7 @@ export function Header() {
                         <MegaColumn title={TRACK_LABELS.professionals} items={professionals} dark />
                         <CompactColumn title={TRACK_LABELS.relief} items={relief} extra={planning} />
                       </div>
-                      <div className="flex items-center justify-between border-t border-line bg-mist px-7 py-4 text-sm">
+                      <div className="flex items-center justify-between border-t border-line bg-mist px-7 py-1.5 text-sm">
                         <span className="text-stone">Not sure where you fit? Answer three questions.</span>
                         <Link href="/start-here/#path-finder" className="inline-flex min-h-11 items-center font-bold text-brass-ink hover:text-ink">
                           Find my path
@@ -211,27 +211,27 @@ function Dropdown({ id, show, wide, children }: { id: string; show: boolean; wid
 
 function MegaColumn({ title, items, dark }: { title: string; items: Expertise[]; dark?: boolean }) {
   return (
-    <div className={cn("p-7", dark && "on-dark bg-ink")}>
-      <p className={cn("eyebrow mb-4", dark ? "text-brass-light" : "text-brass-ink")}>{title}</p>
-      <ul className="grid gap-1">
+    <div className={cn("px-5 py-5", dark && "on-dark bg-ink")}>
+      <p className={cn("eyebrow mb-2 px-2", dark ? "text-brass-light" : "text-brass-ink")}>{title}</p>
+      <ul className="grid">
         {items.map((e) => {
           const Icon = EXPERTISE_ICONS[e.icon];
           return (
             <li key={e.slug}>
-              <Link href={`/expertise/${e.slug}/`} className={cn("group flex items-start gap-3 rounded-xl p-2.5 transition-colors duration-300", dark ? "hover:bg-paper focus-visible:bg-paper" : "hover:bg-ink focus-visible:bg-ink")}>
+              <Link href={`/expertise/${e.slug}/`} className={cn("group flex items-start gap-2.5 rounded-lg px-2 py-1.5 transition-colors duration-300", dark ? "hover:bg-paper focus-visible:bg-paper" : "hover:bg-ink focus-visible:bg-ink")}>
                 <span
                   className={cn(
-                    "mt-0.5 grid size-8 shrink-0 place-items-center rounded-full border transition-colors duration-300",
+                    "mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border transition-colors duration-300",
                     dark
                       ? "border-line-dark text-brass-light group-hover:border-line group-hover:text-brass-ink group-focus-visible:border-line group-focus-visible:text-brass-ink"
                       : "border-line text-brass-ink group-hover:border-line-dark group-hover:text-brass-light group-focus-visible:border-line-dark group-focus-visible:text-brass-light",
                   )}
                 >
-                  <Icon aria-hidden className="size-4" />
+                  <Icon aria-hidden className="size-3.5" />
                 </span>
                 <span>
-                  <span className={cn("block font-bold transition-colors duration-300", dark ? "text-paper group-hover:text-ink group-focus-visible:text-ink" : "text-ink group-hover:text-paper group-focus-visible:text-paper")}>{e.title}</span>
-                  <span className={cn("block text-[0.82rem] font-bold transition-colors duration-300", dark ? "text-stone-dark group-hover:text-stone group-focus-visible:text-stone" : "text-stone group-hover:text-stone-dark group-focus-visible:text-stone-dark")}>{e.codes}</span>
+                  <span className={cn("block text-[0.95rem] font-bold leading-snug transition-colors duration-300", dark ? "text-paper group-hover:text-ink group-focus-visible:text-ink" : "text-ink group-hover:text-paper group-focus-visible:text-paper")}>{e.title}</span>
+                  <span className={cn("block text-[0.76rem] font-bold transition-colors duration-300", dark ? "text-stone-dark group-hover:text-stone group-focus-visible:text-stone" : "text-stone group-hover:text-stone-dark group-focus-visible:text-stone-dark")}>{e.codes}</span>
                 </span>
               </Link>
             </li>
@@ -248,7 +248,7 @@ function CompactColumn({ title, items, extra }: { title: string; items: Expertis
     const Icon = EXPERTISE_ICONS[e.icon];
     return (
       <li key={e.slug}>
-        <Link href={`/expertise/${e.slug}/`} className="group flex items-start gap-2.5 rounded-lg px-2 py-1.5 transition-colors duration-300 hover:bg-ink focus-visible:bg-ink">
+        <Link href={`/expertise/${e.slug}/`} className="group flex items-start gap-2.5 rounded-lg px-2 py-1 transition-colors duration-300 hover:bg-ink focus-visible:bg-ink">
           <Icon aria-hidden className="mt-[3px] size-4 shrink-0 text-brass-ink transition-colors duration-300 group-hover:text-brass-light group-focus-visible:text-brass-light" />
           <span className="min-w-0">
             <span className="block text-[0.9rem] font-bold leading-snug text-ink transition-colors duration-300 group-hover:text-paper group-focus-visible:text-paper">{e.title}</span>
@@ -259,10 +259,10 @@ function CompactColumn({ title, items, extra }: { title: string; items: Expertis
     );
   };
   return (
-    <div className="border-l border-line bg-mist/60 px-4 py-7">
-      <p className="eyebrow mb-3 px-2 text-brass-ink">{title}</p>
+    <div className="border-l border-line bg-mist/60 px-4 py-5">
+      <p className="eyebrow mb-2 px-2 text-brass-ink">{title}</p>
       <ul className="grid gap-0.5">{items.map(row)}</ul>
-      {extra.length > 0 && <ul className="mt-3 grid gap-0.5 border-t border-line pt-3">{extra.map(row)}</ul>}
+      {extra.length > 0 && <ul className="mt-2 grid gap-0.5 border-t border-line pt-2">{extra.map(row)}</ul>}
     </div>
   );
 }
@@ -333,7 +333,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
                     >
                       {g.links.map((l) =>
                         l.heading ? (
-                          <li key={l.label} className="eyebrow mt-5 px-1 pb-1 text-brass-light">
+                          <li key={l.label} className="eyebrow mt-3 px-1 text-brass-light">
                             {l.label}
                           </li>
                         ) : (

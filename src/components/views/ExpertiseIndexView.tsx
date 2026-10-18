@@ -34,41 +34,41 @@ export function ExpertiseIndexView() {
         </div>
       </PageHero>
 
-      <section id="individuals" className="scroll-mt-28 py-24">
-        <Container className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
+      <section id="individuals" className="scroll-mt-28 py-14 sm:py-16">
+        <Container className="grid gap-8 lg:grid-cols-[0.6fr_1.4fr] lg:gap-12">
           <div>
-            <h2 className="font-serif-display text-4xl text-ink sm:text-5xl">{TRACK_LABELS.individuals}</h2>
-            <p className="mt-4 max-w-sm text-lg leading-relaxed text-stone">Plain explanations for first-time applicants, with the detail experienced applicants expect.</p>
+            <h2 className="font-serif-display text-3xl text-ink sm:text-4xl">{TRACK_LABELS.individuals}</h2>
+            <p className="mt-3 max-w-sm leading-relaxed text-stone">Plain explanations for first-time applicants, with the detail experienced applicants expect.</p>
           </div>
           <ExpertiseIndex items={byTrack("individuals")} meta={describe} />
         </Container>
       </section>
 
-      <section id="professionals" className="on-dark scroll-mt-28 bg-ink py-24 text-paper">
-        <Container className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
+      <section id="professionals" className="on-dark scroll-mt-28 bg-ink py-14 sm:py-16 text-paper">
+        <Container className="grid gap-8 lg:grid-cols-[0.6fr_1.4fr] lg:gap-12">
           <div>
-            <h2 className="font-serif-display text-4xl sm:text-5xl">{TRACK_LABELS.professionals}</h2>
-            <p className="mt-4 max-w-sm text-lg leading-relaxed text-stone-dark">Criteria-led petitions, evidence strategy and premium processing where available, for clients anywhere in the United States.</p>
+            <h2 className="font-serif-display text-3xl sm:text-4xl">{TRACK_LABELS.professionals}</h2>
+            <p className="mt-3 max-w-sm leading-relaxed text-stone-dark">Criteria-led petitions, evidence strategy and premium processing where available, for clients anywhere in the United States.</p>
           </div>
           <ExpertiseIndex items={byTrack("professionals")} dark meta={describe} />
         </Container>
       </section>
 
-      <section id="relief" className="scroll-mt-28 py-24">
-        <Container className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
+      <section id="relief" className="scroll-mt-28 py-14 sm:py-16">
+        <Container className="grid gap-8 lg:grid-cols-[0.6fr_1.4fr] lg:gap-12">
           <div>
-            <h2 className="font-serif-display text-4xl text-ink sm:text-5xl">{TRACK_LABELS.relief}</h2>
-            <p className="mt-4 max-w-sm text-lg leading-relaxed text-stone">Humanitarian protection, and status for students and permanent residents.</p>
+            <h2 className="font-serif-display text-3xl text-ink sm:text-4xl">{TRACK_LABELS.relief}</h2>
+            <p className="mt-3 max-w-sm leading-relaxed text-stone">Humanitarian protection and student status.</p>
           </div>
           <ExpertiseIndex items={byTrack("relief")} meta={describe} />
         </Container>
       </section>
 
-      <section className="border-t border-line py-24">
-        <Container className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
+      <section className="border-t border-line py-14 sm:py-16">
+        <Container className="grid gap-8 lg:grid-cols-[0.6fr_1.4fr] lg:gap-12">
           <div>
-            <h2 className="font-serif-display text-4xl text-ink sm:text-5xl">{TRACK_LABELS.other}</h2>
-            <p className="mt-4 max-w-sm text-lg leading-relaxed text-stone">Estate planning grew from the firm&rsquo;s fiduciary roots.</p>
+            <h2 className="font-serif-display text-3xl text-ink sm:text-4xl">{TRACK_LABELS.other}</h2>
+            <p className="mt-3 max-w-sm leading-relaxed text-stone">Estate planning grew from the firm&rsquo;s fiduciary roots.</p>
           </div>
           <ExpertiseIndex items={byTrack("other")} meta={describe} />
         </Container>

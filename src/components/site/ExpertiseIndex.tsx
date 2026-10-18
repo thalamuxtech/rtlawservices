@@ -16,21 +16,21 @@ export function ExpertiseIndex({ items, dark, meta }: { items: Expertise[]; dark
             <Link
               href={`/expertise/${e.slug}/`}
               className={cn(
-                "group grid gap-x-10 gap-y-2 border-b py-7 transition-colors duration-300 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline",
+                "group grid gap-x-10 gap-y-1 border-b py-4 transition-colors sm:py-5 duration-300 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline",
                 dark ? "border-line-dark hover:bg-ink-raised/60" : "border-ink/15 hover:bg-white",
               )}
             >
               <span className="min-w-0 sm:pl-2">
                 <span
                   className={cn(
-                    "font-serif-display block text-[1.75rem] leading-tight decoration-1 underline-offset-[6px] group-hover:underline sm:text-[2rem]",
+                    "font-serif-display block text-[1.45rem] leading-tight decoration-1 underline-offset-[6px] group-hover:underline sm:text-[1.65rem]",
                     dark ? "text-paper decoration-brass-light" : "text-ink decoration-brass",
                   )}
                 >
                   {e.title}
                 </span>
-                <span className={cn("mt-2 block max-w-[62ch] leading-relaxed", dark ? "text-stone-dark" : "text-stone")}>{e.summary}</span>
-                {m && <span className={cn("mt-2 block text-sm", dark ? "text-stone-dark" : "text-stone")}>{m}</span>}
+                <span className={cn("mt-1 block max-w-[62ch] text-[0.95rem] leading-relaxed", dark ? "text-stone-dark" : "text-stone")}>{e.summary}</span>
+                {m && <span className={cn("mt-1 block text-sm", dark ? "text-stone-dark" : "text-stone")}>{m}</span>}
               </span>
               <span className={cn("text-sm font-bold sm:pr-2 sm:text-right", dark ? "text-brass-light" : "text-brass-ink")}>{e.codes}</span>
             </Link>

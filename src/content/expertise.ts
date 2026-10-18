@@ -91,6 +91,52 @@ export const BASE_EXPERTISE: Expertise[] = [
     ],
   },
   {
+    slug: "permanent-residence",
+    track: "individuals",
+    icon: "house",
+    title: "Permanent residence",
+    codes: "I-90, I-751, I-485",
+    summary: "Keeping a green card current: renewals, removing conditions, adjustment of status and protecting residence during travel.",
+    intro:
+      "A green card holder, formally a lawful permanent resident, keeps that status unless it is abandoned or taken away, but the card itself expires, and some residents hold conditional status. We help residents renew or replace cards, remove conditions on time, protect their status during long trips and resolve problems that arise along the way.",
+    newToThis:
+      "A green card is usually valid for ten years. A conditional green card, valid for two years, goes to spouses in marriages less than two years old when residence is granted, and to immigrant investors. Both must later file to remove the conditions.",
+    whoFor: [
+      "Residents whose card is expiring, lost, damaged or wrong",
+      "Conditional residents within 90 days of the card's two-year expiry",
+      "Conditional residents whose marriage ended or became abusive",
+      "Residents who have spent, or plan to spend, long periods abroad",
+    ],
+    howWeHelp: [
+      { title: "Renewals and replacements", text: "We file Form I-90 to renew or replace a card, or to correct an error on it." },
+      { title: "Removing conditions", text: "We file Form I-751 jointly with the spouse, or alone with a waiver where the marriage ended, the spouse died or there was abuse." },
+      { title: "Travel and abandonment", text: "We review travel history, prepare reentry permits and, after long absences, advise on returning resident visas." },
+      { title: "Adjustment of status", text: "For people in the United States who qualify for a green card, we prepare Form I-485 with the supporting petition." },
+    ],
+    forms: [
+      { code: "I-90", name: "Application to Replace Permanent Resident Card" },
+      { code: "I-751", name: "Petition to Remove Conditions on Residence" },
+      { code: "I-485", name: "Application to Register Permanent Residence or Adjust Status" },
+      { code: "DS-117", name: "Application to Determine Returning Resident Status" },
+    ],
+    timeline:
+      "U.S. Citizenship and Immigration Services (USCIS) data for April to June 2026 show median processing times of about 5.5 months for Form I-90 and about 22.6 months for Form I-751. While Form I-751 is pending, the receipt notice extends conditional residence for the period it states.",
+    checklist: [
+      "Current or expired green card",
+      "Passport and a list of trips abroad",
+      "For Form I-751: joint evidence of the marriage, such as leases, tax returns, bank accounts and children's birth certificates",
+      "For a waiver: divorce decree, death certificate or evidence of abuse",
+      "Court records for any arrest",
+    ],
+    faqs: [
+      { q: "Does my status end when my card expires?", a: "No. Permanent residence continues, but you need a valid card as proof of status for work, travel and other purposes. You can renew within six months before the card expires." },
+      { q: "When do I file Form I-751?", a: "During the 90 days before the conditional card expires. Missing the window can end conditional status, although USCIS may accept a late filing with a written explanation of good cause." },
+      { q: "What if we divorced before filing?", a: "You can file alone with a waiver, showing that the marriage was entered in good faith." },
+      { q: "How long can I stay abroad?", a: "Trips of more than six months may raise questions, and an absence of one year or more without a reentry permit generally creates a presumption that residence was abandoned. Your intentions and ties to the United States also matter." },
+      { q: "What is a returning resident visa?", a: "An SB-1 visa for permanent residents who stayed abroad longer than a year, or beyond the validity of a reentry permit, for reasons outside their control. The applicant must prove that the delay was beyond their control." },
+    ],
+  },
+  {
     slug: "citizenship",
     track: "individuals",
     icon: "flag",
@@ -941,52 +987,6 @@ export const BASE_EXPERTISE: Expertise[] = [
       { q: "Can I travel abroad?", a: "Only with permission granted before you leave, requested on Form I-131. Travel without it can end TPS." },
       { q: "What happens when a designation ends?", a: "TPS and related work permits end on the date set in the termination notice, unless a court orders otherwise. Holders should review other options well before that date." },
       { q: "Can a person with a criminal record get TPS?", a: "A felony, or two or more misdemeanours, committed in the United States generally makes a person ineligible, and other bars also apply." },
-    ],
-  },
-  {
-    slug: "permanent-residence",
-    track: "relief",
-    icon: "house",
-    title: "Permanent residence",
-    codes: "I-90, I-751, I-485",
-    summary: "Keeping a green card current: renewals, removing conditions, adjustment of status and protecting residence during travel.",
-    intro:
-      "A green card holder, formally a lawful permanent resident, keeps that status unless it is abandoned or taken away, but the card itself expires, and some residents hold conditional status. We help residents renew or replace cards, remove conditions on time, protect their status during long trips and resolve problems that arise along the way.",
-    newToThis:
-      "A green card is usually valid for ten years. A conditional green card, valid for two years, goes to spouses in marriages less than two years old when residence is granted, and to immigrant investors. Both must later file to remove the conditions.",
-    whoFor: [
-      "Residents whose card is expiring, lost, damaged or wrong",
-      "Conditional residents within 90 days of the card's two-year expiry",
-      "Conditional residents whose marriage ended or became abusive",
-      "Residents who have spent, or plan to spend, long periods abroad",
-    ],
-    howWeHelp: [
-      { title: "Renewals and replacements", text: "We file Form I-90 to renew or replace a card, or to correct an error on it." },
-      { title: "Removing conditions", text: "We file Form I-751 jointly with the spouse, or alone with a waiver where the marriage ended, the spouse died or there was abuse." },
-      { title: "Travel and abandonment", text: "We review travel history, prepare reentry permits and, after long absences, advise on returning resident visas." },
-      { title: "Adjustment of status", text: "For people in the United States who qualify for a green card, we prepare Form I-485 with the supporting petition." },
-    ],
-    forms: [
-      { code: "I-90", name: "Application to Replace Permanent Resident Card" },
-      { code: "I-751", name: "Petition to Remove Conditions on Residence" },
-      { code: "I-485", name: "Application to Register Permanent Residence or Adjust Status" },
-      { code: "DS-117", name: "Application to Determine Returning Resident Status" },
-    ],
-    timeline:
-      "U.S. Citizenship and Immigration Services (USCIS) data for April to June 2026 show median processing times of about 5.5 months for Form I-90 and about 22.6 months for Form I-751. While Form I-751 is pending, the receipt notice extends conditional residence for the period it states.",
-    checklist: [
-      "Current or expired green card",
-      "Passport and a list of trips abroad",
-      "For Form I-751: joint evidence of the marriage, such as leases, tax returns, bank accounts and children's birth certificates",
-      "For a waiver: divorce decree, death certificate or evidence of abuse",
-      "Court records for any arrest",
-    ],
-    faqs: [
-      { q: "Does my status end when my card expires?", a: "No. Permanent residence continues, but you need a valid card as proof of status for work, travel and other purposes. You can renew within six months before the card expires." },
-      { q: "When do I file Form I-751?", a: "During the 90 days before the conditional card expires. Missing the window can end conditional status, although USCIS may accept a late filing with a written explanation of good cause." },
-      { q: "What if we divorced before filing?", a: "You can file alone with a waiver, showing that the marriage was entered in good faith." },
-      { q: "How long can I stay abroad?", a: "Trips of more than six months may raise questions, and an absence of one year or more without a reentry permit generally creates a presumption that residence was abandoned. Your intentions and ties to the United States also matter." },
-      { q: "What is a returning resident visa?", a: "An SB-1 visa for permanent residents who stayed abroad longer than a year, or beyond the validity of a reentry permit, for reasons outside their control. The applicant must prove that the delay was beyond their control." },
     ],
   },
   {
