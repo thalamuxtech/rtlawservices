@@ -4,7 +4,6 @@ import { PageHero } from "@/components/site/PageHero";
 import { ReviewCard } from "@/components/site/cards";
 import { BookingBand } from "@/components/home/Sections";
 import { ButtonLink, Container, Stars } from "@/components/ui/primitives";
-import { ILLUSTRATIVE_NOTE } from "@/content/live";
 import { useContent } from "@/content/LiveContent";
 import { HEADINGS } from "@/content/headings";
 
@@ -17,7 +16,7 @@ export function ReviewsView() {
         title={HEADINGS["/reviews/"].title}
         lede={
           REVIEWS_ILLUSTRATIVE
-            ? ILLUSTRATIVE_NOTE
+            ? undefined
             : "Reviews are published with the reviewer's permission. We show first names and initials only, to protect privacy."
         }
         crumbs={[{ label: "Reviews" }]}

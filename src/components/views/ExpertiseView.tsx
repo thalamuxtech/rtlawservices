@@ -6,7 +6,6 @@ import { Accordion, PageHero } from "@/components/site/PageHero";
 import { CaseCard, ReviewCard } from "@/components/site/cards";
 import { BookingBand } from "@/components/home/Sections";
 import { ButtonLink, Container } from "@/components/ui/primitives";
-import { ILLUSTRATIVE_NOTE } from "@/content/live";
 import { RESULTS_CAVEAT } from "@/content/site";
 import { Missing } from "@/components/views/Missing";
 import { useContent, useContentFresh, useLiveTitle } from "@/content/LiveContent";
@@ -203,7 +202,6 @@ export function ExpertiseView({ slug }: { slug: string }) {
               <div className="grid gap-10 sm:grid-cols-2">
                 {reviews.map((r, i) => <ReviewCard key={r.id} r={r} index={i} />)}
               </div>
-              {reviews.some((r) => r.demo) && <p className="mt-6 text-sm text-stone">{ILLUSTRATIVE_NOTE}</p>}
             </section>
           )}
 

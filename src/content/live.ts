@@ -22,10 +22,8 @@ export type LiveData = {
 
 // Records flagged demo are fictional placeholders kept for the back office.
 // Attorneys and cases flagged demo are never published. Reviews flagged demo
-// are shown, with one note that they are illustrative, until real ones arrive.
+// are shown, without the average rating or a recommendation claim, until real ones arrive.
 const visible = <T extends { demo?: boolean }>(rows: T[]) => rows.filter((r) => !r.demo);
-
-export const ILLUSTRATIVE_NOTE = "These reviews are illustrative examples while client reviews are being collected.";
 
 export function deriveLive(live: LiveData) {
   const fromStore = live.source === "database";

@@ -236,7 +236,7 @@ function Editor({ kind, r, set }: { kind: Kind; r: Row; set: (p: Partial<Row>) =
         <div className="pt-6">
           <Toggle
             label="Fictional placeholder"
-            hint={kind === "reviews" ? "Shown on the website with a note that reviews are illustrative examples. Turn off once the review is real." : "Kept in the back office only. Never shown on the website. Turn off once the record is real."}
+            hint={kind === "reviews" ? "Sample review. Shown on the website, but left out of the average rating. Turn off once the review is real." : "Kept in the back office only. Never shown on the website. Turn off once the record is real."}
             checked={!!r.demo}
             onChange={(v) => set({ demo: v })}
           />

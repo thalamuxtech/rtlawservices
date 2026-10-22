@@ -2,7 +2,6 @@ import Link from "next/link";
 import { MarqueePause } from "./MarqueePause";
 import { Stars } from "@/components/ui/primitives";
 import type { Review } from "@/content/types";
-import { ILLUSTRATIVE_NOTE } from "@/content/live";
 import { cn } from "@/lib/utils";
 
 const BUILD = new Date();
@@ -73,9 +72,7 @@ export function ReviewsMarquee({ reviews, illustrative = false }: { reviews: Rev
             {/* A recommendation claim needs real reviews behind it, so placeholders keep the neutral heading. */}
             {illustrative ? <>In our clients&rsquo; words</> : "Our clients keep recommending us"}
           </h2>
-          {illustrative ? (
-            <p className="mt-5 max-w-xl text-stone">{ILLUSTRATIVE_NOTE}</p>
-          ) : (
+          {illustrative ? null : (
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <span className="font-serif-display text-4xl text-ink">{avg.toFixed(1)}</span>
               <Stars rating={Math.round(avg)} />
