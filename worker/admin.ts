@@ -10,7 +10,11 @@ const REQUESTS = new Set(["evaluations", "bookings", "messages"]);
 const CONTENT = new Set(["attorneys", "cases", "reviews", "posts"]);
 // Shared email templates: back office only, so saving one never rebuilds the website.
 const TEMPLATES = "emailTemplates";
-const READABLE = new Set([...REQUESTS, ...CONTENT, "staff", "emails", "settings", "meta", TEMPLATES]);
+// Mail received at clientservice@ and info@ (worker/inbox.ts).
+const INBOX = "inbox";
+// Records whose status and internal note staff can change.
+const TRACKED = new Set([...REQUESTS, INBOX]);
+const READABLE = new Set([...REQUESTS, ...CONTENT, "staff", "emails", "settings", "meta", TEMPLATES, INBOX]);
 const ROLES = new Set(["owner", "attorney", "intake", "editor"]);
 
 // Statuses that mean the meeting will not happen, so its time goes back on the calendar.
@@ -149,7 +153,7 @@ async function emailClient(env: Env, staff: Staff, b: Doc) {
   if (!content.body.trim() && !content.heading.trim()) throw new HttpError(400, "Write a message.");
 
   const from = SENDERS.find((s) => s === b.from) ?? SENDERS[0];
-  const col = typeof b.col === "string" && REQUESTS.has(b.col) ? b.col : null;
+  const col = typeof b.col === "string" && TRACKED.has(b.col) ? b.col : null;
   const id = col && str(b.id, 1, 64) ? b.id : null;
   const request = col && id ? await getDoc(env.DB, col, id) : null;
   const toName = String(b.toName ?? request?.name ?? "").slice(0, 200);
@@ -191,8 +195,9 @@ async function emailClient(env: Env, staff: Staff, b: Doc) {
     messageId: result.messageId ?? "",
     createdAt: ts(),
   });
-  // A reply to a new message moves it along, so the inbox stays accurate.
-  if (request?.status === "new" && col === "messages") await mergeDoc(env.DB, col, id!, { status: "replied", updatedAt: ts(), updatedBy: staff.uid });
+  // A reply moves a message along, so the inbox stays accurate.
+  if ((col === "messages" && request?.status === "new") || (col === INBOX && request?.status !== "archived"))
+    await mergeDoc(env.DB, col, id!, { status: "replied", updatedAt: ts(), updatedBy: staff.uid });
   return json({ ok: true, id: emailId });
 }
 
@@ -269,7 +274,7 @@ export async function adminRoutes(env: Env, req: Request, path: string, ctx: Exe
     }
 
     if (method === "PATCH") {
-      if (!REQUESTS.has(col)) throw new HttpError(403, "This record cannot be edited here.");
+      if (!TRACKED.has(col)) throw new HttpError(403, "This record cannot be edited here.");
       const patch = await body(req);
       const allowed: Doc = {};
       if (str(patch.status, 1, 40)) allowed.status = patch.status;
@@ -302,8 +307,21 @@ export async function adminRoutes(env: Env, req: Request, path: string, ctx: Exe
         await deleteDoc(env.DB, col, id);
         return json({ ok: true });
       }
+      if (col === INBOX) {
+        if (staff.role !== "owner") throw new HttpError(403, "Only owners can delete received email. Archive it instead.");
+        await env.FILES.delete(`inbox/${id}.eml`);
+        await deleteDoc(env.DB, col, id);
+        return json({ ok: true });
+      }
       throw new HttpError(403, "This record cannot be deleted here.");
     }
+  }
+
+  // GET /api/admin/inbox-raw/{id}: the received message as sent, parsed in the browser.
+  if (parts[0] === "inbox-raw" && parts.length === 2 && method === "GET") {
+    const obj = await env.FILES.get(`inbox/${parts[1]}.eml`);
+    if (!obj) throw new HttpError(404, "The message could not be found.");
+    return new Response(obj.body, { headers: { "Content-Type": "message/rfc822", "Cache-Control": "private, max-age=3600", "X-Content-Type-Options": "nosniff" } });
   }
 
   // GET /api/admin/cv/{evaluationId}
