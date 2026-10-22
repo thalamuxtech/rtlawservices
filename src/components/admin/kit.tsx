@@ -1,8 +1,8 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowDown, ArrowUp, CheckCircle2, Loader2, Plus, Trash2, X, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, HelpCircle, Loader2, Plus, Trash2, X, XCircle } from "lucide-react";
 import { deleteDoc, putDoc, Timestamp, useRows, type DocumentData, type Row } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -69,7 +69,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
   return (
     <ToastCtx.Provider value={push}>
-      {children}
+      <DialogProvider>{children}</DialogProvider>
       <div className="pointer-events-none fixed bottom-6 right-6 z-[80] grid gap-2" aria-live="polite">
         <AnimatePresence>
           {toasts.map((t) => (
@@ -90,6 +90,153 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         </AnimatePresence>
       </div>
     </ToastCtx.Provider>
+  );
+}
+
+/* ---------- dialogs ---------- */
+
+type DialogOptions = {
+  title: string;
+  message?: ReactNode;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  /** Red styling, for deleting or discarding. */
+  danger?: boolean;
+  /** Shows a text field; the dialog then resolves with its value. */
+  input?: { label: string; value?: string; placeholder?: string; required?: string };
+};
+type Open = DialogOptions & { resolve: (v: string | boolean | null) => void };
+
+type Dialogs = {
+  /** Resolves true when confirmed, false when cancelled. */
+  confirm: (o: DialogOptions) => Promise<boolean>;
+  /** Resolves with the text entered, or null when cancelled. */
+  prompt: (o: DialogOptions & { input: NonNullable<DialogOptions["input"]> }) => Promise<string | null>;
+};
+
+const DialogCtx = createContext<Dialogs>({ confirm: async () => false, prompt: async () => null });
+export const useDialog = () => useContext(DialogCtx);
+
+// Panels and the email composer leave Escape to an open dialog.
+let openDialogs = 0;
+export const dialogIsOpen = () => openDialogs > 0;
+
+function DialogProvider({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState<Open | null>(null);
+  const api = useMemo<Dialogs>(
+    () => ({
+      confirm: (o) => new Promise((resolve) => setOpen({ ...o, resolve: (v) => resolve(v === true) })),
+      prompt: (o) => new Promise((resolve) => setOpen({ ...o, resolve: (v) => resolve(typeof v === "string" ? v : null) })),
+    }),
+    [],
+  );
+  return (
+    <DialogCtx.Provider value={api}>
+      {children}
+      <AnimatePresence>{open && <DialogBox key={open.title} d={open} close={() => setOpen(null)} />}</AnimatePresence>
+    </DialogCtx.Provider>
+  );
+}
+
+function DialogBox({ d, close }: { d: Open; close: () => void }) {
+  const [value, setValue] = useState(d.input?.value ?? "");
+  const [error, setError] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+
+  const finish = useCallback(
+    (ok: boolean) => {
+      if (ok && d.input) {
+        const v = value.trim();
+        if (!v) return setError(d.input.required ?? "This cannot be empty.");
+        d.resolve(v);
+      } else d.resolve(ok);
+      close();
+    },
+    [d, value, close],
+  );
+
+  useEffect(() => {
+    openDialogs++;
+    // Start in the text field, or on Cancel for a deletion so Enter cannot delete by accident.
+    const t = setTimeout(() => (d.input ? inputRef.current?.select() : d.danger ? undefined : confirmRef.current?.focus()), 30);
+    return () => {
+      openDialogs--;
+      clearTimeout(t);
+    };
+  }, [d]);
+
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      finish(false);
+    };
+    window.addEventListener("keydown", k, true);
+    return () => window.removeEventListener("keydown", k, true);
+  }, [finish]);
+
+  const Icon = d.danger ? (d.confirmLabel?.toLowerCase().includes("delete") ? Trash2 : AlertTriangle) : HelpCircle;
+  return (
+    <div className="fixed inset-0 z-[90] grid place-items-center p-4">
+      <motion.button type="button" aria-label="Cancel" tabIndex={-1} className="absolute inset-0 cursor-default bg-ink/50 backdrop-blur-[3px]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => finish(false)} />
+      <motion.form
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="rt-dialog-title"
+        initial={{ opacity: 0, y: 16, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 10, scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 380, damping: 32 }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          finish(true);
+        }}
+        className="relative w-full max-w-md overflow-hidden rounded-3xl bg-paper shadow-2xl ring-1 ring-ink/10"
+      >
+        <div className={cn("h-1", d.danger ? "bg-danger" : "bg-brass")} />
+        <div className="p-7">
+          <span className={cn("grid size-12 place-items-center rounded-full", d.danger ? "bg-danger/10 text-danger" : "bg-brass-pale text-brass-ink")}>
+            <Icon aria-hidden className="size-6" />
+          </span>
+          <h2 id="rt-dialog-title" className="font-serif-display mt-5 text-3xl leading-tight text-ink">
+            {d.title}
+          </h2>
+          {d.message && <div className="mt-2 leading-relaxed text-stone">{d.message}</div>}
+          {d.input && (
+            <label className="mt-5 block">
+              <span className="text-sm font-bold text-ink">{d.input.label}</span>
+              <input
+                ref={inputRef}
+                value={value}
+                placeholder={d.input.placeholder}
+                onChange={(e) => {
+                  setValue(e.target.value);
+                  setError("");
+                }}
+                className={cn("mt-1.5 min-h-12 w-full rounded-xl border bg-white px-4 text-ink outline-none focus:border-ink", error ? "border-danger" : "border-line")}
+              />
+              {error && <span className="mt-1 block text-sm font-bold text-danger">{error}</span>}
+            </label>
+          )}
+          <div className="mt-7 flex flex-wrap justify-end gap-3">
+            <Btn type="button" variant="ghost" onClick={() => finish(false)}>
+              {d.cancelLabel ?? "Cancel"}
+            </Btn>
+            <button
+              ref={confirmRef}
+              type="submit"
+              className={cn(
+                "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 text-sm font-bold transition-colors",
+                d.danger ? "bg-danger text-white hover:bg-danger/90" : "bg-ink text-paper hover:bg-ink-raised",
+              )}
+            >
+              {d.confirmLabel ?? "Continue"}
+            </button>
+          </div>
+        </div>
+      </motion.form>
+    </div>
   );
 }
 
@@ -116,7 +263,7 @@ export function Panel({ open, title, onClose, children, footer, wide }: { open: 
     const me = Symbol(title);
     panelStack.push(me);
     const k = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && panelStack[panelStack.length - 1] === me) {
+      if (e.key === "Escape" && !dialogIsOpen() && panelStack[panelStack.length - 1] === me) {
         e.stopPropagation();
         onClose();
       }

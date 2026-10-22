@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, Clock, ExternalLink, GitBranch, Globe2, Link2, Loader2, RefreshCw, Rocket, Trash2, UserPlus } from "lucide-react";
 import { adminDelete, adminPost, api, useDoc, type DocumentData, type Timestamp } from "@/lib/api";
-import { AreaIn, Btn, Chip, Empty, Loading, RowsIn, saveContent, SectionHeader, SelectIn, TextIn, Toggle, useToast, type Row } from "../kit";
+import { AreaIn, Btn, Chip, Empty, Loading, type Row, RowsIn, saveContent, SectionHeader, SelectIn, TextIn, Toggle, useDialog, useToast } from "../kit";
 
 /* ---------- Site settings ---------- */
 
@@ -110,6 +110,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 
 export function Staff({ rows, uid, role }: { rows: Row[] | null; uid: string; role: string }) {
   const toast = useToast();
+  const dialog = useDialog();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [newRole, setNewRole] = useState("intake");
@@ -207,7 +208,7 @@ export function Staff({ rows, uid, role }: { rows: Row[] | null; uid: string; ro
                   type="button"
                   aria-label={`Remove ${r.email}`}
                   onClick={async () => {
-                    if (!confirm(`Remove back office access for ${r.email}?`)) return;
+                    if (!(await dialog.confirm({ title: "Remove access?", message: `${r.name || r.email} will be signed out and can no longer use the back office.`, confirmLabel: "Remove access", danger: true }))) return;
                     try {
                       await adminDelete(`staff/${encodeURIComponent(r.id)}`);
                       toast("ok", "Access removed");

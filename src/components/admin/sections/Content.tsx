@@ -7,9 +7,7 @@ import { EXPERTISE } from "@/content/expertise";
 import { Markdown } from "@/components/site/Markdown";
 import { cn } from "@/lib/utils";
 import { RedactionTool } from "../RedactionTool";
-import {
-  AreaIn, Btn, Chip, Empty, LinesIn, Loading, Panel, removeContent, RowsIn, saveContent, Search, SectionHeader, SelectIn, slugify, TextIn, Toggle, useToast, type Row,
-} from "../kit";
+import { AreaIn, Btn, Chip, Empty, LinesIn, Loading, Panel, removeContent, type Row, RowsIn, saveContent, Search, SectionHeader, SelectIn, slugify, TextIn, Toggle, useDialog, useToast } from "../kit";
 
 type Kind = "cases" | "reviews" | "posts" | "attorneys";
 
@@ -56,6 +54,7 @@ const subtitle = (k: Kind, r: Row) =>
 export function ContentManager({ kind, rows }: { kind: Kind; rows: Row[] | null }) {
   const meta = META[kind];
   const toast = useToast();
+  const dialog = useDialog();
   const [q, setQ] = useState("");
   const [edit, setEdit] = useState<Row | null>(null);
   const [opened, setOpened] = useState("");
@@ -100,7 +99,7 @@ export function ContentManager({ kind, rows }: { kind: Kind; rows: Row[] | null 
   };
 
   const remove = async () => {
-    if (!edit?.id || !confirm("Delete this item permanently? This cannot be undone.")) return;
+    if (!edit?.id || !(await dialog.confirm({ title: `Delete this ${meta.add.replace(/^New /, "")}?`, message: "It is removed from the website and the back office. This cannot be undone.", confirmLabel: "Delete", danger: true }))) return;
     setBusy(true);
     try {
       await removeContent(kind, edit.id);
@@ -198,9 +197,14 @@ export function ContentManager({ kind, rows }: { kind: Kind; rows: Row[] | null 
       <Panel
         open={!!edit}
         title={isNew ? meta.add : `Edit ${String(edit?.title || edit?.name || "")}`}
-        onClose={() => {
+        onClose={async () => {
           // Closing with unsaved edits asks first, so Escape or a stray click cannot discard work.
-          if (edit && JSON.stringify(edit) !== opened && !confirm("Discard your unsaved changes?")) return;
+          if (
+            edit &&
+            JSON.stringify(edit) !== opened &&
+            !(await dialog.confirm({ title: "Discard your changes?", message: "You have edits that are not saved yet.", confirmLabel: "Discard changes", cancelLabel: "Keep editing", danger: true }))
+          )
+            return;
           setEdit(null);
         }}
         wide
@@ -408,14 +412,15 @@ function Editor({ kind, r, set }: { kind: Kind; r: Row; set: (p: Partial<Row>) =
 }
 
 function PhotoField({ value, onChange }: { value?: string; onChange: (v: string | null) => void }) {
+  const toast = useToast();
   const pick = (f: File | null) => {
     if (!f) return;
     // Read as a data URL: the site's content security policy blocks blob URLs.
     const reader = new FileReader();
-    reader.onerror = () => alert("The file could not be read. Try another image.");
+    reader.onerror = () => toast("error", "The file could not be read. Try another image.");
     reader.onload = () => {
       const img = new Image();
-      img.onerror = () => alert("This image could not be opened. Try a PNG or JPEG.");
+      img.onerror = () => toast("error", "This image could not be opened. Try a PNG or JPEG.");
       img.onload = () => {
         const size = 800;
         const c = document.createElement("canvas");

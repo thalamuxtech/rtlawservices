@@ -6,7 +6,7 @@ import { Download, Mail, PenLine, Phone, Trash2 } from "lucide-react";
 import { deleteDoc, patchDoc, type Timestamp } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { EmailComposer, type ComposeTarget } from "../EmailComposer";
-import { AreaIn, Btn, Chip, Empty, fmtTs, Loading, Panel, Search, SectionHeader, useCollection, useToast, type Row } from "../kit";
+import { AreaIn, Btn, Chip, Empty, fmtTs, Loading, Panel, type Row, Search, SectionHeader, useCollection, useDialog, useToast } from "../kit";
 import { SentEmail } from "./Emails";
 
 type Config = {
@@ -73,6 +73,7 @@ export const MESSAGES: Config = {
 
 export function Requests({ cfg, rows, role }: { cfg: Config; rows: Row[] | null; role?: string }) {
   const toast = useToast();
+  const dialog = useDialog();
   const [filter, setFilter] = useState("all");
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -108,7 +109,11 @@ export function Requests({ cfg, rows, role }: { cfg: Config; rows: Row[] | null;
 
   // Owners can erase a request, for example when a client asks for their data to be deleted.
   const erase = async () => {
-    if (!current || !confirm(`Delete this request from ${current.name} permanently, including any CV? This cannot be undone.`)) return;
+    if (
+      !current ||
+      !(await dialog.confirm({ title: "Delete this request?", message: `The request from ${current.name}, any CV and the emails sent about it are deleted permanently. This cannot be undone.`, confirmLabel: "Delete request", danger: true }))
+    )
+      return;
     setBusy(true);
     try {
       // The server also removes any CV, booked times and sent emails.

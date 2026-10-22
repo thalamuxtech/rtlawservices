@@ -665,18 +665,25 @@ const noSubscription = () => () => {};
 
 function Bookmarklet() {
   const ref = useRef<HTMLAnchorElement>(null);
+  // A click only shows how to use the button; it works once dragged to the bookmarks bar.
+  const [hint, setHint] = useState(false);
+  useEffect(() => {
+    if (!hint) return;
+    const t = setTimeout(() => setHint(false), 7000);
+    return () => clearTimeout(t);
+  }, [hint]);
   const origin = useSyncExternalStore(noSubscription, () => window.location.origin, () => "");
   // React does not render javascript: links, so the address is set directly.
   useEffect(() => {
     if (ref.current && origin) ref.current.setAttribute("href", readerCode(origin));
   }, [origin]);
   return (
-    <div className="mt-6 hidden items-center gap-5 rounded-2xl border border-dashed border-brass/40 p-5 md:flex">
+    <div className="relative mt-6 hidden items-center gap-5 rounded-2xl border border-dashed border-brass/40 p-5 md:flex">
       <a
         ref={ref}
         onClick={(e) => {
           e.preventDefault();
-          alert("Drag this button to your bookmarks bar. Then, on the USCIS website, signed in, click the bookmark.");
+          setHint(true);
         }}
         className="inline-flex min-h-12 shrink-0 cursor-grab items-center gap-2 rounded-full bg-paper px-5 font-bold text-ink shadow-[0_10px_30px_-12px_rgba(0,0,0,0.6)] active:cursor-grabbing"
       >
@@ -685,6 +692,9 @@ function Bookmarklet() {
       <p className="text-sm leading-relaxed text-stone-dark">
         <strong className="text-paper">Skip the copying on a computer.</strong> Drag this button to your bookmarks bar once. After you sign in to USCIS,
         click the bookmark and enter your receipt number. Your case opens here, read only in your browser.
+      </p>
+      <p role="status" aria-live="polite" className={`absolute -top-3 left-5 rounded-full bg-brass px-4 py-1.5 text-sm font-bold text-ink shadow-lg transition-opacity duration-300 ${hint ? "opacity-100" : "pointer-events-none opacity-0"}`}>
+        {hint ? "Drag the button to your bookmarks bar, then click the bookmark on the USCIS website." : ""}
       </p>
     </div>
   );

@@ -11,7 +11,7 @@ import { deleteDoc, patchDoc, type Timestamp } from "@/lib/api";
 import { SENDERS } from "@/lib/email-template";
 import { cn } from "@/lib/utils";
 import { EmailComposer, EmailFrame, type ComposeTarget } from "../EmailComposer";
-import { Btn, Chip, Empty, fmtTs, Loading, Panel, Search, SectionHeader, useCollection, useToast, type Row } from "../kit";
+import { Btn, Chip, Empty, fmtTs, Loading, Panel, type Row, Search, SectionHeader, useCollection, useDialog, useToast } from "../kit";
 import { SentEmail } from "./Emails";
 
 type Parsed = {
@@ -68,6 +68,7 @@ async function parseMessage(id: string): Promise<Parsed> {
 
 export function Inbox({ rows, role }: { rows: Row[] | null; role: string }) {
   const toast = useToast();
+  const dialog = useDialog();
   const emails = useCollection("emails");
   const [mailbox, setMailbox] = useState("all");
   const [status, setStatus] = useState<(typeof STATUSES)[number]>("all");
@@ -123,7 +124,7 @@ export function Inbox({ rows, role }: { rows: Row[] | null; role: string }) {
   };
 
   const erase = async (r: Row) => {
-    if (!confirm(`Delete this email from ${r.name || r.email} permanently? This cannot be undone.`)) return;
+    if (!(await dialog.confirm({ title: "Delete this email?", message: `The email from ${r.name || r.email} is deleted permanently. This cannot be undone.`, confirmLabel: "Delete email", danger: true }))) return;
     setBusy(true);
     try {
       await deleteDoc("inbox", r.id);

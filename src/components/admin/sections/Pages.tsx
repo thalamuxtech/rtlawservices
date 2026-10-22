@@ -9,7 +9,7 @@ import { BASE_EXPERTISE, type Expertise } from "@/content/expertise";
 import { DEFAULT_GENERAL_FAQS } from "@/content/general";
 import { DEFAULT_PAGES, type PagesContent } from "@/content/pages";
 import { HEADING_LIST } from "@/content/headings";
-import { AreaIn, Btn, ItemsIn, LinesIn, Loading, saveContent, SectionHeader, SelectIn, TextIn, useToast } from "../kit";
+import { AreaIn, Btn, ItemsIn, LinesIn, Loading, saveContent, SectionHeader, SelectIn, TextIn, useDialog, useToast } from "../kit";
 
 type Tab = "home" | "headings" | "about" | "approach" | "faq" | "expertise" | "firm";
 
@@ -42,6 +42,7 @@ function current(saved: Partial<PagesContent>): PagesContent {
 
 export function PagesEditor() {
   const toast = useToast();
+  const dialog = useDialog();
   const stored = useDoc("settings", "pages");
   const [edits, setData] = useState<PagesContent | null>(null);
   const [dirty, setDirty] = useState(false);
@@ -72,8 +73,8 @@ export function PagesEditor() {
     }
   };
 
-  const restore = () => {
-    if (!confirm("Restore the original wording for this tab? Your change is saved only when you choose Save changes.")) return;
+  const restore = async () => {
+    if (!(await dialog.confirm({ title: "Restore the original wording?", message: "This tab goes back to its original text. Nothing changes on the website until you choose Save changes.", confirmLabel: "Restore", danger: true }))) return;
     const d = current({});
     if (tab === "home") patch("home", d.home);
     if (tab === "about") patch("about", d.about);
@@ -251,6 +252,7 @@ type HeadingOverrides = NonNullable<PagesContent["headings"]>;
 
 /** The headline and introduction at the top of each page. */
 function HeadingsEditor({ value, onChange }: { value: HeadingOverrides; onChange: (v: HeadingOverrides) => void }) {
+  const dialog = useDialog();
   const [path, setPath] = useState(HEADING_LIST[0].path);
   const base = HEADING_LIST.find((h) => h.path === path)!;
   const over = value[path] ?? {};
@@ -263,8 +265,8 @@ function HeadingsEditor({ value, onChange }: { value: HeadingOverrides; onChange
     if (!Object.keys(next).length) delete all[path];
     onChange(all);
   };
-  const reset = () => {
-    if (!confirm(`Restore the original heading for ${base.label}? Your change is saved only when you choose Save changes.`)) return;
+  const reset = async () => {
+    if (!(await dialog.confirm({ title: "Restore the original heading?", message: `The heading for ${base.label} goes back to its original text. Nothing changes on the website until you choose Save changes.`, confirmLabel: "Restore", danger: true }))) return;
     const all = { ...value };
     delete all[path];
     onChange(all);
@@ -302,9 +304,10 @@ function ExpertiseEditor({ value, onChange }: { value: PagesContent["expertise"]
   const base = useMemo(() => BASE_EXPERTISE.find((e) => e.slug === slug)!, [slug]);
   const e: Expertise = { ...base, ...(value[slug] ?? {}) } as Expertise;
   const edited = !!value[slug] && Object.keys(value[slug]).length > 0;
+  const dialog = useDialog();
   const set = (p: Over) => onChange({ ...value, [slug]: { ...(value[slug] ?? {}), ...p } });
-  const reset = () => {
-    if (!confirm(`Restore the original wording for ${base.title}? Your change is saved only when you choose Save changes.`)) return;
+  const reset = async () => {
+    if (!(await dialog.confirm({ title: "Restore the original wording?", message: `${base.title} goes back to its original text. Nothing changes on the website until you choose Save changes.`, confirmLabel: "Restore", danger: true }))) return;
     const next = { ...value };
     delete next[slug];
     onChange(next);

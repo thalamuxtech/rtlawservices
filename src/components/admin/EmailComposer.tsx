@@ -13,7 +13,7 @@ import { adminPost, api, deleteDoc, listDocs, putDoc, type Row, type Timestamp }
 import { DEFAULT_BRAND, renderEmail, SENDERS, type EmailContent } from "@/lib/email-template";
 import { cn } from "@/lib/utils";
 import { PRESETS, fromPreset, mergeTemplates, type Template } from "./email-presets";
-import { Btn, Toggle, useCollection, useToast } from "./kit";
+import { Btn, dialogIsOpen, Toggle, useCollection, useDialog, useToast } from "./kit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -58,6 +58,7 @@ export function EmailComposer({ target, onClose }: { target: ComposeTarget; onCl
 
 function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => void }) {
   const toast = useToast();
+  const dialog = useDialog();
   const { SITE } = useContent();
   const [me, setMe] = useState<{ email: string; name?: string } | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -108,7 +109,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
   useEffect(() => {
     // Escape closes only the composer, not the request panel underneath.
     const k = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
+      if (e.key !== "Escape" || dialogIsOpen()) return;
       e.stopPropagation();
       onClose();
     };
@@ -139,10 +140,14 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
 
   const current = templates.find((t) => t.id === draft.presetId);
 
-  const applyPreset = (id: string) => {
+  const applyPreset = async (id: string) => {
     const p = templates.find((x) => x.id === id);
     if (!p) return;
-    if (c.body.trim() && !confirm(`Replace the current text with the "${p.label}" template?`)) return;
+    if (
+      c.body.trim() &&
+      !(await dialog.confirm({ title: `Use "${p.label}"?`, message: "The template replaces the text you have written in this email.", confirmLabel: "Use template", danger: true }))
+    )
+      return;
     const content = fromPreset(p, c.signName || me?.name || "");
     if (p.id === "consultation" && target?.col === "bookings" && target.row) content.details = bookingDetails(target.row) || content.details;
     set({ presetId: id, subject: p.subject || draft.subject, content });
@@ -157,7 +162,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
 
   const saveTemplate = async () => {
     if (!current || current.id === "blank") return;
-    if (!confirm(`Save these changes to the "${current.label}" template for all staff?`)) return;
+    if (!(await dialog.confirm({ title: "Save to template?", message: `The "${current.label}" template will start this way for everyone on the staff.`, confirmLabel: "Save template" }))) return;
     try {
       await putDoc("emailTemplates", current.id, { label: current.label, ...asTemplate(current) }, false);
       toast("ok", `"${current.label}" template saved`);
@@ -167,7 +172,12 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
   };
 
   const saveAsNew = async () => {
-    const label = prompt("Name for the new template", draft.subject || "New template")?.trim();
+    const label = await dialog.prompt({
+      title: "Save as a new template",
+      message: "The template is shared with all staff and appears with the others in the composer.",
+      confirmLabel: "Save template",
+      input: { label: "Template name", value: draft.subject || "New template", required: "Give the template a name." },
+    });
     if (!label) return;
     const id = `t-${Date.now().toString(36)}`;
     try {
@@ -182,7 +192,12 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
   const removeTemplate = async () => {
     if (!current || current.id === "blank") return;
     const restoring = current.builtIn;
-    if (!confirm(restoring ? `Restore the "${current.label}" template to its original wording for all staff?` : `Delete the "${current.label}" template for all staff?`)) return;
+    const ok = await dialog.confirm(
+      restoring
+        ? { title: "Restore the original?", message: `The "${current.label}" template goes back to its original wording for everyone on the staff.`, confirmLabel: "Restore original", danger: true }
+        : { title: "Delete this template?", message: `"${current.label}" will be removed for everyone on the staff. This cannot be undone.`, confirmLabel: "Delete template", danger: true },
+    );
+    if (!ok) return;
     try {
       await deleteDoc("emailTemplates", current.id);
       toast("ok", restoring ? "Original template restored" : "Template deleted");
@@ -193,7 +208,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
   };
 
   /** Wraps or prefixes the selected text in the message box. */
-  const format = (kind: "bold" | "link" | "bullets" | "numbers" | "name") => {
+  const format = async (kind: "bold" | "link" | "bullets" | "numbers" | "name") => {
     const el = bodyRef.current;
     if (!el) return;
     const { selectionStart: a, selectionEnd: b, value } = el;
@@ -201,8 +216,13 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
     let insert = sel;
     if (kind === "bold") insert = `**${sel || "bold text"}**`;
     if (kind === "link") {
-      const url = prompt("Link address (starting with https://)", "https://");
-      if (!url) return;
+      const url = await dialog.prompt({
+        title: "Add a link",
+        message: sel ? `The words "${sel}" will link to this address.` : "Link text is added where the cursor is; change it afterwards.",
+        confirmLabel: "Add link",
+        input: { label: "Web address", value: "https://", placeholder: "https://rtlawservices.com/book/", required: "Enter the web address." },
+      });
+      if (!url || url === "https://") return;
       insert = `[${sel || "link text"}](${url})`;
     }
     if (kind === "bullets" || kind === "numbers")
@@ -242,7 +262,20 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
     if (!draft.to.length) return toast("error", "Add at least one recipient.");
     if (!draft.subject.trim()) return toast("error", "Write a subject.");
     const extra = draft.cc.length + draft.bcc.length;
-    if (!confirm(`Send "${draft.subject}" to ${draft.to.join(", ")}${extra ? ` and ${extra} more in Cc and Bcc` : ""}?`)) return;
+    const ok = await dialog.confirm({
+      title: "Send this email?",
+      message: (
+        <>
+          <span className="block font-bold text-ink">{draft.subject}</span>
+          <span className="mt-1 block">
+            From {from} to {draft.to.join(", ")}
+            {extra ? `, plus ${extra} in Cc and Bcc` : ""}.
+          </span>
+        </>
+      ),
+      confirmLabel: "Send email",
+    });
+    if (!ok) return;
     setBusy("send");
     try {
       await adminPost("email", { ...payload(), to: draft.to, cc: draft.cc, bcc: draft.bcc });
@@ -258,8 +291,8 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
     }
   };
 
-  const discard = () => {
-    if (!confirm("Discard this draft and start again from the template?")) return;
+  const discard = async () => {
+    if (!(await dialog.confirm({ title: "Discard this draft?", message: "Everything written in this email is cleared and it starts again from the template.", confirmLabel: "Discard draft", danger: true }))) return;
     try {
       localStorage.removeItem(draftKey(target));
     } catch {}
