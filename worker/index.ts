@@ -3,7 +3,6 @@
 
 import { adminRoutes } from "./admin";
 import { authRoutes } from "./auth";
-import { receiveEmail } from "./inbox";
 import { HttpError, json } from "./lib";
 import { publicRoutes } from "./public";
 
@@ -31,10 +30,5 @@ export default {
       console.error(err);
       return json({ error: "Something went wrong. Please try again." }, 500);
     }
-  },
-
-  // Mail for clientservice@ and info@, delivered by Email Routing.
-  async email(message, env) {
-    await receiveEmail(message, env);
   },
 } satisfies ExportedHandler<Env>;
