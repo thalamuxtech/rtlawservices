@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Bold, CopyPlus, FlaskConical, Link2, List, ListOrdered, Monitor, RotateCcw, Save, Send, Smartphone, Trash2, UserRound, X } from "lucide-react";
+import { Bold, CopyPlus, FlaskConical, Link2, List, ListOrdered, Monitor, Paperclip, RotateCcw, Save, Send, Smartphone, Trash2, UserRound, X } from "lucide-react";
 import { useContent } from "@/content/LiveContent";
 import { adminPost, api, deleteDoc, listDocs, putDoc, type Row, type Timestamp } from "@/lib/api";
 import { DEFAULT_BRAND, renderEmail, SENDERS, type EmailContent } from "@/lib/email-template";
@@ -17,9 +17,53 @@ import { Btn, dialogIsOpen, Toggle, useCollection, useDialog, useToast } from ".
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-export type ComposeTarget = { col?: "evaluations" | "bookings" | "messages" | "inbox"; row?: Row } | null;
+/** A received email being answered or passed on. */
+export type Original = {
+  /** "On ..., Ada Obi <ada@example.com> wrote:" */
+  replyHeader: string;
+  /** The forwarded-message block: From, Date, Subject and To. */
+  forwardHeader: string;
+  text: string;
+  to: string[];
+  cc: string[];
+  files?: { name: string; type: string; blob: Blob }[];
+};
 
-type Draft = { presetId: string; from: string; subject: string; to: string[]; cc: string[]; bcc: string[]; content: EmailContent };
+export type ComposeTarget = {
+  col?: "evaluations" | "bookings" | "messages" | "inbox";
+  row?: Row;
+  mode?: "reply" | "replyAll" | "forward";
+  original?: Original;
+} | null;
+
+type Attachment = { name: string; type: string; size: number; content: string };
+
+type Draft = {
+  presetId: string;
+  from: string;
+  subject: string;
+  to: string[];
+  cc: string[];
+  bcc: string[];
+  content: EmailContent;
+  /** Whether the quoted original goes out with the email. */
+  quoted?: boolean;
+  attachments?: Attachment[];
+};
+
+const MAX_FILES = 10;
+const MAX_BYTES = 7 * 1024 * 1024;
+
+export const fileSize = (n: number) => (n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`);
+
+/** A file as base64, the form the email service takes. */
+const readBase64 = (f: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(",")[1] ?? "");
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(f);
+  });
 
 /** Consultation details from a booking, written for the client. */
 function bookingDetails(r: Row) {
@@ -42,18 +86,39 @@ function startDraft(target: ComposeTarget, signName: string, templates: Template
   const preset = templates.find((p) => p.id === want) ?? PRESETS.find((p) => p.id === want)!;
   const content = fromPreset(preset, signName);
   if (target?.col === "bookings" && row) content.details = bookingDetails(row) || content.details;
-  // A reply to a received email keeps its subject and goes out from the address it was sent to.
+  // A reply to a received email keeps its subject, quotes it, and goes out
+  // from the address it was sent to. A forward starts with no recipient.
   const inbox = target?.col === "inbox" && row;
-  const subject = inbox ? (/^re:/i.test(String(row.subject)) ? String(row.subject) : `Re: ${row.subject}`) : preset.subject;
+  const mode = target?.mode ?? "reply";
+  const orig = target?.original;
+  const base = String(row?.subject ?? "");
+  let subject = preset.subject;
+  let to = row?.email ? [String(row.email)] : [];
+  let cc: string[] = [];
+  if (inbox) {
+    if (mode === "forward") {
+      subject = /^fwd?:/i.test(base) ? base : `Fwd: ${base}`;
+      to = [];
+      Object.assign(content, { preheader: `Forwarded: ${base}`, label: "", heading: "", greeting: "Hello,", body: "Please see the message below." });
+    } else subject = /^re:/i.test(base) ? base : `Re: ${base}`;
+    if (mode === "replyAll" && orig) {
+      const sender = String(row.email).toLowerCase();
+      cc = [...new Set([...orig.to, ...orig.cc].map((x) => x.toLowerCase()))].filter((x) => x !== sender && !SENDERS.some((s) => s === x));
+    }
+    if (orig) {
+      content.quote = orig.text;
+      content.quoteHeader = mode === "forward" ? orig.forwardHeader : orig.replyHeader;
+    }
+  }
   const from = inbox ? (SENDERS.find((s) => s === row.mailbox) ?? SENDERS[0]) : SENDERS[0];
-  return { presetId: preset.id, from, subject, to: row?.email ? [String(row.email)] : [], cc: [], bcc: [], content };
+  return { presetId: preset.id, from, subject, to, cc, bcc: [], content, quoted: !!content.quote, attachments: [] };
 }
 
-const draftKey = (target: ComposeTarget) => `rt-email-draft-${target?.row?.id ?? "new"}`;
+const draftKey = (target: ComposeTarget) => `rt-email-draft-${target?.row?.id ?? "new"}${target?.mode && target.mode !== "reply" ? `-${target.mode}` : ""}`;
 
 export function EmailComposer({ target, onClose }: { target: ComposeTarget; onClose: () => void }) {
   const open = target !== null;
-  return <AnimatePresence>{open && <Composer key={target?.row?.id ?? "new"} target={target} onClose={onClose} />}</AnimatePresence>;
+  return <AnimatePresence>{open && <Composer key={draftKey(target)} target={target} onClose={onClose} />}</AnimatePresence>;
 }
 
 function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => void }) {
@@ -88,10 +153,16 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
       try {
         kept = JSON.parse(localStorage.getItem(draftKey(target)) || "null");
       } catch {}
-      const d = kept?.content ? kept : startDraft(target, s?.name ?? "", mergeTemplates(rows));
+      const d = kept?.content ? { ...kept, attachments: [] } : startDraft(target, s?.name ?? "", mergeTemplates(rows));
       setDraft(d);
       setShowCc(d.cc.length > 0);
       setShowBcc(d.bcc.length > 0);
+      // A forward carries the original attachments.
+      const files = target?.mode === "forward" ? (target.original?.files ?? []) : [];
+      if (files.length)
+        Promise.all(files.slice(0, MAX_FILES).map(async (f) => ({ name: f.name, type: f.type, size: f.blob.size, content: await readBase64(f.blob) })))
+          .then((attachments) => setDraft((cur) => (cur ? { ...cur, attachments } : cur)))
+          .catch(() => {});
     });
   }, [target]);
 
@@ -100,7 +171,8 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
     if (!draft) return;
     const t = setTimeout(() => {
       try {
-        localStorage.setItem(draftKey(target), JSON.stringify(draft));
+        // Files are left out: they can be large, and browser storage is small.
+        localStorage.setItem(draftKey(target), JSON.stringify({ ...draft, attachments: [] }));
       } catch {}
     }, 400);
     return () => clearTimeout(t);
@@ -124,7 +196,9 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
 
   const name = String(target?.row?.name ?? "");
   const brand = useMemo(() => ({ ...DEFAULT_BRAND, phone: SITE.phone, email: SITE.email, website: SITE.url }), [SITE]);
-  const rendered = useMemo(() => (draft ? renderEmail(draft.content, { name, email: draft.to[0] }, brand) : null), [draft, name, brand]);
+  // The quoted original goes out only while it is switched on.
+  const effective = useMemo(() => (draft ? (draft.quoted === false ? { ...draft.content, quote: "", quoteHeader: "" } : draft.content) : null), [draft]);
+  const rendered = useMemo(() => (draft && effective ? renderEmail(effective, { name, email: draft.to[0] }, brand) : null), [draft, effective, name, brand]);
 
   if (!draft || !rendered) {
     return (
@@ -240,7 +314,31 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
   };
 
   const from = SENDERS.find((s) => s === draft.from) ?? SENDERS[0];
-  const payload = () => ({ col: target?.col, id: target?.row?.id, from, toName: name, subject: draft.subject, content: c });
+  const files = draft.attachments ?? [];
+  const totalSize = files.reduce((n, f) => n + f.size, 0);
+  const payload = () => ({
+    col: target?.col,
+    id: target?.row?.id,
+    from,
+    toName: name,
+    subject: draft.subject,
+    content: effective,
+    attachments: files.map(({ name: n, content }) => ({ name: n, content })),
+  });
+
+  const addFiles = async (list: FileList | File[] | null) => {
+    const picked = Array.from(list ?? []);
+    if (!picked.length) return;
+    if (files.length + picked.length > MAX_FILES) return toast("error", `Attach ${MAX_FILES} files at most.`);
+    if (totalSize + picked.reduce((n, f) => n + f.size, 0) > MAX_BYTES) return toast("error", "Attachments can add up to 7 MB. Try smaller files or send them separately.");
+    try {
+      const added = await Promise.all(picked.map(async (f) => ({ name: f.name, type: f.type || "application/octet-stream", size: f.size, content: await readBase64(f) })));
+      setDraft((cur) => (cur ? { ...cur, attachments: [...(cur.attachments ?? []), ...added] } : cur));
+    } catch {
+      toast("error", "A file could not be read. Try again.");
+    }
+  };
+  const removeFile = (i: number) => setDraft((cur) => (cur ? { ...cur, attachments: (cur.attachments ?? []).filter((_, j) => j !== i) } : cur));
 
   const sendTest = async () => {
     const list = testTo.split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean);
@@ -469,6 +567,48 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
               </div>
             </Section>
 
+            <Section title="Attachments" aside={<span className="text-xs font-bold text-stone">{fileSize(totalSize)} of 7 MB</span>}>
+              <label
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  addFiles(e.dataTransfer.files);
+                }}
+                className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-ink/25 bg-mist/40 px-4 py-5 text-center transition-colors hover:border-ink/50 hover:bg-mist"
+              >
+                <Paperclip aria-hidden className="size-5 text-brass-ink" />
+                <span className="text-sm font-bold text-ink">Add files</span>
+                <span className="text-xs text-stone">Drop files here or choose them. Up to {MAX_FILES} files, 7 MB in total.</span>
+                <input type="file" multiple className="sr-only" onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+              </label>
+              {files.length > 0 && (
+                <ul className="grid gap-2">
+                  {files.map((f, i) => (
+                    <li key={`${f.name}-${i}`} className="flex items-center gap-3 rounded-xl border border-line bg-white px-3 py-2">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brass-pale text-xs font-bold uppercase text-brass-ink">{(f.name.split(".").pop() || "file").slice(0, 4)}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-bold text-ink">{f.name}</span>
+                        <span className="block text-xs text-stone">{fileSize(f.size)}</span>
+                      </span>
+                      <button type="button" onClick={() => removeFile(i)} aria-label={`Remove ${f.name}`} className="grid size-9 place-items-center rounded-full text-stone hover:bg-danger/10 hover:text-danger">
+                        <X aria-hidden className="size-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Section>
+
+            {c.quote.trim() && (
+              <Section
+                title={target?.mode === "forward" ? "Forwarded message" : "Original message"}
+                aside={<Toggle label="Include" checked={draft.quoted !== false} onChange={(quoted) => set({ quoted })} />}
+              >
+                <p className="whitespace-pre-line text-xs text-stone">{c.quoteHeader}</p>
+                <div className="max-h-48 overflow-y-auto whitespace-pre-wrap border-l-2 border-line pl-3 text-sm text-stone">{c.quote}</div>
+              </Section>
+            )}
+
             <Section title="Details box" aside={<Toggle label="Show" checked={c.detailsEnabled} onChange={(detailsEnabled) => setC({ detailsEnabled })} />}>
               {c.detailsEnabled ? (
                 <>
@@ -548,6 +688,15 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
                   {draft.cc.length > 0 && `, Cc ${draft.cc.join(", ")}`}
                 </p>
                 {c.preheader && <p className="mt-1 truncate text-xs text-stone">{c.preheader}</p>}
+                {files.length > 0 && (
+                  <p className="mt-2 flex flex-wrap gap-1.5">
+                    {files.map((f, i) => (
+                      <span key={`${f.name}-${i}`} className="inline-flex items-center gap-1 rounded-full bg-mist px-2.5 py-1 text-xs font-bold text-ink">
+                        <Paperclip aria-hidden className="size-3" /> {f.name}
+                      </span>
+                    ))}
+                  </p>
+                )}
               </div>
               <EmailFrame title="Email preview" html={rendered.html} />
             </div>

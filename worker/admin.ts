@@ -118,6 +118,25 @@ export async function emailBrand(env: Env): Promise<EmailBrand> {
 }
 
 const MAX_RECIPIENTS = 20;
+const MAX_FILES = 10;
+// Base64 makes files about a third larger; this allows about 7 MB of files.
+const MAX_ATTACHMENT_CHARS = 10_000_000;
+
+/** Files attached in the composer, as base64. Returns them with their sizes for the record. */
+function cleanAttachments(v: unknown) {
+  const list = Array.isArray(v) ? v : [];
+  if (list.length > MAX_FILES) throw new HttpError(400, `Attach ${MAX_FILES} files at most.`);
+  let total = 0;
+  const files = list.map((a) => {
+    const name = typeof a?.name === "string" ? a.name.replace(/[\\/\r\n"]/g, "_").trim().slice(0, 150) : "";
+    const content = typeof a?.content === "string" ? a.content : "";
+    if (!name || !content || !/^[A-Za-z0-9+/]+=*$/.test(content.slice(0, 200))) throw new HttpError(400, "An attachment could not be read. Remove it and add it again.");
+    total += content.length;
+    return { name, content, size: Math.floor((content.length * 3) / 4) };
+  });
+  if (total > MAX_ATTACHMENT_CHARS) throw new HttpError(400, "The attachments add up to more than 7 MB. Send fewer or smaller files.");
+  return files;
+}
 
 function addresses(v: unknown, label: string): string[] {
   const list = Array.isArray(v) ? v : [];
@@ -134,7 +153,7 @@ function cleanContent(v: unknown): EmailContent {
   const out: Record<string, unknown> = {};
   for (const [k, d] of Object.entries(BLANK_EMAIL)) {
     const x = src[k];
-    out[k] = typeof d === "boolean" ? x === true : typeof x === "string" ? x.slice(0, k === "body" ? 20_000 : 2_000) : d;
+    out[k] = typeof d === "boolean" ? x === true : typeof x === "string" ? x.slice(0, k === "body" || k === "quote" ? 20_000 : 2_000) : d;
   }
   if (out.headerStyle !== "light") out.headerStyle = "dark";
   if (out.accent !== "ink") out.accent = "gold";
@@ -159,12 +178,14 @@ async function emailClient(env: Env, staff: Staff, b: Doc) {
   const toName = String(b.toName ?? request?.name ?? "").slice(0, 200);
   const vars = { name: toName, email: typeof request?.email === "string" ? request.email : undefined };
   const { html, text } = renderEmail(content, vars, await emailBrand(env));
+  const files = cleanAttachments(b.attachments);
+  const attachments = files.map(({ name, content }) => ({ name, content }));
 
   if (b.test === true) {
     const to = addresses(b.testTo, "Test address");
     if (!to.length) throw new HttpError(400, "Enter an email address for the test.");
     if (to.length > 3) throw new HttpError(400, "Send a test to three addresses at most.");
-    const result = await sendMail(env, { from, to, subject: `[Test] ${subject}`, html, text });
+    const result = await sendMail(env, { from, to, subject: `[Test] ${subject}`, html, text, attachments });
     if (!result.ok) throw new HttpError(502, result.error);
     return json({ ok: true, test: true });
   }
@@ -175,7 +196,7 @@ async function emailClient(env: Env, staff: Staff, b: Doc) {
   if (!to.length) throw new HttpError(400, "Add at least one recipient.");
   if (to.length + cc.length + bcc.length > MAX_RECIPIENTS) throw new HttpError(400, `Send to ${MAX_RECIPIENTS} addresses at most.`);
 
-  const result = await sendMail(env, { from, to, toName, cc, bcc, subject, html, text });
+  const result = await sendMail(env, { from, to, toName, cc, bcc, subject, html, text, attachments });
   if (!result.ok) throw new HttpError(502, result.error);
   const emailId = newId();
   await putDoc(env.DB, "emails", emailId, {
@@ -188,6 +209,7 @@ async function emailClient(env: Env, staff: Staff, b: Doc) {
     bcc,
     subject,
     content,
+    attachments: files.map(({ name, size }) => ({ name, size })),
     html,
     text,
     sentBy: staff.uid,
@@ -279,6 +301,9 @@ export async function adminRoutes(env: Env, req: Request, path: string, ctx: Exe
       const allowed: Doc = {};
       if (str(patch.status, 1, 40)) allowed.status = patch.status;
       if (typeof patch.staffNote === "string") allowed.staffNote = patch.staffNote.slice(0, 4000);
+      // Received email: a preview line and attachment count, filled in once the browser has read it.
+      if (col === INBOX && typeof patch.preview === "string") allowed.preview = patch.preview.slice(0, 240);
+      if (col === INBOX && Number.isInteger(patch.attachmentCount)) allowed.attachmentCount = Math.min(Math.max(Number(patch.attachmentCount), 0), 100);
       if (!Object.keys(allowed).length) throw new HttpError(400, "Nothing to save.");
       if (!(await getDoc(env.DB, col, id))) throw new HttpError(404, "This request no longer exists.");
       await mergeDoc(env.DB, col, id, { ...allowed, updatedAt: ts(), updatedBy: staff.uid });

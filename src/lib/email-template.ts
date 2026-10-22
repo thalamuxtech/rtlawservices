@@ -28,6 +28,9 @@ export type EmailContent = {
   signTitle: string;
   showContact: boolean;
   showNotice: boolean;
+  /** The message being replied to or forwarded, shown below the sign-off. */
+  quoteHeader: string;
+  quote: string;
 };
 
 export type EmailBrand = { name: string; phone: string; email: string; website: string };
@@ -63,6 +66,8 @@ export const BLANK_EMAIL: EmailContent = {
   signTitle: "RT Law Services",
   showContact: true,
   showNotice: true,
+  quoteHeader: "",
+  quote: "",
 };
 
 const C = {
@@ -230,6 +235,16 @@ export function renderEmail(content: EmailContent, vars: EmailVars = {}, brand: 
     ${c.signTitle.trim() ? `<p style="margin:2px 0 0;font-family:${SANS};font-size:14px;color:${C.stone}">${esc(f(c.signTitle))}</p>` : ""}
   </td></tr>
   ${
+    c.quote.trim()
+      ? `<tr><td class="rt-pad" style="padding:0 48px 40px">
+    <div style="border-top:1px solid ${C.line};padding-top:22px">
+      ${c.quoteHeader.trim() ? `<p style="margin:0 0 10px;font-family:${SANS};font-size:13px;color:${C.stone}">${esc(c.quoteHeader).replace(/\n/g, "<br>")}</p>` : ""}
+      <div style="border-left:3px solid ${C.line};padding:2px 0 2px 16px;font-family:${SANS};font-size:14px;line-height:1.6;color:${C.stone}">${esc(c.quote.trim()).replace(/\n/g, "<br>")}</div>
+    </div>
+  </td></tr>`
+      : ""
+  }
+  ${
     c.showContact
       ? `<tr><td class="rt-pad" style="background:${C.ink};padding:26px 48px">
     <p style="margin:0 0 6px;font-family:${SERIF};font-size:17px;color:#FFFFFF">${esc(brand.name)}</p>
@@ -272,6 +287,7 @@ ${
     f(c.closing),
     f(c.signName),
     f(c.signTitle),
+    c.quote.trim() ? `\n${c.quoteHeader}\n${c.quote.trim().split("\n").map((l) => `> ${l}`).join("\n")}` : "",
     c.showContact ? `\n${brand.name}\n${brand.phone} | ${brand.email} | ${site}` : "",
     c.showNotice
       ? "\nThis email may contain confidential or legally privileged information. If you received it by mistake, please tell us by replying and delete it. Receiving this email does not by itself create an attorney-client relationship."

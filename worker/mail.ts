@@ -13,6 +13,8 @@ export type Mail = {
   text: string;
   /** Full HTML document. Without it, the text is sent in a simple layout. */
   html?: string;
+  /** Files as base64, passed to Brevo unchanged. */
+  attachments?: { name: string; content: string }[];
   replyTo?: string;
 };
 
@@ -45,6 +47,7 @@ export async function sendMail(env: Env, mail: Mail): Promise<MailResult> {
         subject: mail.subject,
         textContent: mail.text,
         htmlContent: mail.html || toHtml(mail.text),
+        ...(mail.attachments?.length ? { attachment: mail.attachments } : {}),
       }),
     });
     const data = (await res.json().catch(() => ({}))) as { messageId?: string; message?: string };
