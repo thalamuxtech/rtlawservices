@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-  # Content published from the back office goes live on the next run.
+  # Rebuilds the prerendered pages after back-office edits. Visitors see an
+  # edit at once; this keeps the copies search engines read up to date.
   schedule:
     - cron: "*/10 * * * *"
 
@@ -14,6 +15,13 @@ permissions:
 concurrency:
   group: deploy
   cancel-in-progress: false
+
+env:
+  # The live site, read for published content. A repository variable can point
+  # it elsewhere, for example the workers.dev address before the domain is attached.
+  CONTENT_URL: ${{ vars.CONTENT_URL || 'https://rtlawservices.com' }}
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
 jobs:
   build-and-deploy:
@@ -33,7 +41,7 @@ jobs:
         run: |
           node scripts/pull-content.mjs
           NEW=$(node -p "require('./public/build-meta.json').contentHash")
-          LIVE=$(curl -fsS "https://rtlawservice.web.app/build-meta.json?ts=$(date +%s)" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).contentHash)}catch{console.log('')}})" || true)
+          LIVE=$(curl -fsS "$CONTENT_URL/build-meta.json?ts=$(date +%s)" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).contentHash)}catch{console.log('')}})" || true)
           echo "new=$NEW live=$LIVE"
           if [ "${{ github.event_name }}" = "schedule" ] && [ "$NEW" = "$LIVE" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -52,9 +60,9 @@ jobs:
           NEXT_PUBLIC_CASE_STATUS_RELAY: ${{ vars.NEXT_PUBLIC_CASE_STATUS_RELAY }}
 
       - if: steps.content.outputs.changed == 'true'
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RTLAWSERVICE }}
-          projectId: rtlawservice
-          channelId: live
+        name: Update the database structure
+        run: npx wrangler d1 migrations apply rtlawservices --remote
+
+      - if: steps.content.outputs.changed == 'true'
+        name: Deploy to Cloudflare
+        run: npx wrangler deploy

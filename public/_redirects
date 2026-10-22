@@ -1,0 +1,23 @@
+# Addresses from the firm's previous website.
+/practice-area /expertise/ 301
+/practice-area/* /expertise/ 301
+/we-have-expertise-in /expertise/ 301
+/we-have-expertise-in/* /expertise/ 301
+/request-appointment /book/ 301
+/request-appointment/* /book/ 301
+/contact-us /contact/ 301
+/contact-us/* /contact/ 301
+/fiduciary-services /expertise/estates/ 301
+/fiduciary-services/* /expertise/estates/ 301
+/diaspora-connect /diaspora/ 301
+/diaspora-connect/* /diaspora/ 301
+/gateway-to-nigerian-markets /diaspora/ 301
+/gateway-to-nigerian-markets/* /diaspora/ 301
+/video-blog /resources/ 301
+/video-blog/* /resources/ 301
+/resources/marriage-green-card-what-to-expect /blog/marriage-green-card-what-to-expect/ 301
+/resources/marriage-green-card-what-to-expect/* /blog/marriage-green-card-what-to-expect/ 301
+/resources/eb1a-or-national-interest-waiver /blog/eb1a-or-national-interest-waiver/ 301
+/resources/eb1a-or-national-interest-waiver/* /blog/eb1a-or-national-interest-waiver/ 301
+/resources/avoiding-notario-fraud /blog/avoiding-notario-fraud/ 301
+/resources/avoiding-notario-fraud/* /blog/avoiding-notario-fraud/ 301

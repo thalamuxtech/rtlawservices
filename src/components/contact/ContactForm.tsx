@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Check, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/primitives";
 import { NO_RELATIONSHIP } from "@/content/site";
-import { store } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const TOPICS = ["A new matter", "An existing case", "Fees and billing", "Something else"];
@@ -29,16 +28,18 @@ export function ContactForm() {
     }
     setState("sending");
     try {
-      const { fs, db } = await store();
-      await fs.addDoc(fs.collection(db, "messages"), {
-        name: f.name.trim(),
-        email: f.email.trim().toLowerCase(),
-        phone: f.phone.trim(),
-        topic: f.topic,
-        message: f.message.trim(),
-        status: "new",
-        createdAt: fs.serverTimestamp(),
+      const res = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: f.name.trim(),
+          email: f.email.trim().toLowerCase(),
+          phone: f.phone.trim(),
+          topic: f.topic,
+          message: f.message.trim(),
+        }),
       });
+      if (!res.ok) throw new Error(String(res.status));
       setState("sent");
     } catch {
       setState("error");

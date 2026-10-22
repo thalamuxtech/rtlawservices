@@ -113,6 +113,6 @@ export function applyOverrides<E extends Expertise>(pages: Pages, e: E): E {
 type Raw = { source?: string; pages?: Partial<PagesContent> };
 const raw = liveJson as unknown as Raw;
 
-export const PAGES = mergePages(raw.source === "firestore" ? raw.pages : undefined);
+export const PAGES = mergePages(raw.source === "database" ? raw.pages : undefined);
 
 export const withOverrides = <E extends Expertise>(e: E): E => applyOverrides(PAGES, e);

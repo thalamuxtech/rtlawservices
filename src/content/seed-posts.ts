@@ -1,6 +1,6 @@
 import type { Post } from "./types";
 
-// Seed blog posts. Once the back office publishes posts to Firestore, the
+// Seed blog posts. Once the back office publishes posts to the database, the
 // build uses those instead. Every factual statement points to a listed source.
 
 export const SEED_POSTS: Post[] = [

@@ -17,7 +17,7 @@ export function PrivacyView() {
       <h2>How we use it</h2>
       <p>To respond to you, schedule consultations, check for conflicts of interest and improve the website. We do not sell personal information.</p>
       <h2>Where it is stored</h2>
-      <p>Form submissions are stored in Google Firebase, encrypted in transit and at rest, and are readable only by authorized firm staff.</p>
+      <p>Form submissions and any CV you upload are stored with Cloudflare, our hosting provider, encrypted in transit and at rest, and are readable only by authorized firm staff. When we email you from our staff portal, the message is delivered through Brevo, an email delivery service.</p>
       <h2>How long we keep it</h2>
       <p>If you do not become a client, we delete website enquiry data within 24 months, unless the law requires otherwise.</p>
       <h2>Your choices</h2>

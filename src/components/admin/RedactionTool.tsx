@@ -12,8 +12,8 @@ const MAX_CHARS = 700_000;
 /**
  * Redacts an approval document before upload. Each selected area is painted
  * over with one flat colour, so no detail survives to be recovered, and the
- * unredacted original never leaves the browser. Returns a WebP data URL small
- * enough for one Firestore document.
+ * unredacted original never leaves the browser. Returns a small WebP data URL,
+ * which the server stores as an image file when the record is saved.
  */
 export function RedactionTool({ open, onClose, onDone }: { open: boolean; onClose: () => void; onDone: (dataUrl: string) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);

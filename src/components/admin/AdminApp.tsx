@@ -1,16 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
-import { onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import {
   BookOpen, CalendarClock, ClipboardCheck, ExternalLink, Eye, EyeOff, FileBadge, FileText, Gauge, Globe2, KeyRound, LayoutDashboard, Loader2, Lock, LogOut, Mail, Menu, MessagesSquare, PanelLeftClose, PanelLeftOpen, Rocket, Settings, ShieldAlert, Star, Users, UserSquare2, Wand2, X,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { LoginArt } from "./LoginArt";
-import { auth, db } from "@/lib/firebase";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { ToastProvider, useCollection } from "./kit";
 import { Overview } from "./sections/Overview";
@@ -20,39 +18,59 @@ import { Publishing, SiteSettings, Staff } from "./sections/Settings";
 import { PagesEditor } from "./sections/Pages";
 
 type StaffDoc = { role: string; name?: string; email?: string };
+type User = { uid: string; email: string };
+type Session = { user: User; staff: StaffDoc } | { user: null; email: string | null };
+
+async function readSession(): Promise<Session> {
+  const r = await api<{ staff: (StaffDoc & User) | null; email?: string | null }>("/api/auth/me");
+  return r.staff ? { user: { uid: r.staff.uid, email: r.staff.email }, staff: r.staff } : { user: null, email: r.email ?? null };
+}
+
+export async function signOut() {
+  await api("/api/auth/logout", { method: "POST" }).catch(() => {});
+  location.reload();
+}
+
+/** The token in a set-password link (/admin/#reset=...), if this visit came from one. */
+const resetToken = () => (typeof window !== "undefined" && window.location.hash.startsWith("#reset=") ? window.location.hash.slice(7) : "");
 
 export function AdminApp() {
-  const [user, setUser] = useState<User | null | undefined>(undefined);
-  const [staff, setStaff] = useState<StaffDoc | null | undefined>(undefined);
-
-  useEffect(
+  const [session, setSession] = useState<Session | undefined>(undefined);
+  const [token, setToken] = useState(resetToken);
+  const refresh = useCallback(
     () =>
-      onAuthStateChanged(auth(), async (u) => {
-        setUser(u);
-        if (!u) return setStaff(null);
-        setStaff(undefined);
-        try {
-          const snap = await getDoc(doc(db(), "staff", u.uid));
-          setStaff(snap.exists() ? (snap.data() as StaffDoc) : null);
-        } catch {
-          setStaff(null);
-        }
-      }),
+      readSession()
+        .then(setSession)
+        .catch(() => setSession({ user: null, email: null })),
     [],
   );
 
-  if (user === undefined || (user && staff === undefined)) {
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  if (token)
+    return (
+      <SetPassword
+        token={token}
+        done={() => {
+          history.replaceState(null, "", "/admin/");
+          setToken("");
+          refresh();
+        }}
+      />
+    );
+  if (session === undefined) {
     return (
       <div className="grid min-h-dvh place-items-center bg-ink">
         <Logo tone="dark" variant="mark" className="w-24" />
       </div>
     );
   }
-  if (!user) return <Login />;
-  if (!staff) return <NotStaff user={user} />;
+  if (!session.user) return session.email ? <NotStaff email={session.email} /> : <Login onSignedIn={refresh} />;
   return (
     <ToastProvider>
-      <Shell user={user} staff={staff} />
+      <Shell user={session.user} staff={session.staff} />
     </ToastProvider>
   );
 }
@@ -76,7 +94,7 @@ function savedLogin(): { email: string; password: string } | null {
   }
 }
 
-function Login() {
+function Login({ onSignedIn }: { onSignedIn: () => void }) {
   const [email, setEmail] = useState(() => {
     try {
       return (typeof window !== "undefined" && localStorage.getItem("rt-admin-email")) || DEFAULT_EMAIL;
@@ -99,14 +117,15 @@ function Login() {
     setBusy(true);
     setError("");
     try {
-      await signInWithEmailAndPassword(auth(), em, pw);
+      await api("/api/auth/login", { method: "POST", json: { email: em, password: pw } });
       try {
         localStorage.setItem("rt-admin-email", em);
         if (remember) localStorage.setItem(SAVED_KEY, JSON.stringify({ email: em, password: pw }));
         else localStorage.removeItem(SAVED_KEY);
       } catch {}
-    } catch {
-      setError("Sign-in failed. Check your email and password.");
+      onSignedIn();
+    } catch (e) {
+      setError((e as Error).message || "Sign-in failed. Check your email and password.");
     } finally {
       setBusy(false);
     }
@@ -137,9 +156,11 @@ function Login() {
   const reset = async () => {
     if (!email.trim()) return setError("Enter your email first, then choose reset.");
     try {
-      await sendPasswordResetEmail(auth(), email.trim());
-    } catch {}
-    setInfo("If an account exists for that email, a reset link is on its way.");
+      await api("/api/auth/reset-request", { method: "POST", json: { email: email.trim() } });
+      setInfo("If an account exists for that email, a reset link is on its way.");
+    } catch (e) {
+      setError((e as Error).message);
+    }
   };
 
   return (
@@ -257,17 +278,73 @@ function Login() {
   );
 }
 
-function NotStaff({ user }: { user: User }) {
+function NotStaff({ email }: { email: string }) {
   return (
     <div className="grid min-h-dvh place-items-center bg-paper px-4 text-center">
       <div className="max-w-md">
         <ShieldAlert aria-hidden className="mx-auto size-10 text-brass-ink" />
         <h1 className="font-serif-display mt-6 text-3xl text-ink">Access not yet granted</h1>
-        <p className="mt-3 text-stone">You are signed in as {user.email}, but this account is not on the staff list. Ask an owner to add it.</p>
-        <button type="button" onClick={() => signOut(auth())} className="mt-8 inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-6 font-bold text-paper">
+        <p className="mt-3 text-stone">You are signed in as {email}, but this account is not on the staff list. Ask an owner to add it.</p>
+        <button type="button" onClick={signOut} className="mt-8 inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-6 font-bold text-paper">
           <LogOut aria-hidden className="size-4" /> Sign out
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Reached from a set-password link in an email or from an owner. */
+function SetPassword({ token, done }: { token: string; done: () => void }) {
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [show, setShow] = useState(false);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pw.length < 10) return setError("Use at least 10 characters.");
+    if (pw !== pw2) return setError("The two passwords do not match.");
+    setBusy(true);
+    setError("");
+    try {
+      await api("/api/auth/reset", { method: "POST", json: { token, password: pw } });
+      done();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="grid min-h-dvh place-items-center bg-paper px-4 py-16">
+      <form onSubmit={submit} className="w-full max-w-md">
+        <Logo className="mb-10 w-56" />
+        <p className="text-sm font-bold text-brass-ink">Staff portal</p>
+        <h1 className="font-serif-display mt-2 text-5xl text-ink">Set your password</h1>
+        <p className="mt-4 text-stone">Choose a password of at least 10 characters. You will be signed in straight after.</p>
+        <label htmlFor="n-pass" className="mt-8 block text-sm font-bold text-ink">
+          New password
+        </label>
+        <input id="n-pass" type={show ? "text" : "password"} autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-line bg-white px-4 outline-none focus:border-ink" />
+        <label htmlFor="n-pass2" className="mt-5 block text-sm font-bold text-ink">
+          Repeat the password
+        </label>
+        <input id="n-pass2" type={show ? "text" : "password"} autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-line bg-white px-4 outline-none focus:border-ink" />
+        <label className="mt-4 flex min-h-11 cursor-pointer items-center gap-3 text-sm text-stone">
+          <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} className="size-5 accent-ink" />
+          Show passwords
+        </label>
+        {error && (
+          <p role="alert" className="mt-4 text-sm font-bold text-danger">
+            {error}
+          </p>
+        )}
+        <button type="submit" disabled={busy} className="mt-8 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-ink font-bold text-paper transition-colors hover:bg-ink-raised disabled:opacity-60">
+          {busy ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <KeyRound aria-hidden className="size-4" />} Save password
+        </button>
+      </form>
     </div>
   );
 }
@@ -389,7 +466,7 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
               <span className="block truncate text-xs capitalize text-stone-dark">{staff.role}</span>
             </span>
           )}
-          <button type="button" onClick={() => signOut(auth())} aria-label="Sign out" title="Sign out" className="grid size-11 place-items-center rounded-full text-stone-dark transition-colors hover:bg-paper hover:text-ink">
+          <button type="button" onClick={signOut} aria-label="Sign out" title="Sign out" className="grid size-11 place-items-center rounded-full text-stone-dark transition-colors hover:bg-paper hover:text-ink">
             <LogOut aria-hidden className="size-4" />
           </button>
         </div>
@@ -462,16 +539,16 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
                   go={go}
                 />
               )}
-              {section === "evaluations" && <Requests cfg={EVALUATIONS} rows={evaluations.rows} uid={user.uid} role={staff.role} />}
-              {section === "bookings" && <Requests cfg={BOOKINGS} rows={bookings.rows} uid={user.uid} role={staff.role} />}
-              {section === "messages" && <Requests cfg={MESSAGES} rows={messages.rows} uid={user.uid} role={staff.role} />}
-              {section === "cases" && <ContentManager kind="cases" rows={cases.rows} uid={user.uid} />}
-              {section === "reviews" && <ContentManager kind="reviews" rows={reviews.rows} uid={user.uid} />}
-              {section === "posts" && <ContentManager kind="posts" rows={posts.rows} uid={user.uid} />}
-              {section === "attorneys" && <ContentManager kind="attorneys" rows={attorneys.rows} uid={user.uid} />}
-              {section === "pages" && <PagesEditor uid={user.uid} />}
-              {section === "settings" && <SiteSettings uid={user.uid} />}
-              {section === "publishing" && <Publishing uid={user.uid} role={staff.role} />}
+              {section === "evaluations" && <Requests cfg={EVALUATIONS} rows={evaluations.rows} role={staff.role} />}
+              {section === "bookings" && <Requests cfg={BOOKINGS} rows={bookings.rows} role={staff.role} />}
+              {section === "messages" && <Requests cfg={MESSAGES} rows={messages.rows} role={staff.role} />}
+              {section === "cases" && <ContentManager kind="cases" rows={cases.rows} />}
+              {section === "reviews" && <ContentManager kind="reviews" rows={reviews.rows} />}
+              {section === "posts" && <ContentManager kind="posts" rows={posts.rows} />}
+              {section === "attorneys" && <ContentManager kind="attorneys" rows={attorneys.rows} />}
+              {section === "pages" && <PagesEditor />}
+              {section === "settings" && <SiteSettings />}
+              {section === "publishing" && <Publishing />}
               {section === "staff" && <Staff rows={staffRows.rows} uid={user.uid} role={staff.role} />}
             </motion.div>
           </AnimatePresence>

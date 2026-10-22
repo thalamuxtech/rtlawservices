@@ -1,89 +1,45 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import {
-  collection, deleteDoc, doc, onSnapshot, serverTimestamp, setDoc, type DocumentData, type Timestamp,
-} from "firebase/firestore";
 import { ArrowDown, ArrowUp, CheckCircle2, Loader2, Plus, Trash2, X, XCircle } from "lucide-react";
-import { db } from "@/lib/firebase";
-import { writeLiveContent } from "@/lib/live-content";
-import { requestPublish } from "@/lib/publish";
+import { deleteDoc, putDoc, Timestamp, useRows, type DocumentData, type Row } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 /* ---------- data ---------- */
 
-export type Row = DocumentData & { id: string };
+export type { Row };
 
-const sortKey = (v: unknown) => (v && typeof v === "object" && "toMillis" in v ? (v as Timestamp).toMillis() : (v as string | number | undefined) ?? "");
+const sortKey = (v: unknown) => (v instanceof Timestamp ? v.toMillis() : (v as string | number | undefined) ?? "");
 
-/**
- * Live rows of a collection, newest first. Sorting happens here rather than in
- * the query, because Firestore leaves out documents that lack the ordered field.
- */
+/** Rows of a collection, newest first, refreshed while the portal is open. */
 export function useCollection(name: string, order = "createdAt") {
-  const [rows, setRows] = useState<Row[] | null>(null);
-  const [error, setError] = useState("");
-  useEffect(
-    () =>
-      onSnapshot(
-        collection(db(), name),
-        (s) => {
-          setError("");
-          const list = s.docs.map((d) => ({ id: d.id, ...d.data() }) as Row);
-          const asc = order === "order";
-          list.sort((a, b) => {
-            const x = sortKey(a[order]);
-            const y = sortKey(b[order]);
-            return (x < y ? -1 : x > y ? 1 : 0) * (asc ? 1 : -1);
-          });
-          setRows(list);
-        },
-        (e) => {
-          setError(e.message);
-          setRows((r) => r ?? []);
-        },
-      ),
-    [name, order],
-  );
-  return { rows, error };
+  const { rows, error } = useRows(name);
+  const sorted = useMemo(() => {
+    if (!rows) return null;
+    const asc = order === "order";
+    return [...rows].sort((a, b) => {
+      const x = sortKey(a[order]);
+      const y = sortKey(b[order]);
+      return (x < y ? -1 : x > y ? 1 : 0) * (asc ? 1 : -1);
+    });
+  }, [rows, order]);
+  return { rows: sorted, error };
 }
 
 /**
- * Records the time of the last content change, updates the content the public
- * website reads on each page view, and starts a site rebuild.
+ * Saves a record. The server records who changed it and, when the change
+ * affects the website, starts a rebuild. Visitors see it on their next page load.
  */
-export async function touchContent(uid: string) {
-  await setDoc(doc(db(), "meta", "content"), { updatedAt: serverTimestamp(), updatedBy: uid }, { merge: true });
-  try {
-    await writeLiveContent();
-    await setDoc(doc(db(), "meta", "content"), { liveError: "" }, { merge: true });
-  } catch (err) {
-    // The save itself succeeded; the change then waits for the rebuild.
-    await setDoc(doc(db(), "meta", "content"), { liveError: err instanceof Error ? err.message : "Unknown error" }, { merge: true }).catch(() => {});
-  }
-  // Not awaited: the Publishing screen reports any problem starting the build.
-  // The rebuild refreshes search engine copies and uploaded images.
-  void requestPublish(uid);
+export async function saveContent(col: string, id: string, data: DocumentData, affectsSite = true) {
+  await putDoc(col, id, data, affectsSite);
 }
 
-/** Firestore rejects undefined values, so drop them before writing. */
-const clean = (v: unknown): unknown =>
-  Array.isArray(v)
-    ? v.map(clean)
-    : v && typeof v === "object" && !("toDate" in (v as object))
-      ? Object.fromEntries(Object.entries(v as object).filter(([, x]) => x !== undefined).map(([k, x]) => [k, clean(x)]))
-      : v;
-
-export async function saveContent(col: string, id: string, data: DocumentData, uid: string, affectsSite = true) {
-  await setDoc(doc(db(), col, id), { ...(clean(data) as DocumentData), updatedAt: serverTimestamp(), updatedBy: uid }, { merge: false });
-  if (affectsSite) await touchContent(uid);
+export async function removeContent(col: string, id: string) {
+  await deleteDoc(col, id);
 }
 
-export async function removeContent(col: string, id: string, uid: string) {
-  await deleteDoc(doc(db(), col, id));
-  await touchContent(uid);
-}
+export { Timestamp };
 
 export const fmtTs = (t?: Timestamp | null, tz = "America/New_York"): string => {
   if (!t?.toDate) return "";

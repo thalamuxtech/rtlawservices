@@ -1,6 +1,6 @@
 // Merges content published from the back office over the seed content in this
 // folder. At build time the content comes from generated/live.json, pulled from
-// Firestore by scripts/pull-content.mjs. In the browser, LiveContent.tsx runs
+// the site's database by scripts/pull-content.mjs. In the browser, LiveContent.tsx runs
 // the same merge on the newest published content, so edits show at once. If
 // neither source is reachable, the seeds are used, so the site always builds.
 
@@ -11,7 +11,7 @@ import type { Attorney, CaseResult, Post, Review, SiteSettings } from "./types";
 import type { PagesContent } from "./pages";
 
 export type LiveData = {
-  source: "firestore" | "none";
+  source: "database" | "none";
   site?: Partial<SiteSettings>;
   pages?: Partial<PagesContent>;
   attorneys?: Attorney[];
@@ -28,7 +28,7 @@ const visible = <T extends { demo?: boolean }>(rows: T[]) => rows.filter((r) => 
 export const ILLUSTRATIVE_NOTE = "These reviews are illustrative examples while client reviews are being collected.";
 
 export function deriveLive(live: LiveData) {
-  const fromStore = live.source === "firestore";
+  const fromStore = live.source === "database";
   const pick = <T,>(remote: T[] | undefined, seed: T[]) => (fromStore && remote && remote.length ? remote : seed);
 
   // The firm does not offer consultations in Yoruba (decided 17 October 2026), so

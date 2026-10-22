@@ -3,14 +3,12 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import type { Timestamp } from "firebase/firestore";
 import { ArrowLeft, CalendarCheck, CalendarPlus, Check, Loader2, Phone, Video, Building2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/primitives";
 import { TRACK_LABELS } from "@/content/expertise";
 import { NO_RELATIONSHIP } from "@/content/site";
 import { useContent } from "@/content/LiveContent";
-import { store } from "@/lib/store";
-import { attorneyFor, blocksFor, bookableDays, durationFor, fetchUsHolidays, FIRM_TZ, fmtDayLong, fmtTime, icsFile, MATTERS, MODES, slotId, slotsFor, type Mode, tzLabel, visitorTz } from "@/lib/booking";
+import { attorneyFor, blocksFor, bookableDays, durationFor, fetchUsHolidays, FIRM_TZ, fmtDayLong, fmtTime, icsFile, MATTERS, MODES, slotsFor, type Mode, tzLabel, visitorTz } from "@/lib/booking";
 import { cn, focusStep } from "@/lib/utils";
 
 const noopSubscribe = () => () => {};
@@ -76,12 +74,12 @@ export function BookingFlow() {
     if (!day) return;
     let live = true;
     // Never leave the calendar waiting: after 6 seconds show every time. The
-    // create-only slot lock in Firestore still prevents double booking.
+    // database still refuses a second booking of the same time.
     const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 6000));
-    const lookup = store().then(({ fs, db }) => fs.getDocs(fs.query(fs.collection(db, "slots"), fs.where("attorney", "==", attorney), fs.where("day", "==", day))));
+    const lookup = fetch(`/api/slots?attorney=${encodeURIComponent(attorney)}&day=${day}`).then((r) => (r.ok ? (r.json() as Promise<{ taken: string[] }>) : Promise.reject(new Error("slots"))));
     Promise.race([lookup, timeout])
-      .then((snap) => {
-        if (live) setTaken(new Set(snap.docs.map((d) => (d.data().start as Timestamp).toMillis())));
+      .then(({ taken }) => {
+        if (live) setTaken(new Set(taken.map((t) => Date.parse(t))));
       })
       .catch(() => {
         if (live) setTaken(new Set());
@@ -130,22 +128,17 @@ export function BookingFlow() {
     setSubmitting(true);
     setSubmitError("");
     try {
-      const { fs, db: firestore } = await store();
-      const batch = fs.writeBatch(firestore);
-      const bookingRef = fs.doc(fs.collection(firestore, "bookings"));
-      // Lock every 30-minute block the consultation covers. Each lock names its
-      // booking, and the security rules accept a lock only alongside that booking.
-      const blocks = blocksFor(slot, duration);
-      const slotRef = fs.doc(firestore, "slots", slotId(attorney, blocks[0]));
-      blocks.forEach((b) =>
-        batch.set(fs.doc(firestore, "slots", slotId(attorney, b)), { attorney, day, start: fs.Timestamp.fromDate(b), bookingId: bookingRef.id, createdAt: fs.serverTimestamp() }),
-      );
-      batch.set(bookingRef, {
+      // The server books every 30-minute block the consultation covers in one
+      // step, and refuses the request if any of them was taken meanwhile.
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
         matter,
         matterLabel: matterInfo?.label ?? matter,
         mode,
         attorney,
-        start: fs.Timestamp.fromDate(slot),
+        start: slot.toISOString(),
         day,
         durationMin: duration,
         visitorTz: tz,
@@ -157,12 +150,9 @@ export function BookingFlow() {
         otherParties: details.otherParties.trim(),
         notes: details.notes.trim(),
         source: details.source.trim(),
-        consents: { noRelationship: true, privacy: true },
-        slotId: slotRef.id,
-        status: "new",
-        createdAt: fs.serverTimestamp(),
+        }),
       });
-      await batch.commit();
+      if (!res.ok) throw new Error(String(res.status));
       setDone(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {

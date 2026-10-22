@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/primitives";
 import { NO_RELATIONSHIP } from "@/content/site";
 import { useContent } from "@/content/LiveContent";
 import { countryNames } from "@/lib/countries";
-import { store } from "@/lib/store";
 import { cn, focusStep } from "@/lib/utils";
 
 type Track = "professional" | "family";
@@ -17,7 +16,6 @@ type Answers = Record<string, string | string[] | boolean>;
 const STEPS = ["About you", "Your goal", "Your record", "Documents"] as const;
 const STORE = "rt-evaluation-draft";
 const MAX_FILE = 3 * 1024 * 1024;
-const CHUNK = 800_000;
 
 const PRO_CATEGORIES = [
   "EB-2 National Interest Waiver (self-petitioned)",
@@ -145,9 +143,6 @@ export function EvaluationForm() {
     }
     setState("sending");
     try {
-      const { fs, db: firestore } = await store();
-      const ref = fs.doc(fs.collection(firestore, "evaluations"));
-      const batch = fs.writeBatch(firestore);
       const answers: Record<string, string | string[]> = {};
       for (const [k, v] of Object.entries(a)) {
         if (["firstName", "lastName", "email", "phone", "birthCountry", "track", "website", "consentRelationship", "consentAccurate", "consentPrivacy"].includes(k)) continue;
@@ -155,26 +150,21 @@ export function EvaluationForm() {
         else if (Array.isArray(v)) answers[k] = v.slice(0, 20);
         else if (typeof v === "boolean") answers[k] = v ? "Yes" : "No";
       }
-      let chunks: string[] = [];
-      if (file) {
-        const b64 = await toBase64(file);
-        for (let i = 0; i < b64.length; i += CHUNK) chunks.push(b64.slice(i, i + CHUNK));
-        if (chunks.length > 6) chunks = [];
-      }
-      batch.set(ref, {
+      const form = new FormData();
+      form.set(
+        "data",
+        JSON.stringify({
         name: `${str("salutation") ? `${str("salutation")} ` : ""}${str("firstName").trim()} ${str("lastName").trim()}`.slice(0, 200),
         email: str("email").trim().toLowerCase(),
         phone: str("phone").trim(),
         birthCountry: str("birthCountry"),
         track,
         answers,
-        file: chunks.length ? { name: file!.name.slice(0, 160), type: file!.type || "application/octet-stream", size: file!.size, chunks: chunks.length } : null,
-        consents: { noRelationship: true, accurate: true },
-        status: "new",
-        createdAt: fs.serverTimestamp(),
-      });
-      chunks.forEach((data, index) => batch.set(fs.doc(firestore, "evaluations", ref.id, "files", String(index)), { index, data }));
-      await batch.commit();
+        }),
+      );
+      if (file) form.set("file", file, file.name.slice(0, 160));
+      const res = await fetch("/api/evaluations", { method: "POST", body: form });
+      if (!res.ok) throw new Error(String(res.status));
       try {
         localStorage.removeItem(STORE);
       } catch {}
@@ -382,15 +372,6 @@ export function EvaluationForm() {
       </div>
     </div>
   );
-}
-
-function toBase64(f: File) {
-  return new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result).split(",")[1] ?? "");
-    r.onerror = () => reject(r.error);
-    r.readAsDataURL(f);
-  });
 }
 
 function Success({ name }: { name: string }) {

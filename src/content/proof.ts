@@ -1,5 +1,5 @@
 // Seed reviews, case results and attorney profiles, used until the back
-// office publishes records to Firestore. Every record flagged `demo: true` is
+// office publishes records to the database. Every record flagged `demo: true` is
 // fictional sample content and carries a visible "Sample" label.
 
 import type { Attorney, CaseResult, Review } from "./types";

@@ -24,7 +24,7 @@ export function deriveSite(LIVE_SITE: Partial<SiteSettings>, ATTORNEYS: Attorney
     name: SITE_NAME,
     shortName: "RT Law",
     tagline: PAGES.firm.tagline,
-    url: "https://rtlawservice.web.app",
+    url: "https://rtlawservices.com",
     description: PAGES.firm.description,
     phone,
     phoneHref: `tel:${phone.replace(/[^\d+]/g, "")}`,

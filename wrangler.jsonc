@@ -1,0 +1,38 @@
+// The website and its back end run as one Cloudflare Worker. Requests under
+// /api/ reach the code in worker/; everything else is served from the static
+// site that `npm run build` writes to out/.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rtlawservices",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./out",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "rtlawservices",
+      "database_id": "97f90566-435f-47f2-98d6-b52cbfd5db01",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "rtlawservices-files" }],
+  "vars": {
+    "SITE_URL": "https://rtlawservices.com",
+    "GITHUB_REPO": "thalamuxtech/rtlawservices",
+    "MAIL_FROM": "clientservice@rtlawservices.com",
+    "MAIL_FROM_NAME": "RT Law Services",
+    // Staff signing in for the first time are checked once against their old
+    // Firebase password, then moved to a password stored here. Remove after
+    // every staff member has signed in once.
+    "FIREBASE_API_KEY": "AIzaSyDUwp_5XYzduoAyY9HEbiXT8ktKPPsSS4c"
+  },
+  // Secrets, set with `wrangler secret put`: BREVO_API_KEY, GITHUB_TOKEN.
+  "observability": { "enabled": true }
+}

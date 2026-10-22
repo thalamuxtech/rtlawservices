@@ -2,12 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { collection, deleteDoc, doc, getDocs, orderBy, query, serverTimestamp, type Timestamp, updateDoc } from "firebase/firestore";
-import { Download, Mail, Phone, Trash2 } from "lucide-react";
-import { db } from "@/lib/firebase";
-import { blocksFor, slotId } from "@/lib/booking";
+import { Download, Mail, Phone, Send, Trash2 } from "lucide-react";
+import { adminPost, deleteDoc, patchDoc, type Timestamp } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { AreaIn, Btn, Chip, Empty, fmtTs, Loading, Panel, Search, SectionHeader, useToast, type Row } from "../kit";
+import { AreaIn, Btn, Chip, Empty, fmtTs, Loading, Panel, Search, SectionHeader, TextIn, useCollection, useToast, type Row } from "../kit";
 
 type Config = {
   col: "evaluations" | "bookings" | "messages";
@@ -71,17 +69,7 @@ export const MESSAGES: Config = {
   ],
 };
 
-// Statuses that mean the meeting will not happen, so its time goes back on the calendar.
-const RELEASES = new Set(["cancelled", "not-a-fit", "referred"]);
-
-/** Slot locks held by a booking: one per 30-minute block, keyed as in the booking form. */
-const slotIdsOf = (r: Row) => {
-  const start = (r.start as Timestamp | undefined)?.toDate?.();
-  if (!start || !r.attorney) return r.slotId ? [String(r.slotId)] : [];
-  return blocksFor(start, Number(r.durationMin) || 30).map((b) => slotId(String(r.attorney), b));
-};
-
-export function Requests({ cfg, rows, uid, role }: { cfg: Config; rows: Row[] | null; uid: string; role?: string }) {
+export function Requests({ cfg, rows, role }: { cfg: Config; rows: Row[] | null; role?: string }) {
   const toast = useToast();
   const [filter, setFilter] = useState("all");
   const [q, setQ] = useState("");
@@ -105,11 +93,9 @@ export function Requests({ cfg, rows, uid, role }: { cfg: Config; rows: Row[] | 
     if (!current) return;
     setBusy(true);
     try {
-      await updateDoc(doc(db(), cfg.col, current.id), { ...patch, updatedAt: serverTimestamp(), updatedBy: uid });
-      if (cfg.col === "bookings" && typeof patch.status === "string" && RELEASES.has(patch.status)) {
-        await Promise.all(slotIdsOf(current).map((id) => deleteDoc(doc(db(), "slots", id)).catch(() => {})));
-        toast("ok", `${done}. The time is open for booking again.`);
-      } else toast("ok", done);
+      // The server releases a booking's time when its status means the meeting will not happen.
+      const { released } = await patchDoc(cfg.col, current.id, patch);
+      toast("ok", released ? `${done}. The time is open for booking again.` : done);
     } catch {
       toast("error", "Could not save. Check your connection and permissions.");
     } finally {
@@ -122,12 +108,8 @@ export function Requests({ cfg, rows, uid, role }: { cfg: Config; rows: Row[] | 
     if (!current || !confirm(`Delete this request from ${current.name} permanently, including any CV? This cannot be undone.`)) return;
     setBusy(true);
     try {
-      if (cfg.col === "evaluations") {
-        const files = await getDocs(collection(db(), cfg.col, current.id, "files"));
-        await Promise.all(files.docs.map((f) => deleteDoc(f.ref)));
-      }
-      if (cfg.col === "bookings") await Promise.all(slotIdsOf(current).map((id) => deleteDoc(doc(db(), "slots", id)).catch(() => {})));
-      await deleteDoc(doc(db(), cfg.col, current.id));
+      // The server also removes any CV, booked times and sent emails.
+      await deleteDoc(cfg.col, current.id);
       setOpenId(null);
       toast("ok", "Request deleted");
     } catch {
@@ -137,22 +119,6 @@ export function Requests({ cfg, rows, uid, role }: { cfg: Config; rows: Row[] | 
     }
   };
 
-  const downloadCv = async () => {
-    if (!current?.file) return;
-    try {
-      const snap = await getDocs(query(collection(db(), cfg.col, current.id, "files"), orderBy("index")));
-      const b64 = snap.docs.map((d) => d.data().data as string).join("");
-      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-      const url = URL.createObjectURL(new Blob([bytes], { type: current.file.type }));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = current.file.name;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
-    } catch {
-      toast("error", "The file could not be downloaded.");
-    }
-  };
 
   return (
     <div className="grid gap-6">
@@ -231,8 +197,8 @@ export function Requests({ cfg, rows, uid, role }: { cfg: Config; rows: Row[] | 
         {current && (
           <div className="grid gap-6">
             <div className="flex flex-wrap gap-2">
-              <a href={`mailto:${current.email}`} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-5 text-sm font-bold text-paper">
-                <Mail aria-hidden className="size-4" /> Reply by email
+              <a href={`mailto:${current.email}`} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-5 text-sm font-bold text-ink hover:border-ink/40">
+                <Mail aria-hidden className="size-4" /> Open in my email app
               </a>
               {current.phone && (
                 <a href={`tel:${current.phone}`} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-5 text-sm font-bold text-ink">
@@ -240,9 +206,9 @@ export function Requests({ cfg, rows, uid, role }: { cfg: Config; rows: Row[] | 
                 </a>
               )}
               {current.file && (
-                <button type="button" onClick={downloadCv} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-5 text-sm font-bold text-ink hover:border-ink/40">
+                <a href={`/api/admin/cv/${encodeURIComponent(current.id)}`} download={current.file.name} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-5 text-sm font-bold text-ink hover:border-ink/40">
                   <Download aria-hidden className="size-4" /> {current.file.name}
-                </button>
+                </a>
               )}
             </div>
 
@@ -273,6 +239,8 @@ export function Requests({ cfg, rows, uid, role }: { cfg: Config; rows: Row[] | 
             </dl>
 
             <AreaIn label="Internal note" hint="Visible to staff only." value={note} onChange={setNote} rows={4} />
+
+            <EmailClient col={cfg.col} request={current} />
           </div>
         )}
       </Panel>
@@ -286,5 +254,59 @@ function Detail({ k, v }: { k: string; v: string }) {
       <dt className="text-sm font-bold text-stone">{k}</dt>
       <dd className="whitespace-pre-wrap break-words text-ink">{v || "None"}</dd>
     </div>
+  );
+}
+
+/** Writes to the client from the portal. Replies go to clientservice@, which forwards to the firm's inbox. */
+function EmailClient({ col, request }: { col: Config["col"]; request: Row }) {
+  const toast = useToast();
+  const emails = useCollection("emails");
+  const [subject, setSubject] = useState("Your enquiry with RT Law Services");
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const sent = (emails.rows ?? []).filter((e) => e.requestId === request.id);
+
+  const send = async () => {
+    if (!subject.trim() || !text.trim()) return toast("error", "Write a subject and a message.");
+    setBusy(true);
+    try {
+      await adminPost("email", { col, id: request.id, subject: subject.trim(), text: text.trim() });
+      setText("");
+      toast("ok", `Email sent to ${request.email}`);
+    } catch (e) {
+      toast("error", (e as Error).message || "The email could not be sent.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="grid gap-4 rounded-2xl border border-line bg-white p-5">
+      <h3 className="font-bold text-ink">Email {request.name || "the client"}</h3>
+      <p className="-mt-2 text-sm text-stone">
+        Sent from clientservice@rtlawservices.com to {request.email}. The client&apos;s reply arrives in the firm&apos;s inbox.
+      </p>
+      <TextIn label="Subject" value={subject} onChange={setSubject} />
+      <AreaIn label="Message" value={text} onChange={setText} rows={7} />
+      <Btn busy={busy} onClick={send} className="w-fit">
+        <Send aria-hidden className="size-4" /> Send email
+      </Btn>
+      {sent.length > 0 && (
+        <div>
+          <p className="text-sm font-bold text-ink">Sent from the portal</p>
+          <ul className="mt-2 grid gap-2">
+            {sent.map((e) => (
+              <li key={e.id} className="rounded-xl bg-mist/60 px-4 py-3 text-sm">
+                <span className="block font-bold text-ink">{e.subject}</span>
+                <span className="block text-stone">
+                  {fmtTs(e.createdAt as Timestamp)}, by {e.sentByName}
+                </span>
+                <span className="mt-1 block whitespace-pre-wrap text-ink">{e.text}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
   );
 }

@@ -59,3 +59,7 @@ AGENTS.md
 
 # Claude Code personal settings
 .claude/settings.local.json
+
+# cloudflare
+.wrangler/
+.dev.vars*

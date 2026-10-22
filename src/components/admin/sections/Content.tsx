@@ -53,7 +53,7 @@ const META: Record<Kind, { title: string; lede: string; add: string; idField: st
 const subtitle = (k: Kind, r: Row) =>
   k === "cases" ? `${r.category}, ${r.year}` : k === "reviews" ? `${r.matter}, ${r.date}` : k === "posts" ? `${r.category}, ${r.published}` : r.title;
 
-export function ContentManager({ kind, rows, uid }: { kind: Kind; rows: Row[] | null; uid: string }) {
+export function ContentManager({ kind, rows }: { kind: Kind; rows: Row[] | null }) {
   const meta = META[kind];
   const toast = useToast();
   const [q, setQ] = useState("");
@@ -89,7 +89,7 @@ export function ContentManager({ kind, rows, uid }: { kind: Kind; rows: Row[] | 
     setBusy(true);
     try {
       const wasLive = (rows ?? []).find((r) => r.id === id)?.status === "published";
-      await saveContent(kind, id, data, uid, data.status === "published" || wasLive);
+      await saveContent(kind, id, data, data.status === "published" || wasLive);
       toast("ok", data.status === "published" ? "Saved. It is live on the website now." : "Saved as draft");
       setEdit(null);
     } catch {
@@ -103,7 +103,7 @@ export function ContentManager({ kind, rows, uid }: { kind: Kind; rows: Row[] | 
     if (!edit?.id || !confirm("Delete this item permanently? This cannot be undone.")) return;
     setBusy(true);
     try {
-      await removeContent(kind, edit.id, uid);
+      await removeContent(kind, edit.id);
       toast("ok", "Deleted");
       setEdit(null);
     } catch {

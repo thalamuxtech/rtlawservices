@@ -2,10 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { doc, onSnapshot, type Timestamp } from "firebase/firestore";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, PolarAngleAxis, RadialBar, RadialBarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ArrowDownRight, ArrowUpRight, BookOpen, CalendarClock, ClipboardCheck, ExternalLink, FileText, Globe2, Mail, Minus, Sparkles, Trophy } from "lucide-react";
-import { db } from "@/lib/firebase";
+import { useDoc, type Timestamp } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { fmtTs, Toggle, type Row } from "../kit";
 
@@ -62,11 +61,10 @@ export function Overview({ evaluations, bookings, messages, content, name, go }:
   const [sample, setSample] = useState(false);
   const [range, setRange] = useState<Range>("90d");
   const [series, setSeries] = useState({ Evaluations: true, Consultations: true, Messages: true });
-  const [meta, setMeta] = useState<{ updatedAt?: Timestamp } | null>(null);
+  const meta = useDoc("meta", "content") as { updatedAt?: Timestamp } | null | undefined;
   const [build, setBuild] = useState<{ builtAt?: string } | null>(null);
   const [now] = useState(() => Date.now());
 
-  useEffect(() => onSnapshot(doc(db(), "meta", "content"), (s) => setMeta(s.data() ?? null)), []);
   useEffect(() => {
     fetch(`/build-meta.json?ts=${Date.now()}`)
       .then((r) => (r.ok ? r.json() : null))

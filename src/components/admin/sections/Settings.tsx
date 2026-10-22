@@ -1,26 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { initializeApp, deleteApp } from "firebase/app";
-import { createUserWithEmailAndPassword, getAuth, sendPasswordResetEmail, signOut } from "firebase/auth";
-import { deleteDoc, doc, onSnapshot, setDoc, serverTimestamp, type DocumentData, type Timestamp } from "firebase/firestore";
-import { CheckCircle2, Clock, ExternalLink, GitBranch, Globe2, Loader2, RefreshCw, Rocket, Trash2, UserPlus } from "lucide-react";
-import { auth, db, firebaseApp } from "@/lib/firebase";
-import { writeLiveContent } from "@/lib/live-content";
-import { hasPublishToken, latestBuild, requestPublish, savePublishToken, type BuildRun } from "@/lib/publish";
+import { useCallback, useEffect, useState } from "react";
+import { CheckCircle2, Clock, ExternalLink, GitBranch, Globe2, Link2, Loader2, RefreshCw, Rocket, Trash2, UserPlus } from "lucide-react";
+import { adminDelete, adminPost, api, useDoc, type DocumentData, type Timestamp } from "@/lib/api";
 import { AreaIn, Btn, Chip, Empty, Loading, RowsIn, saveContent, SectionHeader, SelectIn, TextIn, Toggle, useToast, type Row } from "../kit";
 
 /* ---------- Site settings ---------- */
 
-export function SiteSettings({ uid }: { uid: string }) {
+export function SiteSettings() {
   const toast = useToast();
-  const [s, setS] = useState<DocumentData | null>(null);
+  const stored = useDoc("settings", "site");
+  const [edits, setS] = useState<DocumentData | null>(null);
   const [busy, setBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
-  useEffect(() => onSnapshot(doc(db(), "settings", "site"), (d) => setS((cur) => (cur && dirty ? cur : (d.data() ?? {})))), [dirty]);
+  // Unsaved edits win over the stored copy, which refreshes in the background.
+  const s = dirty && edits ? edits : stored === undefined ? null : (stored ?? {});
   if (!s) return <Loading />;
   const set = (p: DocumentData) => {
-    setS((cur) => ({ ...cur, ...p }));
+    setS((cur) => ({ ...(cur ?? s), ...p }));
     setDirty(true);
   };
   const refund = s.refundPolicy ?? { enabled: false, title: "Approval or refund", text: "" };
@@ -31,8 +28,9 @@ export function SiteSettings({ uid }: { uid: string }) {
       const { updatedAt: _u, updatedBy: _b, ...data } = s;
       void _u;
       void _b;
-      await saveContent("settings", "site", data, uid);
+      await saveContent("settings", "site", data);
       setDirty(false);
+      setS(null);
       toast("ok", "Settings saved. The website shows them now.");
     } catch {
       toast("error", "Could not save settings.");
@@ -116,29 +114,35 @@ export function Staff({ rows, uid, role }: { rows: Row[] | null; uid: string; ro
   const [name, setName] = useState("");
   const [newRole, setNewRole] = useState("intake");
   const [busy, setBusy] = useState(false);
+  const [link, setLink] = useState<{ email: string; url: string } | null>(null);
   const owner = role === "owner";
 
   const add = async () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) return toast("error", "Enter a valid email address.");
     setBusy(true);
-    // A secondary app instance creates the account without signing the owner out.
-    const second = initializeApp(firebaseApp().options, `staff-${Date.now()}`);
     try {
-      const a2 = getAuth(second);
-      const temp = crypto.getRandomValues(new Uint32Array(4)).join("-") + "Aa!";
-      const cred = await createUserWithEmailAndPassword(a2, email.trim(), temp);
-      await setDoc(doc(db(), "staff", cred.user.uid), { email: email.trim().toLowerCase(), name: name.trim(), role: newRole, addedBy: uid, addedAt: serverTimestamp() });
-      await sendPasswordResetEmail(auth(), email.trim());
-      await signOut(a2);
-      toast("ok", `${email.trim()} added. A link to set a password is on its way.`);
+      const r = await adminPost<{ emailed: boolean; link?: string }>("staff", { email: email.trim(), name: name.trim(), role: newRole });
+      if (r.emailed) toast("ok", `${email.trim()} added. A link to set a password is on its way.`);
+      else if (r.link) {
+        setLink({ email: email.trim(), url: r.link });
+        toast("ok", `${email.trim()} added. Send them the set-password link below.`);
+      }
       setEmail("");
       setName("");
     } catch (e) {
-      const msg = String((e as Error).message || "");
-      toast("error", msg.includes("email-already-in-use") ? "That email already has an account. Ask an owner to add its staff record in the console." : "Could not add the staff member.");
+      toast("error", (e as Error).message || "Could not add the staff member.");
     } finally {
-      await deleteApp(second).catch(() => {});
       setBusy(false);
+    }
+  };
+
+  // A set-password link, valid for an hour, for someone who cannot receive email from the portal.
+  const makeLink = async (r: Row) => {
+    try {
+      const { link: url } = await adminPost<{ link: string }>(`staff/${encodeURIComponent(r.id)}/link`);
+      setLink({ email: String(r.email ?? r.id), url });
+    } catch (e) {
+      toast("error", (e as Error).message || "Could not create a link.");
     }
   };
 
@@ -168,6 +172,17 @@ export function Staff({ rows, uid, role }: { rows: Row[] | null; uid: string; ro
           </Btn>
         </section>
       )}
+      {link && (
+        <section role="status" className="grid gap-3 rounded-2xl border border-brass/40 bg-brass-pale p-6">
+          <h2 className="font-bold text-ink">Set-password link for {link.email}</h2>
+          <p className="text-sm text-stone">Valid for one hour and for one use. Send it to them privately.</p>
+          <input readOnly value={link.url} onFocus={(e) => e.currentTarget.select()} className="min-h-11 w-full rounded-xl border border-line bg-white px-3.5 font-mono text-sm" />
+          <div className="flex gap-2">
+            <Btn onClick={() => navigator.clipboard?.writeText(link.url).then(() => toast("ok", "Link copied"))}>Copy link</Btn>
+            <Btn variant="ghost" onClick={() => setLink(null)}>Done</Btn>
+          </div>
+        </section>
+      )}
       {rows === null ? (
         <Loading />
       ) : rows.length === 0 ? (
@@ -182,6 +197,11 @@ export function Staff({ rows, uid, role }: { rows: Row[] | null; uid: string; ro
                 <span className="block text-sm text-stone">{r.email || r.id}</span>
               </span>
               <Chip status={r.role} />
+              {owner && (
+                <button type="button" aria-label={`Set-password link for ${r.email}`} title="Set-password link" onClick={() => makeLink(r)} className="grid size-11 place-items-center rounded-full text-stone hover:bg-mist hover:text-ink">
+                  <Link2 aria-hidden className="size-4" />
+                </button>
+              )}
               {owner && r.id !== uid && (
                 <button
                   type="button"
@@ -189,7 +209,7 @@ export function Staff({ rows, uid, role }: { rows: Row[] | null; uid: string; ro
                   onClick={async () => {
                     if (!confirm(`Remove back office access for ${r.email}?`)) return;
                     try {
-                      await deleteDoc(doc(db(), "staff", r.id));
+                      await adminDelete(`staff/${encodeURIComponent(r.id)}`);
                       toast("ok", "Access removed");
                     } catch {
                       toast("error", "Could not remove access.");
@@ -212,70 +232,56 @@ export function Staff({ rows, uid, role }: { rows: Row[] | null; uid: string; ro
 
 const when = (d: Date) => d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
 
-export function Publishing({ uid, role }: { uid: string; role: string }) {
+type BuildRun = { status: string; conclusion: string | null; createdAt: string; url: string };
+type Status = { tokenSaved: boolean; mailReady: boolean; run: BuildRun | null };
+
+export function Publishing() {
   const toast = useToast();
-  const [meta, setMeta] = useState<{ updatedAt?: Timestamp; publishRequestedAt?: Timestamp; publishError?: string; liveError?: string } | null>(null);
+  const meta = useDoc("meta", "content") as { updatedAt?: Timestamp; publishError?: string } | null | undefined;
   const [build, setBuild] = useState<{ builtAt?: string; contentHash?: string } | null>(null);
-  const [run, setRun] = useState<BuildRun | null>(null);
-  const [tokenSaved, setTokenSaved] = useState<boolean | null>(null);
-  const [newToken, setNewToken] = useState("");
+  const [status, setStatus] = useState<Status | null>(null);
   const [checking, setChecking] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const owner = role === "owner";
-  useEffect(() => onSnapshot(doc(db(), "meta", "content"), (s) => setMeta(s.data() ?? null)), []);
-  const load = () =>
-    Promise.all([
-      fetch(`/build-meta.json?ts=${Date.now()}`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then(setBuild)
-        .catch(() => setBuild(null)),
-      latestBuild().then(setRun),
-      hasPublishToken().then(setTokenSaved),
-    ]);
+  const load = useCallback(
+    () =>
+      Promise.all([
+        fetch(`/build-meta.json?ts=${Date.now()}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then(setBuild)
+          .catch(() => setBuild(null)),
+        api<Status>("/api/admin/publish")
+          .then(setStatus)
+          .catch(() => setStatus(null)),
+      ]),
+    [],
+  );
   const check = () => {
     setChecking(true);
     load().finally(() => setChecking(false));
   };
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
+  const run = status?.run ?? null;
   // While a build runs, check its progress every 20 seconds.
   const running = !!run && run.status !== "completed";
   useEffect(() => {
     if (!running) return;
     const t = setInterval(load, 20000);
     return () => clearInterval(t);
-  }, [running]);
+  }, [running, load]);
 
   const publishNow = async () => {
     setPublishing(true);
-    let live = true;
     try {
-      await writeLiveContent();
-      await setDoc(doc(db(), "meta", "content"), { liveError: "" }, { merge: true });
-    } catch {
-      live = false;
-    }
-    const r = await requestPublish(uid);
-    setPublishing(false);
-    if (!live) {
-      toast("error", "Could not update the live website content. Try again in a moment.");
-    } else if (r.ok || r.reason === "no-token") {
-      toast("ok", "The website now shows the latest content.");
+      const r = await adminPost<{ ok: boolean; error?: string }>("publish");
+      if (r.ok) toast("ok", "Rebuild started. The website already shows the latest content.");
+      else toast("error", `The website shows the latest content, but the rebuild could not start. ${r.error ?? ""}`);
       setTimeout(load, 4000);
-    } else {
-      toast("error", `The website shows the latest content, but the rebuild could not start. ${r.detail ?? ""}`);
-    }
-  };
-  const saveToken = async (value: string) => {
-    try {
-      await savePublishToken(value.trim(), uid);
-      setNewToken("");
-      setTokenSaved(!!value.trim());
-      toast("ok", value.trim() ? "Publishing token saved." : "Publishing token removed.");
-      load();
-    } catch {
-      toast("error", "Could not save the token.");
+    } catch (e) {
+      toast("error", (e as Error).message);
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -284,7 +290,6 @@ export function Publishing({ uid, role }: { uid: string; role: string }) {
   const pending = !!(changed && built && changed > built);
   const failed = run?.status === "completed" && run.conclusion === "failure";
   const error = meta?.publishError;
-  const liveError = meta?.liveError;
 
   return (
     <div className="grid max-w-3xl gap-8">
@@ -294,7 +299,7 @@ export function Publishing({ uid, role }: { uid: string; role: string }) {
         action={
           <div className="flex flex-wrap items-center gap-2">
             <Btn variant="ghost" busy={checking} onClick={check}><RefreshCw aria-hidden className="size-4" /> Check again</Btn>
-            <Btn variant="gold" busy={publishing} onClick={publishNow}><Rocket aria-hidden className="size-4" /> Publish now</Btn>
+            <Btn variant="gold" busy={publishing} onClick={publishNow}><Rocket aria-hidden className="size-4" /> Rebuild now</Btn>
           </div>
         }
       />
@@ -305,27 +310,21 @@ export function Publishing({ uid, role }: { uid: string; role: string }) {
         <div>
           <p className="font-serif-display text-2xl text-ink">{running ? "Rebuilding the website" : pending ? "Live, rebuild pending" : "Website up to date"}</p>
           <p className="text-sm text-stone">
-            Last content change: {changed ? when(changed) : "none recorded"}. Last publish: {built ? when(built) : "unknown"}.
+            Last content change: {changed ? when(changed) : "none recorded"}. Last rebuild: {built ? when(built) : "unknown"}.
           </p>
         </div>
       </div>
-      {liveError && (
-        <div role="alert" className="rounded-2xl border border-danger/30 bg-danger/5 p-5 text-sm text-ink">
-          <p className="font-bold text-danger">The last change did not reach the website straight away.</p>
-          <p className="mt-1">{liveError}. Click Publish now to try again. Otherwise the change goes live with the next build.</p>
-        </div>
-      )}
       {(failed || error) && (
         <div role="alert" className="rounded-2xl border border-danger/30 bg-danger/5 p-5 text-sm text-ink">
-          <p className="font-bold text-danger">{failed ? "The last build failed." : "Publishing could not start."}</p>
+          <p className="font-bold text-danger">{failed ? "The last build failed." : "The rebuild could not start."}</p>
           <p className="mt-1">
             {failed ? (
               <>
-                The website still shows the previous version.{" "}
+                Visitors still see every saved change. Only the copies search engines read are out of date.{" "}
                 <a href={run!.url} target="_blank" rel="noopener noreferrer" className="font-bold underline">See the build log</a>.
               </>
             ) : (
-              <>{error}. Changes still go live with the scheduled build, which can take several hours.</>
+              <>{error}. Visitors still see every saved change, and the scheduled rebuild refreshes the copies search engines read.</>
             )}
           </p>
         </div>
@@ -333,8 +332,8 @@ export function Publishing({ uid, role }: { uid: string; role: string }) {
       <ol className="grid gap-4">
         {[
           { icon: CheckCircle2, t: "Save", d: "Saving a story, review, post, attorney, page text or setting records the change in the database instantly." },
-          { icon: Globe2, t: "Live at once", d: "Each save also updates the content the website reads on every page view, so visitors see the change on their next page load." },
-          { icon: GitBranch, t: "Automatic build", d: "Each save also starts a rebuild, which refreshes the copies search engines read and adds new photos and documents. A scheduled job catches any missed change, but GitHub can delay it by several hours." },
+          { icon: Globe2, t: "Live at once", d: "Every page reads the newest published content when it opens, so visitors see the change on their next page load." },
+          { icon: GitBranch, t: "Automatic rebuild", d: "Each save also starts a rebuild, which refreshes the copies of each page that search engines read. A scheduled job every ten minutes catches any missed change." },
         ].map(({ icon: Icon, t, d }) => (
           <li key={t} className="flex gap-4 rounded-2xl border border-line bg-white p-5">
             <Icon aria-hidden className="mt-0.5 size-5 shrink-0 text-brass-ink" />
@@ -348,18 +347,12 @@ export function Publishing({ uid, role }: { uid: string; role: string }) {
       <a href="/" target="_blank" className="inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-ink px-5 text-sm font-bold text-paper">
         Open the website <ExternalLink aria-hidden className="size-4" />
       </a>
-      {owner && (
-        <Group title="Publishing token">
-          <p className="text-sm text-stone">
-            {tokenSaved
-              ? "A token is saved. Saves start a rebuild straight away."
-              : "No token is saved, so changes wait for the scheduled build. Create a fine-grained GitHub token for the thalamuxtech/rtlawservices repository with the Actions permission set to read and write, and paste it here."}
-          </p>
-          <div className="flex flex-wrap items-end gap-3">
-            <TextIn label={tokenSaved ? "Replace token" : "GitHub token"} type="password" value={newToken} onChange={setNewToken} placeholder="github_pat_…" className="min-w-64 flex-1" />
-            <Btn onClick={() => saveToken(newToken)} disabled={!newToken.trim()}>Save token</Btn>
-            {tokenSaved && <Btn variant="danger" onClick={() => saveToken("")}>Remove</Btn>}
-          </div>
+      {status && (
+        <Group title="Connections">
+          <ul className="grid gap-2 text-sm text-ink">
+            <li>Rebuild on save: {status.tokenSaved ? "connected to GitHub" : "not connected yet, so rebuilds wait for the ten-minute schedule"}.</li>
+            <li>Email to clients: {status.mailReady ? "connected" : "not set up yet, so sending from the portal is unavailable"}.</li>
+          </ul>
         </Group>
       )}
     </div>

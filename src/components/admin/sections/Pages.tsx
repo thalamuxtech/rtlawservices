@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { doc, onSnapshot, type DocumentData } from "firebase/firestore";
 import { ExternalLink, RotateCcw } from "lucide-react";
-import { db } from "@/lib/firebase";
+import { useDoc, type DocumentData } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { BASE_EXPERTISE, type Expertise } from "@/content/expertise";
 import { DEFAULT_GENERAL_FAQS } from "@/content/general";
@@ -41,34 +40,30 @@ function current(saved: Partial<PagesContent>): PagesContent {
   };
 }
 
-export function PagesEditor({ uid }: { uid: string }) {
+export function PagesEditor() {
   const toast = useToast();
-  const [data, setData] = useState<PagesContent | null>(null);
+  const stored = useDoc("settings", "pages");
+  const [edits, setData] = useState<PagesContent | null>(null);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<Tab>("home");
-
-  useEffect(
-    () =>
-      onSnapshot(doc(db(), "settings", "pages"), (s) => {
-        // Keep unsaved edits if another device saves meanwhile.
-        setData((cur) => (cur && dirty ? cur : current((s.data() ?? {}) as Partial<PagesContent>)));
-      }),
-    [dirty],
-  );
+  // Keep unsaved edits if another device saves meanwhile.
+  const fromStore = useMemo(() => (stored === undefined ? null : current((stored ?? {}) as Partial<PagesContent>)), [stored]);
+  const data = dirty && edits ? edits : fromStore;
 
   if (!data) return <Loading />;
 
   const patch = <K extends keyof PagesContent>(k: K, v: PagesContent[K]) => {
-    setData((cur) => (cur ? { ...cur, [k]: v } : cur));
+    setData((cur) => ({ ...(cur ?? data), [k]: v }));
     setDirty(true);
   };
 
   const save = async () => {
     setBusy(true);
     try {
-      await saveContent("settings", "pages", changesOnly(data), uid);
+      await saveContent("settings", "pages", changesOnly(data));
       setDirty(false);
+      setData(null);
       toast("ok", "Page text saved. The website shows it now.");
     } catch {
       toast("error", "Could not save the page text.");
@@ -231,7 +226,7 @@ export function PagesEditor({ uid }: { uid: string }) {
 /** Keeps only the fields that differ from the original wording. */
 function changesOnly(data: PagesContent): DocumentData {
   const base = current({});
-  // Compare with sorted keys: Firestore returns map fields in alphabetical order.
+  // Compare with sorted keys, so records saved with fields in a different order still match.
   const stable = (v: unknown): unknown =>
     Array.isArray(v) ? v.map(stable) : v && typeof v === "object" ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, stable((v as Record<string, unknown>)[k])])) : v;
   const same = (a: unknown, b: unknown) => JSON.stringify(stable(a)) === JSON.stringify(stable(b));

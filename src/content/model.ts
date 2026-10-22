@@ -1,6 +1,6 @@
 // Everything the public pages read, derived from one set of published content.
 // The build uses it on generated/live.json; the browser uses it on the newest
-// content in Firestore (public/live), so back-office edits show immediately.
+// content from /api/content, so back-office edits show immediately.
 
 import { deriveExpertise, type Track } from "./expertise";
 import { deriveGeneral } from "./general";
@@ -9,7 +9,7 @@ import { mergePages } from "./pages";
 import { deriveSite } from "./site";
 
 export function buildContent(raw: LiveData) {
-  const fromStore = raw.source === "firestore";
+  const fromStore = raw.source === "database";
   const PAGES = mergePages(fromStore ? raw.pages : undefined);
   const live = deriveLive(raw);
   const EXPERTISE = deriveExpertise(PAGES);
