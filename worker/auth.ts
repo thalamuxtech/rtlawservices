@@ -1,6 +1,7 @@
 // Staff sign-in: passwords hashed with PBKDF2, sessions in an HttpOnly cookie.
 
 import { body, clientIp, EMAIL_RE, getDoc, HttpError, json, limited, sha256Hex, str } from "./lib";
+import { BLANK_EMAIL, renderEmail } from "../src/lib/email-template";
 import { sendMail } from "./mail";
 
 const COOKIE = "rt_session";
@@ -120,11 +121,22 @@ export async function createResetLink(env: Env, uid: string) {
 
 export async function emailResetLink(env: Env, uid: string, email: string, intro: string) {
   const link = await createResetLink(env, uid);
-  const sent = await sendMail(env, {
-    to: await recoveryAddress(env, uid, email),
-    subject: "Set your RT Law Services staff password",
-    text: `${intro}\n\nOpen this link within ${RESET_MINUTES} minutes to set a password for ${email}:\n${link}\n\nIf you did not ask for this, you can ignore this email.`,
+  const { html, text } = renderEmail({
+    ...BLANK_EMAIL,
+    preheader: `Set a password for ${email}. The link works for ${RESET_MINUTES} minutes.`,
+    label: "Staff portal",
+    heading: "Set your password",
+    greeting: "Hello,",
+    body: `${intro}\n\nChoose the button below within ${RESET_MINUTES} minutes to set a password for **${email}**. The link works once.\n\nIf you did not ask for this, you can ignore this email.`,
+    buttonEnabled: true,
+    buttonLabel: "Set my password",
+    buttonUrl: link,
+    closing: "",
+    signName: "",
+    signTitle: "",
+    showContact: false,
   });
+  const sent = await sendMail(env, { to: await recoveryAddress(env, uid, email), subject: "Set your RT Law Services staff password", html, text });
   return { link, sent };
 }
 

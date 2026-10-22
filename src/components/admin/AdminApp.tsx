@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  BookOpen, CalendarClock, ClipboardCheck, ExternalLink, Eye, EyeOff, FileBadge, FileText, Gauge, Globe2, KeyRound, LayoutDashboard, Loader2, Lock, LogOut, Mail, Menu, MessagesSquare, PanelLeftClose, PanelLeftOpen, Rocket, Settings, ShieldAlert, Star, Users, UserSquare2, X,
+  BookOpen, CalendarClock, ClipboardCheck, ExternalLink, Eye, EyeOff, FileBadge, FileText, Gauge, Globe2, KeyRound, LayoutDashboard, Loader2, Lock, LogOut, Mail, Menu, MessagesSquare, PanelLeftClose, PanelLeftOpen, Rocket, Send, Settings, ShieldAlert, Star, Users, UserSquare2, X,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { LoginArt } from "./LoginArt";
@@ -14,6 +14,7 @@ import { ToastProvider, useCollection } from "./kit";
 import { Overview } from "./sections/Overview";
 import { BOOKINGS, EVALUATIONS, MESSAGES, Requests } from "./sections/Requests";
 import { ContentManager } from "./sections/Content";
+import { Emails } from "./sections/Emails";
 import { Publishing, SiteSettings, Staff } from "./sections/Settings";
 import { PagesEditor } from "./sections/Pages";
 
@@ -311,6 +312,7 @@ const SECTIONS = [
   { id: "evaluations", label: "Free evaluations", icon: ClipboardCheck, group: "Requests" },
   { id: "bookings", label: "Consultations", icon: CalendarClock, group: "Requests" },
   { id: "messages", label: "Messages", icon: Mail, group: "Requests" },
+  { id: "emails", label: "Emails", icon: Send, group: "Requests" },
   { id: "cases", label: "Success stories", icon: FileBadge, group: "Website" },
   { id: "reviews", label: "Reviews", icon: Star, group: "Website" },
   { id: "posts", label: "Blog", icon: BookOpen, group: "Website" },
@@ -351,6 +353,7 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
   const evaluations = useCollection("evaluations");
   const bookings = useCollection("bookings");
   const messages = useCollection("messages");
+  const emails = useCollection("emails");
   const cases = useCollection("cases", "year");
   const reviews = useCollection("reviews", "date");
   const posts = useCollection("posts", "published");
@@ -497,6 +500,7 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
               {section === "evaluations" && <Requests cfg={EVALUATIONS} rows={evaluations.rows} role={staff.role} />}
               {section === "bookings" && <Requests cfg={BOOKINGS} rows={bookings.rows} role={staff.role} />}
               {section === "messages" && <Requests cfg={MESSAGES} rows={messages.rows} role={staff.role} />}
+              {section === "emails" && <Emails rows={emails.rows} />}
               {section === "cases" && <ContentManager kind="cases" rows={cases.rows} />}
               {section === "reviews" && <ContentManager kind="reviews" rows={reviews.rows} />}
               {section === "posts" && <ContentManager kind="posts" rows={posts.rows} />}

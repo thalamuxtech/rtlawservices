@@ -2,10 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { Download, Mail, Phone, Send, Trash2 } from "lucide-react";
-import { adminPost, deleteDoc, patchDoc, type Timestamp } from "@/lib/api";
+import { Download, Mail, PenLine, Phone, Trash2 } from "lucide-react";
+import { deleteDoc, patchDoc, type Timestamp } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { AreaIn, Btn, Chip, Empty, fmtTs, Loading, Panel, Search, SectionHeader, TextIn, useCollection, useToast, type Row } from "../kit";
+import { EmailComposer, type ComposeTarget } from "../EmailComposer";
+import { AreaIn, Btn, Chip, Empty, fmtTs, Loading, Panel, Search, SectionHeader, useCollection, useToast, type Row } from "../kit";
+import { SentEmail } from "./Emails";
 
 type Config = {
   col: "evaluations" | "bookings" | "messages";
@@ -257,56 +259,44 @@ function Detail({ k, v }: { k: string; v: string }) {
   );
 }
 
-/** Writes to the client from the portal. Replies go to clientservice@, which forwards to the firm's inbox. */
+/** Branded email to the client, written in the full-screen composer, and the emails already sent. */
 function EmailClient({ col, request }: { col: Config["col"]; request: Row }) {
-  const toast = useToast();
   const emails = useCollection("emails");
-  const [subject, setSubject] = useState("Your enquiry with RT Law Services");
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [compose, setCompose] = useState<ComposeTarget>(null);
+  const [open, setOpen] = useState<Row | null>(null);
   const sent = (emails.rows ?? []).filter((e) => e.requestId === request.id);
-
-  const send = async () => {
-    if (!subject.trim() || !text.trim()) return toast("error", "Write a subject and a message.");
-    setBusy(true);
-    try {
-      await adminPost("email", { col, id: request.id, subject: subject.trim(), text: text.trim() });
-      setText("");
-      toast("ok", `Email sent to ${request.email}`);
-    } catch (e) {
-      toast("error", (e as Error).message || "The email could not be sent.");
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
     <section className="grid gap-4 rounded-2xl border border-line bg-white p-5">
-      <h3 className="font-bold text-ink">Email {request.name || "the client"}</h3>
-      <p className="-mt-2 text-sm text-stone">
-        Sent from clientservice@rtlawservices.com to {request.email}. The client&apos;s reply arrives in the firm&apos;s inbox.
-      </p>
-      <TextIn label="Subject" value={subject} onChange={setSubject} />
-      <AreaIn label="Message" value={text} onChange={setText} rows={7} />
-      <Btn busy={busy} onClick={send} className="w-fit">
-        <Send aria-hidden className="size-4" /> Send email
-      </Btn>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="font-bold text-ink">Email {request.name || "the client"}</h3>
+          <p className="text-sm text-stone">A branded email from clientservice@rtlawservices.com, with a live preview and a test send.</p>
+        </div>
+        <Btn variant="gold" onClick={() => setCompose({ col, row: request })}>
+          <PenLine aria-hidden className="size-4" /> Compose email
+        </Btn>
+      </div>
       {sent.length > 0 && (
         <div>
           <p className="text-sm font-bold text-ink">Sent from the portal</p>
           <ul className="mt-2 grid gap-2">
             {sent.map((e) => (
-              <li key={e.id} className="rounded-xl bg-mist/60 px-4 py-3 text-sm">
-                <span className="block font-bold text-ink">{e.subject}</span>
-                <span className="block text-stone">
-                  {fmtTs(e.createdAt as Timestamp)}, by {e.sentByName}
-                </span>
-                <span className="mt-1 block whitespace-pre-wrap text-ink">{e.text}</span>
+              <li key={e.id}>
+                <button type="button" onClick={() => setOpen(e)} className="w-full rounded-xl bg-mist/60 px-4 py-3 text-left text-sm transition-colors hover:bg-mist">
+                  <span className="block font-bold text-ink">{e.subject}</span>
+                  <span className="block text-stone">
+                    {fmtTs(e.createdAt as Timestamp)}, by {e.sentByName}
+                    {e.cc?.length ? `, Cc ${e.cc.join(", ")}` : ""}
+                  </span>
+                </button>
               </li>
             ))}
           </ul>
         </div>
       )}
+      <EmailComposer target={compose} onClose={() => setCompose(null)} />
+      <SentEmail row={open} onClose={() => setOpen(null)} />
     </section>
   );
 }

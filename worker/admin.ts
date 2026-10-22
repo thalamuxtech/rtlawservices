@@ -2,7 +2,8 @@
 // requests and managing staff need an owner.
 
 import { createResetLink, emailResetLink, requireStaff, type Staff } from "./auth";
-import { body, deleteDoc, EMAIL_RE, getDoc, HttpError, json, listDocs, mergeDoc, newId, putDoc, sha256Hex, str, ts, type Doc } from "./lib";
+import { BLANK_EMAIL, DEFAULT_BRAND, renderEmail, type EmailBrand, type EmailContent } from "../src/lib/email-template";
+import { body, deleteDoc, EMAIL_RE, getDoc, HttpError, json, limited, listDocs, mergeDoc, newId, putDoc, sha256Hex, str, ts, type Doc } from "./lib";
 import { sendMail } from "./mail";
 
 const REQUESTS = new Set(["evaluations", "bookings", "messages"]);
@@ -99,20 +100,95 @@ async function releaseSlots(env: Env, bookingId: string) {
   await env.DB.prepare("DELETE FROM slots WHERE booking_id = ?").bind(bookingId).run();
 }
 
+/** The firm's phone and email as set in Website details, for the email footer. */
+export async function emailBrand(env: Env): Promise<EmailBrand> {
+  const site = await getDoc(env.DB, "settings", "site");
+  return {
+    ...DEFAULT_BRAND,
+    website: env.SITE_URL,
+    ...(typeof site?.phone === "string" && site.phone ? { phone: site.phone } : {}),
+    ...(typeof site?.email === "string" && site.email ? { email: site.email } : {}),
+  };
+}
+
+const MAX_RECIPIENTS = 20;
+
+function addresses(v: unknown, label: string): string[] {
+  const list = Array.isArray(v) ? v : [];
+  const out = [...new Set(list.map((x) => String(x).trim().toLowerCase()).filter(Boolean))];
+  const bad = out.find((x) => !EMAIL_RE.test(x) || x.length > 200);
+  if (bad) throw new HttpError(400, `${label}: "${bad}" is not a valid email address.`);
+  return out;
+}
+
+/** Keeps only the known fields of the composed email, as text of a sensible length. */
+function cleanContent(v: unknown): EmailContent {
+  if (!v || typeof v !== "object") throw new HttpError(400, "Write the email first.");
+  const src = v as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const [k, d] of Object.entries(BLANK_EMAIL)) {
+    const x = src[k];
+    out[k] = typeof d === "boolean" ? x === true : typeof x === "string" ? x.slice(0, k === "body" ? 20_000 : 2_000) : d;
+  }
+  if (out.headerStyle !== "light") out.headerStyle = "dark";
+  if (out.accent !== "ink") out.accent = "gold";
+  return out as EmailContent;
+}
+
+/**
+ * Sends a branded email composed in the back office. A test goes only to the
+ * given test addresses, is marked [Test], and is not recorded.
+ */
 async function emailClient(env: Env, staff: Staff, b: Doc) {
-  const { col, id, subject, text } = b;
-  if (typeof col !== "string" || !REQUESTS.has(col) || !str(id, 1, 64)) throw new HttpError(400, "Choose a request first.");
-  if (!str(subject, 1, 200) || !str(text, 1, 20_000)) throw new HttpError(400, "Write a subject and a message.");
-  const request = await getDoc(env.DB, col, id);
-  const to = request?.email;
-  if (typeof to !== "string" || !EMAIL_RE.test(to)) throw new HttpError(400, "This request has no valid email address.");
-  const result = await sendMail(env, { to, toName: String(request?.name ?? ""), subject, text });
+  if (await limited(env.DB, `email:${staff.uid}`, 60, 3600)) throw new HttpError(429, "That is a lot of email in one hour. Wait a little and try again.");
+  const subject = typeof b.subject === "string" ? b.subject.trim() : "";
+  if (!str(subject, 1, 200)) throw new HttpError(400, "Write a subject.");
+  const content = cleanContent(b.content);
+  if (!content.body.trim() && !content.heading.trim()) throw new HttpError(400, "Write a message.");
+
+  const col = typeof b.col === "string" && REQUESTS.has(b.col) ? b.col : null;
+  const id = col && str(b.id, 1, 64) ? b.id : null;
+  const request = col && id ? await getDoc(env.DB, col, id) : null;
+  const toName = String(b.toName ?? request?.name ?? "").slice(0, 200);
+  const vars = { name: toName, email: typeof request?.email === "string" ? request.email : undefined };
+  const { html, text } = renderEmail(content, vars, await emailBrand(env));
+
+  if (b.test === true) {
+    const to = addresses(b.testTo, "Test address");
+    if (!to.length) throw new HttpError(400, "Enter an email address for the test.");
+    if (to.length > 3) throw new HttpError(400, "Send a test to three addresses at most.");
+    const result = await sendMail(env, { to, subject: `[Test] ${subject}`, html, text });
+    if (!result.ok) throw new HttpError(502, result.error);
+    return json({ ok: true, test: true });
+  }
+
+  const to = addresses(b.to, "To");
+  const cc = addresses(b.cc, "Cc");
+  const bcc = addresses(b.bcc, "Bcc");
+  if (!to.length) throw new HttpError(400, "Add at least one recipient.");
+  if (to.length + cc.length + bcc.length > MAX_RECIPIENTS) throw new HttpError(400, `Send to ${MAX_RECIPIENTS} addresses at most.`);
+
+  const result = await sendMail(env, { to, toName, cc, bcc, subject, html, text });
   if (!result.ok) throw new HttpError(502, result.error);
-  const record = { requestCol: col, requestId: id, to, subject, text, sentBy: staff.uid, sentByName: staff.name || staff.email, messageId: result.messageId ?? "", createdAt: ts() };
   const emailId = newId();
-  await putDoc(env.DB, "emails", emailId, record);
-  // A reply to a new message or evaluation moves it along, so the inbox stays accurate.
-  if (request?.status === "new" && col === "messages") await mergeDoc(env.DB, col, id, { status: "replied", updatedAt: ts(), updatedBy: staff.uid });
+  await putDoc(env.DB, "emails", emailId, {
+    requestCol: col ?? "",
+    requestId: id ?? "",
+    toName,
+    to,
+    cc,
+    bcc,
+    subject,
+    content,
+    html,
+    text,
+    sentBy: staff.uid,
+    sentByName: staff.name || staff.email,
+    messageId: result.messageId ?? "",
+    createdAt: ts(),
+  });
+  // A reply to a new message moves it along, so the inbox stays accurate.
+  if (request?.status === "new" && col === "messages") await mergeDoc(env.DB, col, id!, { status: "replied", updatedAt: ts(), updatedBy: staff.uid });
   return json({ ok: true, id: emailId });
 }
 
@@ -143,7 +219,14 @@ export async function adminRoutes(env: Env, req: Request, path: string, ctx: Exe
   // GET /api/admin/c/{collection}
   if (parts[0] === "c" && parts.length === 2 && method === "GET") {
     if (!READABLE.has(parts[1])) throw new HttpError(404, "Not found.");
-    return json(await listDocs(env.DB, parts[1]));
+    const rows = await listDocs(env.DB, parts[1]);
+    // Lists leave out each sent email's full HTML; opening one reads it.
+    if (parts[1] === "emails")
+      for (const r of rows) {
+        delete r.html;
+        delete r.text;
+      }
+    return json(rows);
   }
 
   // /api/admin/d/{collection}/{id}
