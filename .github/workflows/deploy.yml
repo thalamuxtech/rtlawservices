@@ -66,3 +66,10 @@ jobs:
       - if: steps.content.outputs.changed == 'true'
         name: Deploy to Cloudflare
         run: npx wrangler deploy
+
+      # Lets Bing and other IndexNow search engines know the pages changed.
+      # A failure here never fails the deploy.
+      - if: steps.content.outputs.changed == 'true'
+        name: Notify search engines
+        continue-on-error: true
+        run: node scripts/indexnow.mjs

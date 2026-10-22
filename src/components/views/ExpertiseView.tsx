@@ -9,6 +9,7 @@ import { ButtonLink, Container } from "@/components/ui/primitives";
 import { RESULTS_CAVEAT } from "@/content/site";
 import { Missing } from "@/components/views/Missing";
 import { useContent, useContentFresh, useLiveTitle } from "@/content/LiveContent";
+import { serviceLd } from "@/content/schema";
 
 const REVIEWED = "September 2026";
 
@@ -222,6 +223,7 @@ export function ExpertiseView({ slug }: { slug: string }) {
       </Container>
       <BookingBand />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceLd(SITE, e)) }} />
     </>
   );
 }

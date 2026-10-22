@@ -45,6 +45,7 @@ export function deriveSite(LIVE_SITE: Partial<SiteSettings>, ATTORNEYS: Attorney
     announcement: LIVE_SITE.announcement || "",
     refundPolicy: LIVE_SITE.refundPolicy?.enabled ? LIVE_SITE.refundPolicy : null,
     evaluationDays: LIVE_SITE.evaluationDays || 1,
+    profiles: (LIVE_SITE.profiles ?? []).filter((u) => /^https:\/\/[^\s]+$/.test(u)),
     // Verifiable defaults until the firm enters its own figures in the back office.
     stats: LIVE_SITE.stats?.length
       ? LIVE_SITE.stats

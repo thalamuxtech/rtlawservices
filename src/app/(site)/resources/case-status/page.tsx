@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { page } from "@/content/seo";
 import { InfoPage, OfficialLink } from "@/components/site/InfoPage";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = page("/resources/case-status/", {
   title: "How to check your USCIS case status",
   description: "Where to find your receipt number, how to check case status online, and what common status messages mean.",
-};
+});
 
 export default function CaseStatusPage() {
   return (

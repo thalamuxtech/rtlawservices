@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
+import { page } from "@/content/seo";
 import { Suspense } from "react";
 import { PageHero } from "@/components/site/PageHero";
 import { BookingFlow } from "@/components/booking/BookingFlow";
 import { Container } from "@/components/ui/primitives";
 import { HEADINGS } from "@/content/headings";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = page("/book/", {
   title: "Book a consultation",
   description: "Choose a matter, a format and a time shown in your own time zone. Video or phone consultations.",
-};
+});
 
 export default function BookPage() {
   return (

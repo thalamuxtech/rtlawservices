@@ -1,5 +1,6 @@
 "use client";
 
+import { CookieSettingsLink } from "@/components/site/CookieConsent";
 import Link from "next/link";
 import { Lock, Mail, Phone } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
@@ -90,6 +91,7 @@ export function Footer() {
             <Link href="/legal/privacy/" className="inline-flex min-h-11 items-center hover:text-paper">Privacy</Link>
             <Link href="/legal/terms/" className="inline-flex min-h-11 items-center hover:text-paper">Terms</Link>
             <Link href="/accessibility/" className="inline-flex min-h-11 items-center hover:text-paper">Accessibility</Link>
+            <CookieSettingsLink className="inline-flex min-h-11 items-center hover:text-paper" />
             <Link
               href="/admin/"
               aria-label="Staff sign-in"

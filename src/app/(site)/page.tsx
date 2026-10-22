@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { page } from "@/content/seo";
+import type { Metadata } from "next";
+import { SITE } from "@/content/site";
 import { Gauge } from "lucide-react";
 import { Hero } from "@/components/home/Hero";
 import { ExpertiseTabs } from "@/components/home/ExpertiseTabs";
@@ -15,6 +18,12 @@ import {
 } from "@/components/home/Sections";
 import { ButtonLink, Container, SectionHeading } from "@/components/ui/primitives";
 import { CTA } from "@/content/site";
+
+export const metadata: Metadata = page("/", {
+  title: "RT Law Services | Immigration Law Firm Serving Clients Across the U.S.",
+  absoluteTitle: true,
+  description: SITE.description,
+});
 
 export default function HomePage() {
   return (

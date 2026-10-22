@@ -7,6 +7,7 @@ import { BookingBand } from "@/components/home/Sections";
 import { ButtonLink, Container } from "@/components/ui/primitives";
 import { Missing } from "@/components/views/Missing";
 import { useContent, useContentFresh, useLiveTitle } from "@/content/LiveContent";
+import { personLd } from "@/content/schema";
 
 export function AttorneyView({ slug }: { slug: string }) {
   const { SITE, casesByAttorney, getAttorney, getExpertise } = useContent();
@@ -15,14 +16,7 @@ export function AttorneyView({ slug }: { slug: string }) {
   useLiveTitle(a && `${a.name}, ${a.title}`);
   if (!a) return fresh ? <Missing what="profile" back={{ label: "All attorneys", href: "/attorneys/" }} /> : null;
   const results = casesByAttorney(a.slug);
-  const ld = {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    name: a.name,
-    jobTitle: a.title,
-    knowsLanguage: a.languages,
-    worksFor: { "@type": "LegalService", name: SITE.name },
-  };
+  const ld = personLd(SITE, a, a.leads.map((l) => getExpertise(l)?.title).filter((t): t is string => !!t));
   const panels = [
     { label: "Bar admissions", items: [...admissionsOf(a), ...(a.practiceLimitation ? [a.practiceLimitation] : [])] },
     { label: "Education", items: a.education },

@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { startAnalytics } from "@/lib/analytics";
 
 /**
  * Adds `is-in` to every [data-reveal] element as it enters the viewport.
@@ -10,10 +9,6 @@ import { startAnalytics } from "@/lib/analytics";
  */
 export function RevealObserver() {
   const pathname = usePathname();
-
-  useEffect(() => {
-    startAnalytics().catch(() => {});
-  }, []);
 
   useEffect(() => {
     const io = new IntersectionObserver(

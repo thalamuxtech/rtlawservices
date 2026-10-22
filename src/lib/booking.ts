@@ -107,16 +107,17 @@ export function tzLabel(tz: string, at = new Date()) {
   }
 }
 
-/** U.S. federal holidays from the public Nager.Date API (no key, HTTPS, CORS enabled). */
+/** U.S. federal holidays, from the public Nager.Date API through the site's server (worker/public.ts). */
 export async function fetchUsHolidays(years: number[]): Promise<Set<string>> {
   const set = new Set<string>();
   await Promise.all(
     years.map(async (y) => {
       try {
-        const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${y}/US`, { cache: "force-cache" });
+        // Through the site's own server, so the browser contacts no third party.
+        const res = await fetch(`/api/holidays?year=${y}`);
         if (!res.ok) return;
-        const rows: { date: string; global: boolean }[] = await res.json();
-        rows.filter((r) => r.global).forEach((r) => set.add(r.date));
+        const { days }: { days: string[] } = await res.json();
+        days.forEach((d) => set.add(d));
       } catch {
         // Offline or blocked: fall back to weekday rules only.
       }

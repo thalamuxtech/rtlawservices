@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { track } from "@/lib/analytics";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, CalendarCheck, CalendarPlus, Check, Loader2, Phone, Video, Building2, ShieldCheck } from "lucide-react";
@@ -153,6 +154,7 @@ export function BookingFlow() {
         }),
       });
       if (!res.ok) throw new Error(String(res.status));
+      track("generate_lead", { form: "consultation", matter });
       setDone(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {

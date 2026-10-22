@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { page } from "@/content/seo";
 import { InfoPage, OfficialLink } from "@/components/site/InfoPage";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = page("/resources/visa-bulletin/", {
   title: "The Visa Bulletin, explained",
   description: "What the monthly U.S. Department of State Visa Bulletin shows, how priority dates work, and how to find your place in line.",
-};
+});
 
 export default function VisaBulletinPage() {
   return (

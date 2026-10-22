@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { page } from "@/content/seo";
 import { PostView } from "@/components/views/PostView";
 import { POSTS, getPost } from "@/content/live";
 
@@ -9,7 +10,9 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): Promise<Metadata> {
   const p = getPost((await params).slug);
-  return p ? { title: p.title, description: p.dek, openGraph: { type: "article", title: p.title, description: p.dek } } : { robots: { index: false } };
+  return p
+    ? page(`/blog/${p.slug}/`, { title: p.title, description: p.dek, type: "article", publishedTime: p.published, modifiedTime: p.updated })
+    : { robots: { index: false } };
 }
 
 // The page is prerendered from the build's content; PostView then shows the

@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
+import { page } from "@/content/seo";
 import { MessageSquare, ReceiptText, Video } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { BookingBand, ProcessRibbon } from "@/components/home/Sections";
 import { Container } from "@/components/ui/primitives";
 import { HEADINGS } from "@/content/headings";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = page("/how-we-work/", {
   title: "How we work",
   description: "Five stages from consultation to compliance, how we keep you informed, and how fees work.",
-};
+});
 
 const DETAILS = [
   { icon: Video, title: "The consultation", text: "A focused meeting by video or phone. We review your goals and documents, explain the routes that fit and answer your questions. You leave with a recommended next step and a written fee quote." },
@@ -27,6 +28,8 @@ export default function HowWeWorkPage() {
         crumbs={[{ label: "How we work" }]}
       />
       <div className="py-12">
+        {/* Names the stages for screen readers and search engines; the stages carry H3 headings. */}
+        <h2 className="sr-only">The five stages of a matter</h2>
         <ProcessRibbon compact />
       </div>
       <section className="border-t border-line bg-mist py-20 sm:py-24">

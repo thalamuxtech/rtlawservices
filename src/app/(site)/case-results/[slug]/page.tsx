@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { page } from "@/content/seo";
 import { CASES, getCase } from "@/content/live";
 import { CaseView } from "@/components/views/CaseView";
 
@@ -9,7 +10,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/case-results/[slug]">): Promise<Metadata> {
   const c = getCase((await params).slug);
-  return c ? { title: `Success story: ${c.title}`, description: `${c.category}: ${c.outcome}` } : { robots: { index: false } };
+  return c ? page(`/case-results/${c.slug}/`, { title: `Success story: ${c.title}`, description: `${c.category}: ${c.outcome}` }) : { robots: { index: false } };
 }
 
 // Prerendered from the build's content; the view then shows the newest published version.

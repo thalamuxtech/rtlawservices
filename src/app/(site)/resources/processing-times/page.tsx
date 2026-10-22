@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { page } from "@/content/seo";
 import { InfoPage, OfficialLink } from "@/components/site/InfoPage";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = page("/resources/processing-times/", {
   title: "USCIS processing times explained",
   description: "How to read official USCIS processing times, what affects them, and when a case may be outside normal processing.",
-};
+});
 
 export default function ProcessingTimesPage() {
   return (

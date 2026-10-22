@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
+import { page } from "@/content/seo";
 import { ExternalLink } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { BookingBand } from "@/components/home/Sections";
 import { Container } from "@/components/ui/primitives";
 import { FEES, FEES_AS_OF } from "@/content/general";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = page("/resources/filing-fees/", {
   title: "USCIS filing fees",
   description: `Government filing fees for common immigration forms, from the USCIS fee schedule (Form G-1055) in effect as of ${FEES_AS_OF}.`,
-};
+});
 
 export default function FeesPage() {
   return (

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { page } from "@/content/seo";
 import { EXPERTISE, getExpertise } from "@/content/expertise";
 import { ExpertiseView } from "@/components/views/ExpertiseView";
 
@@ -10,7 +11,7 @@ export async function generateMetadata({ params }: PageProps<"/expertise/[slug]"
   const { slug } = await params;
   const e = getExpertise(slug);
   if (!e) return {};
-  return { title: `${e.title} (${e.codes})`, description: e.summary };
+  return page(`/expertise/${e.slug}/`, { title: `${e.title} (${e.codes})`, description: e.summary });
 }
 
 // Prerendered from the build's content; the view then shows the newest published version.

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { EB_Garamond, Lato } from "next/font/google";
+import { OG_IMAGE } from "@/content/seo";
 import { SITE } from "@/content/site";
 import "./globals.css";
 
@@ -26,16 +27,19 @@ export const metadata: Metadata = {
   },
   description: SITE.description,
   applicationName: SITE.name,
+  // Each public page sets its own canonical address and link-preview tags
+  // (src/content/seo.ts); these are the fallback for anything that does not.
   openGraph: {
     type: "website",
     siteName: SITE.name,
     title: "RT Law Services | Immigration counsel across the United States",
     description: SITE.description,
-    url: SITE.url,
     locale: "en_US",
+    images: [OG_IMAGE],
   },
-  twitter: { card: "summary_large_image" },
+  twitter: { card: "summary_large_image", images: [OG_IMAGE.url] },
   formatDetection: { telephone: false },
+  icons: { apple: "/brand/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {

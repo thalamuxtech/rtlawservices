@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { page } from "@/content/seo";
 import { InfoPage } from "@/components/site/InfoPage";
 
-export const metadata: Metadata = { title: "Terms of use", description: "Terms that apply to the use of the RT Law Services website." };
+export const metadata: Metadata = page("/legal/terms/", { title: "Terms of use", description: "Terms that apply to the use of the RT Law Services website." });
 
 export default function TermsPage() {
   return (

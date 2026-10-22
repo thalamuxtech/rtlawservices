@@ -212,6 +212,23 @@ export async function publicRoutes(env: Env, req: Request, path: string): Promis
     return json({ taken: results.map((r) => r.start) });
   }
 
+  // U.S. federal holidays for the booking calendar, fetched here from the public
+  // Nager.Date API and cached for a day, so visitors' browsers never contact it.
+  if (path === "/api/holidays" && req.method === "GET") {
+    const year = Number(new URL(req.url).searchParams.get("year"));
+    if (!Number.isInteger(year) || year < 2024 || year > 2100) throw new HttpError(400, "Choose a year.");
+    const cache = caches.default;
+    const key = new Request(`https://holidays.internal/${year}`);
+    const hit = await cache.match(key);
+    if (hit) return hit;
+    const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/US`);
+    if (!res.ok) throw new HttpError(502, "Holidays are unavailable right now.");
+    const days = ((await res.json()) as { date: string; global: boolean }[]).filter((d) => d.global).map((d) => d.date);
+    const out = json({ days }, 200, { "Cache-Control": "public, max-age=86400" });
+    await cache.put(key, out.clone());
+    return out;
+  }
+
   if (path === "/api/bookings" && req.method === "POST") return createBooking(env, req);
   if (path === "/api/messages" && req.method === "POST") return createMessage(env, req);
   if (path === "/api/evaluations" && req.method === "POST") return createEvaluation(env, req);

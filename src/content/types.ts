@@ -94,4 +94,10 @@ export type SiteSettings = {
   evaluationDays?: number;
   /** Home page statistics. Enter only figures the firm can substantiate. */
   stats?: { value: number; prefix?: string; suffix?: string; label: string }[];
+  /**
+   * Addresses of the firm's official profiles elsewhere (Google Business
+   * Profile, LinkedIn, bar and lawyer directories). Search and AI systems use
+   * them to confirm these profiles and this website are the same firm.
+   */
+  profiles?: string[];
 };

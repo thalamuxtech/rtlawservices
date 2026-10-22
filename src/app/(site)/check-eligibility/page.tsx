@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
+import { page } from "@/content/seo";
 import { PageHero } from "@/components/site/PageHero";
 import { EligibilityChecker } from "@/components/evaluation/EligibilityChecker";
 import { BookingBand } from "@/components/home/Sections";
 import { Container } from "@/components/ui/primitives";
 import { HEADINGS } from "@/content/headings";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = page("/check-eligibility/", {
   title: "Check your eligibility: EB-1A, O-1A and National Interest Waiver",
   description:
     "An interactive self-check against the EB-1A, O-1A and National Interest Waiver standards, with plain explanations of each criterion. Send your answers for a free attorney evaluation.",
-};
+});
 
 export default function CheckEligibilityPage() {
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { track } from "@/lib/analytics";
 import { Check, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/primitives";
 import { NO_RELATIONSHIP } from "@/content/site";
@@ -40,6 +41,7 @@ export function ContactForm() {
         }),
       });
       if (!res.ok) throw new Error(String(res.status));
+      track("generate_lead", { form: "contact" });
       setState("sent");
     } catch {
       setState("error");

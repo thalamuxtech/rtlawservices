@@ -9,6 +9,7 @@ import { Container } from "@/components/ui/primitives";
 import { Missing } from "@/components/views/Missing";
 import { useContent, useContentFresh, useLiveTitle } from "@/content/LiveContent";
 import { SITE } from "@/content/site";
+import { articleLd } from "@/content/schema";
 
 const fmt = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
@@ -20,17 +21,7 @@ export function PostView({ slug }: { slug: string }) {
   if (!p) return fresh ? <Missing what="post" back={{ label: "All posts", href: "/blog/" }} /> : null;
   const toc = headings(p.body);
   const related = POSTS.filter((x) => x.slug !== p.slug && x.category === p.category).concat(POSTS.filter((x) => x.slug !== p.slug && x.category !== p.category)).slice(0, 3);
-  const ld = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: p.title,
-    description: p.dek,
-    datePublished: p.published,
-    dateModified: p.updated,
-    author: { "@type": "Organization", name: p.author },
-    publisher: { "@type": "Organization", name: SITE.name },
-    citation: p.sources.map((s) => s.url),
-  };
+  const ld = articleLd(SITE, p);
 
   return (
     <>

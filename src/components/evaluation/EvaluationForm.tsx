@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { track as trackEvent } from "@/lib/analytics";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, Briefcase, Check, FileText, Heart, Loader2, Send, ShieldCheck, Upload, X } from "lucide-react";
@@ -165,6 +166,7 @@ export function EvaluationForm() {
       if (file) form.set("file", file, file.name.slice(0, 160));
       const res = await fetch("/api/evaluations", { method: "POST", body: form });
       if (!res.ok) throw new Error(String(res.status));
+      trackEvent("generate_lead", { form: "free_evaluation", track: String(track) });
       try {
         localStorage.removeItem(STORE);
       } catch {}

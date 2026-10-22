@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, Clock, ExternalLink, GitBranch, Globe2, Link2, Loader2, RefreshCw, Rocket, Trash2, UserPlus } from "lucide-react";
 import { adminDelete, adminPost, api, useDoc, type DocumentData, type Timestamp } from "@/lib/api";
-import { AreaIn, Btn, Chip, Empty, Loading, type Row, RowsIn, saveContent, SectionHeader, SelectIn, TextIn, Toggle, useDialog, useToast } from "../kit";
+import { AreaIn, Btn, Chip, Empty, LinesIn, Loading, type Row, RowsIn, saveContent, SectionHeader, SelectIn, TextIn, Toggle, useDialog, useToast } from "../kit";
 
 /* ---------- Site settings ---------- */
 
@@ -64,6 +64,12 @@ export function SiteSettings() {
           <TextIn label="Announcement bar" hint="Shown at the very top of every page. Leave empty for the default." value={s.announcement} onChange={(v) => set({ announcement: v })} className="sm:col-span-2" />
         </div>
         <RowsIn label="Office hours" rows={s.hours} onChange={(v) => set({ hours: v })} blank={{ days: "", time: "" }} fields={[{ key: "days", label: "Days", width: "w-48" }, { key: "time", label: "Hours" }]} />
+        <LinesIn
+          label="Official profiles"
+          hint="One web address per line, starting with https://. For example the firm's Google Business Profile, LinkedIn page, and bar or lawyer directory listings. Search engines and AI systems use them to recognise the firm. List only profiles the firm controls."
+          value={s.profiles}
+          onChange={(v) => set({ profiles: v })}
+        />
       </Group>
 
       <Group title="Free evaluation">

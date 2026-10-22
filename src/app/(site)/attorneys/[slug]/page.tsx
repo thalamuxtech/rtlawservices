@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { page } from "@/content/seo";
 import { ATTORNEYS, getAttorney } from "@/content/live";
 import { AttorneyView } from "@/components/views/AttorneyView";
 
@@ -9,7 +10,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/attorneys/[slug]">): Promise<Metadata> {
   const a = getAttorney((await params).slug);
-  return a ? { title: `${a.name}, ${a.title}`, description: a.bio[0] } : { robots: { index: false } };
+  return a ? page(`/attorneys/${a.slug}/`, { title: `${a.name}, ${a.title}`, description: a.bio[0] }) : { robots: { index: false } };
 }
 
 // Prerendered from the build's content; the view then shows the newest published version.

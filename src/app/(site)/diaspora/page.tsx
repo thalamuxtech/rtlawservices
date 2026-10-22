@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
+import { page } from "@/content/seo";
 import { Clock3, FileCheck2, Landmark, Video } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { BookingBand } from "@/components/home/Sections";
 import { ButtonLink, Container } from "@/components/ui/primitives";
 import { HEADINGS } from "@/content/headings";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = page("/diaspora/", {
   title: "Clients outside the United States",
   description: "Immigration and estate planning support for clients and families abroad, with consultations scheduled in your time zone.",
-};
+});
 
 const ITEMS = [
   { icon: Video, title: "Consultations in your time zone", text: "Book online and see times in your local time. Video consultations work from anywhere with a stable connection." },
