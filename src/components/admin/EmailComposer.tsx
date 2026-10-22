@@ -17,7 +17,7 @@ import { Btn, Toggle, useCollection, useToast } from "./kit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-export type ComposeTarget = { col?: "evaluations" | "bookings" | "messages"; row?: Row } | null;
+export type ComposeTarget = { col?: "evaluations" | "bookings" | "messages" | "inbox"; row?: Row } | null;
 
 type Draft = { presetId: string; from: string; subject: string; to: string[]; cc: string[]; bcc: string[]; content: EmailContent };
 
@@ -42,7 +42,11 @@ function startDraft(target: ComposeTarget, signName: string, templates: Template
   const preset = templates.find((p) => p.id === want) ?? PRESETS.find((p) => p.id === want)!;
   const content = fromPreset(preset, signName);
   if (target?.col === "bookings" && row) content.details = bookingDetails(row) || content.details;
-  return { presetId: preset.id, from: SENDERS[0], subject: preset.subject, to: row?.email ? [String(row.email)] : [], cc: [], bcc: [], content };
+  // A reply to a received email keeps its subject and goes out from the address it was sent to.
+  const inbox = target?.col === "inbox" && row;
+  const subject = inbox ? (/^re:/i.test(String(row.subject)) ? String(row.subject) : `Re: ${row.subject}`) : preset.subject;
+  const from = inbox ? (SENDERS.find((s) => s === row.mailbox) ?? SENDERS[0]) : SENDERS[0];
+  return { presetId: preset.id, from, subject, to: row?.email ? [String(row.email)] : [], cc: [], bcc: [], content };
 }
 
 const draftKey = (target: ComposeTarget) => `rt-email-draft-${target?.row?.id ?? "new"}`;
@@ -527,7 +531,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
  * Shows an email in a frame as tall as the email, so only the page scrolls.
  * Scripts stay blocked; same-origin access only lets the page measure the height.
  */
-export function EmailFrame({ title, html, className }: { title: string; html: string; className?: string }) {
+export function EmailFrame({ title, html, className, sandbox = "allow-same-origin" }: { title: string; html: string; className?: string; sandbox?: string }) {
   const fit = (f: HTMLIFrameElement) => {
     const d = f.contentDocument;
     if (!d) return;
@@ -538,7 +542,7 @@ export function EmailFrame({ title, html, className }: { title: string; html: st
   return (
     <iframe
       title={title}
-      sandbox="allow-same-origin"
+      sandbox={sandbox}
       srcDoc={html}
       onLoad={(e) => fit(e.currentTarget)}
       className={cn("block h-[900px] w-full border-0", className)}
