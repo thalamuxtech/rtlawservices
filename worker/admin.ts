@@ -8,7 +8,9 @@ import { sendMail } from "./mail";
 
 const REQUESTS = new Set(["evaluations", "bookings", "messages"]);
 const CONTENT = new Set(["attorneys", "cases", "reviews", "posts"]);
-const READABLE = new Set([...REQUESTS, ...CONTENT, "staff", "emails", "settings", "meta"]);
+// Shared email templates: back office only, so saving one never rebuilds the website.
+const TEMPLATES = "emailTemplates";
+const READABLE = new Set([...REQUESTS, ...CONTENT, "staff", "emails", "settings", "meta", TEMPLATES]);
 const ROLES = new Set(["owner", "attorney", "intake", "editor"]);
 
 // Statuses that mean the meeting will not happen, so its time goes back on the calendar.
@@ -236,6 +238,21 @@ export async function adminRoutes(env: Env, req: Request, path: string, ctx: Exe
 
     if (method === "GET") return json(await getDoc(env.DB, col, id));
 
+    if (method === "PUT" && col === TEMPLATES) {
+      const { data } = await body<{ data?: Doc }>(req);
+      const label = typeof data?.label === "string" ? data.label.trim().slice(0, 80) : "";
+      if (!label) throw new HttpError(400, "Give the template a name.");
+      await putDoc(env.DB, col, id, {
+        label,
+        subject: typeof data?.subject === "string" ? data.subject.slice(0, 200) : "",
+        content: cleanContent(data?.content),
+        updatedAt: ts(),
+        updatedBy: staff.uid,
+        updatedByName: staff.name || staff.email,
+      });
+      return json({ ok: true });
+    }
+
     if (method === "PUT") {
       if (!CONTENT.has(col) && col !== "settings") throw new HttpError(403, "This record cannot be edited here.");
       const { data, affectsSite = true } = await body<{ data?: Doc; affectsSite?: boolean }>(req);
@@ -277,6 +294,10 @@ export async function adminRoutes(env: Env, req: Request, path: string, ctx: Exe
         await dropImages(env, await getDoc(env.DB, col, id));
         await deleteDoc(env.DB, col, id);
         await touchContent(env, ctx, staff.uid);
+        return json({ ok: true });
+      }
+      if (col === TEMPLATES) {
+        await deleteDoc(env.DB, col, id);
         return json({ ok: true });
       }
       throw new HttpError(403, "This record cannot be deleted here.");

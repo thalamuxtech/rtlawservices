@@ -78,6 +78,7 @@ export function Requests({ cfg, rows, role }: { cfg: Config; rows: Row[] | null;
   const [openId, setOpenId] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [compose, setCompose] = useState<ComposeTarget>(null);
   const current = rows?.find((r) => r.id === openId);
 
   const counts = useMemo(() => {
@@ -199,9 +200,9 @@ export function Requests({ cfg, rows, role }: { cfg: Config; rows: Row[] | null;
         {current && (
           <div className="grid gap-6">
             <div className="flex flex-wrap gap-2">
-              <a href={`mailto:${current.email}`} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-5 text-sm font-bold text-ink hover:border-ink/40">
-                <Mail aria-hidden className="size-4" /> Open in my email app
-              </a>
+              <button type="button" onClick={() => setCompose({ col: cfg.col, row: current })} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-brass px-5 text-sm font-bold text-ink transition-colors hover:bg-brass-light">
+                <Mail aria-hidden className="size-4" /> Send email
+              </button>
               {current.phone && (
                 <a href={`tel:${current.phone}`} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-5 text-sm font-bold text-ink">
                   <Phone aria-hidden className="size-4" /> {current.phone}
@@ -242,10 +243,11 @@ export function Requests({ cfg, rows, role }: { cfg: Config; rows: Row[] | null;
 
             <AreaIn label="Internal note" hint="Visible to staff only." value={note} onChange={setNote} rows={4} />
 
-            <EmailClient col={cfg.col} request={current} />
+            <SentEmails request={current} onCompose={() => setCompose({ col: cfg.col, row: current })} />
           </div>
         )}
       </Panel>
+      <EmailComposer target={compose} onClose={() => setCompose(null)} />
     </div>
   );
 }
@@ -259,10 +261,9 @@ function Detail({ k, v }: { k: string; v: string }) {
   );
 }
 
-/** Branded email to the client, written in the full-screen composer, and the emails already sent. */
-function EmailClient({ col, request }: { col: Config["col"]; request: Row }) {
+/** Emails already sent to this client from the portal. */
+function SentEmails({ request, onCompose }: { request: Row; onCompose: () => void }) {
   const emails = useCollection("emails");
-  const [compose, setCompose] = useState<ComposeTarget>(null);
   const [open, setOpen] = useState<Row | null>(null);
   const sent = (emails.rows ?? []).filter((e) => e.requestId === request.id);
 
@@ -270,11 +271,11 @@ function EmailClient({ col, request }: { col: Config["col"]; request: Row }) {
     <section className="grid gap-4 rounded-2xl border border-line bg-white p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="font-bold text-ink">Email {request.name || "the client"}</h3>
-          <p className="text-sm text-stone">A branded email from clientservice@rtlawservices.com, with a live preview and a test send.</p>
+          <h3 className="font-bold text-ink">Emails to {request.name || "the client"}</h3>
+          <p className="text-sm text-stone">{sent.length ? "Sent from clientservice@rtlawservices.com. Open one to see it as the client did." : "Nothing sent from the portal yet."}</p>
         </div>
-        <Btn variant="gold" onClick={() => setCompose({ col, row: request })}>
-          <PenLine aria-hidden className="size-4" /> Compose email
+        <Btn variant="ghost" onClick={onCompose}>
+          <PenLine aria-hidden className="size-4" /> Write an email
         </Btn>
       </div>
       {sent.length > 0 && (
@@ -295,7 +296,6 @@ function EmailClient({ col, request }: { col: Config["col"]; request: Row }) {
           </ul>
         </div>
       )}
-      <EmailComposer target={compose} onClose={() => setCompose(null)} />
       <SentEmail row={open} onClose={() => setOpen(null)} />
     </section>
   );

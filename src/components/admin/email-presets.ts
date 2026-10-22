@@ -73,4 +73,29 @@ export const PRESETS: Preset[] = [
   { id: "blank", label: "Blank email", subject: "", content: {} },
 ];
 
-export const fromPreset = (p: Preset, signName: string): EmailContent => ({ ...BLANK_EMAIL, signName, ...p.content });
+/** A template as staff see it: built in, built in but edited, or written by staff. */
+export type Template = Preset & { builtIn: boolean; edited: boolean };
+
+/**
+ * Built-in templates, each replaced by its saved version where staff have
+ * edited it, followed by the templates staff have added.
+ */
+export function mergeTemplates(saved: { id: string; label?: string; subject?: string; content?: Partial<EmailContent> }[]): Template[] {
+  const byId = new Map(saved.map((s) => [s.id, s]));
+  const builtIn = PRESETS.map((p) => {
+    const s = byId.get(p.id);
+    return s ? { id: p.id, label: s.label || p.label, subject: s.subject ?? p.subject, content: s.content ?? p.content, builtIn: true, edited: true } : { ...p, builtIn: true, edited: false };
+  });
+  const custom = saved
+    .filter((s) => !PRESETS.some((p) => p.id === s.id))
+    .map((s) => ({ id: s.id, label: s.label || "Untitled template", subject: s.subject ?? "", content: s.content ?? {}, builtIn: false, edited: false }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  // Blank stays last.
+  return [...builtIn.filter((t) => t.id !== "blank"), ...custom, ...builtIn.filter((t) => t.id === "blank")];
+}
+
+/** The template's text, signed by the current staff member unless the template names someone. */
+export const fromPreset = (p: Preset, signName: string): EmailContent => {
+  const content = { ...BLANK_EMAIL, ...p.content };
+  return { ...content, signName: content.signName || signName };
+};

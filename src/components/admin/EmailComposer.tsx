@@ -7,13 +7,13 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Bold, FlaskConical, Link2, List, ListOrdered, Monitor, Send, Smartphone, UserRound, X } from "lucide-react";
+import { Bold, CopyPlus, FlaskConical, Link2, List, ListOrdered, Monitor, RotateCcw, Save, Send, Smartphone, Trash2, UserRound, X } from "lucide-react";
 import { useContent } from "@/content/LiveContent";
-import { adminPost, api, type Row, type Timestamp } from "@/lib/api";
+import { adminPost, api, deleteDoc, listDocs, putDoc, type Row, type Timestamp } from "@/lib/api";
 import { DEFAULT_BRAND, renderEmail, type EmailContent } from "@/lib/email-template";
 import { cn } from "@/lib/utils";
-import { PRESETS, fromPreset } from "./email-presets";
-import { Btn, Toggle, useToast } from "./kit";
+import { PRESETS, fromPreset, mergeTemplates, type Template } from "./email-presets";
+import { Btn, Toggle, useCollection, useToast } from "./kit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -36,9 +36,10 @@ function bookingDetails(r: Row) {
   return `Date: ${day}\nTime: ${et} Eastern Time${local}\nFormat: ${mode}\nLength: ${r.durationMin || 30} minutes`;
 }
 
-function startDraft(target: ComposeTarget, signName: string): Draft {
+function startDraft(target: ComposeTarget, signName: string, templates: Template[]): Draft {
   const row = target?.row;
-  const preset = PRESETS.find((p) => p.id === (target?.col === "bookings" ? "consultation" : target?.col === "evaluations" ? "evaluation" : "reply"))!;
+  const want = target?.col === "bookings" ? "consultation" : target?.col === "evaluations" ? "evaluation" : "reply";
+  const preset = templates.find((p) => p.id === want) ?? PRESETS.find((p) => p.id === want)!;
   const content = fromPreset(preset, signName);
   if (target?.col === "bookings" && row) content.details = bookingDetails(row) || content.details;
   return { presetId: preset.id, subject: preset.subject, to: row?.email ? [String(row.email)] : [], cc: [], bcc: [], content };
@@ -65,23 +66,28 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
   const [mobileTab, setMobileTab] = useState<"write" | "preview">("write");
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
-  // Signed-in staff member: signs the email and receives tests by default.
+  const saved = useCollection("emailTemplates", "label");
+  const templates = useMemo(() => mergeTemplates(saved.rows ?? []), [saved.rows]);
+
+  // The signed-in staff member signs the email and receives tests by default.
+  // The first template is the firm's saved version where there is one.
   useEffect(() => {
-    api<{ staff: { email: string; name?: string } | null }>("/api/auth/me")
-      .then((r) => {
-        const s = r.staff;
-        setMe(s);
-        setTestTo(s?.email ?? "");
-        let saved: Draft | null = null;
-        try {
-          saved = JSON.parse(localStorage.getItem(draftKey(target)) || "null");
-        } catch {}
-        const d = saved?.content ? saved : startDraft(target, s?.name ?? "");
-        setDraft(d);
-        setShowCc(d.cc.length > 0);
-        setShowBcc(d.bcc.length > 0);
-      })
-      .catch(() => setDraft(startDraft(target, "")));
+    Promise.all([
+      api<{ staff: { email: string; name?: string } | null }>("/api/auth/me").catch(() => ({ staff: null })),
+      listDocs("emailTemplates").catch(() => []),
+    ]).then(([r, rows]) => {
+      const s = r.staff;
+      setMe(s);
+      setTestTo(s?.email ?? "");
+      let kept: Draft | null = null;
+      try {
+        kept = JSON.parse(localStorage.getItem(draftKey(target)) || "null");
+      } catch {}
+      const d = kept?.content ? kept : startDraft(target, s?.name ?? "", mergeTemplates(rows));
+      setDraft(d);
+      setShowCc(d.cc.length > 0);
+      setShowBcc(d.bcc.length > 0);
+    });
   }, [target]);
 
   // Keep an unsent draft in this browser, per request.
@@ -96,12 +102,17 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
   }, [draft, target]);
 
   useEffect(() => {
-    const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", k);
+    // Escape closes only the composer, not the request panel underneath.
+    const k = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      onClose();
+    };
+    window.addEventListener("keydown", k, true);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
-      window.removeEventListener("keydown", k);
+      window.removeEventListener("keydown", k, true);
       document.body.style.overflow = prev;
     };
   }, [onClose]);
@@ -122,13 +133,59 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
   const setC = (patch: Partial<EmailContent>) => setDraft({ ...draft, content: { ...draft.content, ...patch } });
   const c = draft.content;
 
+  const current = templates.find((t) => t.id === draft.presetId);
+
   const applyPreset = (id: string) => {
-    const p = PRESETS.find((x) => x.id === id);
+    const p = templates.find((x) => x.id === id);
     if (!p) return;
     if (c.body.trim() && !confirm(`Replace the current text with the "${p.label}" template?`)) return;
     const content = fromPreset(p, c.signName || me?.name || "");
     if (p.id === "consultation" && target?.col === "bookings" && target.row) content.details = bookingDetails(target.row) || content.details;
     set({ presetId: id, subject: p.subject || draft.subject, content });
+  };
+
+  /** The draft as a template: booking details filled in for this client go back to the template's own. */
+  const asTemplate = (base?: Template) => {
+    const content = { ...c };
+    if (target?.col === "bookings" && target.row && content.details === bookingDetails(target.row)) content.details = base?.content.details ?? PRESETS.find((p) => p.id === "consultation")!.content.details ?? "";
+    return { subject: draft.subject, content };
+  };
+
+  const saveTemplate = async () => {
+    if (!current || current.id === "blank") return;
+    if (!confirm(`Save these changes to the "${current.label}" template for all staff?`)) return;
+    try {
+      await putDoc("emailTemplates", current.id, { label: current.label, ...asTemplate(current) }, false);
+      toast("ok", `"${current.label}" template saved`);
+    } catch (e) {
+      toast("error", (e as Error).message);
+    }
+  };
+
+  const saveAsNew = async () => {
+    const label = prompt("Name for the new template", draft.subject || "New template")?.trim();
+    if (!label) return;
+    const id = `t-${Date.now().toString(36)}`;
+    try {
+      await putDoc("emailTemplates", id, { label, ...asTemplate() }, false);
+      set({ presetId: id });
+      toast("ok", `"${label}" template added`);
+    } catch (e) {
+      toast("error", (e as Error).message);
+    }
+  };
+
+  const removeTemplate = async () => {
+    if (!current || current.id === "blank") return;
+    const restoring = current.builtIn;
+    if (!confirm(restoring ? `Restore the "${current.label}" template to its original wording for all staff?` : `Delete the "${current.label}" template for all staff?`)) return;
+    try {
+      await deleteDoc("emailTemplates", current.id);
+      toast("ok", restoring ? "Original template restored" : "Template deleted");
+      if (!restoring) set({ presetId: "blank" });
+    } catch (e) {
+      toast("error", (e as Error).message);
+    }
   };
 
   /** Wraps or prefixes the selected text in the message box. */
@@ -201,7 +258,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
     try {
       localStorage.removeItem(draftKey(target));
     } catch {}
-    setDraft(startDraft(target, me?.name ?? ""));
+    setDraft(startDraft(target, me?.name ?? "", templates));
   };
 
   return (
@@ -280,7 +337,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
           <div className="mx-auto grid max-w-2xl gap-6">
             <Section title="Template">
               <div className="flex flex-wrap gap-2">
-                {PRESETS.map((p) => (
+                {templates.map((p) => (
                   <button
                     key={p.id}
                     type="button"
@@ -294,6 +351,27 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
                   </button>
                 ))}
               </div>
+              <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
+                {current && current.id !== "blank" && (
+                  <Btn variant="ghost" onClick={saveTemplate}>
+                    <Save aria-hidden className="size-4" /> Save to &ldquo;{current.label}&rdquo;
+                  </Btn>
+                )}
+                <Btn variant="ghost" onClick={saveAsNew}>
+                  <CopyPlus aria-hidden className="size-4" /> Save as new template
+                </Btn>
+                {current && !current.builtIn && (
+                  <Btn variant="danger" onClick={removeTemplate}>
+                    <Trash2 aria-hidden className="size-4" /> Delete template
+                  </Btn>
+                )}
+                {current?.builtIn && current.edited && (
+                  <button type="button" onClick={removeTemplate} className="inline-flex min-h-11 items-center gap-1.5 px-2 text-sm font-bold text-stone hover:text-ink">
+                    <RotateCcw aria-hidden className="size-4" /> Restore original
+                  </button>
+                )}
+              </div>
+              <p className="-mt-1 text-xs text-stone">Templates are shared by all staff. Edit the email, then save it to the template so it starts that way next time.</p>
             </Section>
 
             <Section title="Recipients">
