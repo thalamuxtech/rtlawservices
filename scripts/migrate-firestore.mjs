@@ -1,7 +1,8 @@
 // One-off move of every record from Firestore to the Cloudflare D1 database
 // and R2 storage. Safe to run again: each run replaces the D1 records with a
 // fresh copy, keeps any password already set on the new site, and re-uploads
-// files under the same names.
+// files under the same names. With --merge it only adds records D1 does not
+// have yet, for the final catch-up after the new site has gone live.
 //
 // Usage (project owner signed in to gcloud):
 //   FIRESTORE_TOKEN=$(gcloud auth print-access-token) node scripts/migrate-firestore.mjs <work folder>
@@ -19,12 +20,14 @@ const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/
 const TOKEN = process.env.FIRESTORE_TOKEN;
 const WORK = process.argv[2];
 const DRY = process.argv.includes("--dry-run");
+const MERGE = process.argv.includes("--merge");
+const INSERT = MERGE ? "INSERT OR IGNORE" : "INSERT";
 const BUCKET = "rtlawservices-files";
 // Login-only addresses with no mailbox: their reset emails go to a real one.
 const RECOVERY = { "admin@rtlawservices.com": "info@rtlawservices.com" };
 
 if (!TOKEN || !WORK) {
-  console.error("Usage: FIRESTORE_TOKEN=... node scripts/migrate-firestore.mjs <work folder> [--dry-run]");
+  console.error("Usage: FIRESTORE_TOKEN=... node scripts/migrate-firestore.mjs <work folder> [--dry-run] [--merge]");
   process.exit(1);
 }
 mkdirSync(join(WORK, "files"), { recursive: true });
@@ -80,12 +83,12 @@ function image(col, id, dataUrl) {
 }
 
 function putDoc(col, id, data) {
-  sql.push(`INSERT INTO docs (col, id, data) VALUES (${q(col)}, ${q(id)}, ${q(JSON.stringify(data))});`);
+  sql.push(`${INSERT} INTO docs (col, id, data) VALUES (${q(col)}, ${q(id)}, ${q(JSON.stringify(data))});`);
   counts[col] = (counts[col] || 0) + 1;
 }
 
 async function main() {
-  sql.push("DELETE FROM docs;", "DELETE FROM slots;");
+  if (!MERGE) sql.push("DELETE FROM docs;", "DELETE FROM slots;");
 
   for (const col of ["bookings", "messages", "reviews", "posts", "settings", "meta"]) {
     for (const d of await list(col)) putDoc(col, d.id, d.data);
@@ -114,7 +117,7 @@ async function main() {
     const start = d.data.start?.__ts;
     if (!start || !d.data.bookingId) continue;
     sql.push(
-      `INSERT INTO slots (id, attorney, day, start, booking_id, created_at) VALUES (${q(d.id)}, ${q(d.data.attorney)}, ${q(d.data.day)}, ${q(start)}, ${q(d.data.bookingId)}, ${q(d.data.createdAt?.__ts ?? new Date().toISOString())});`,
+      `${INSERT} INTO slots (id, attorney, day, start, booking_id, created_at) VALUES (${q(d.id)}, ${q(d.data.attorney)}, ${q(d.data.day)}, ${q(start)}, ${q(d.data.bookingId)}, ${q(d.data.createdAt?.__ts ?? new Date().toISOString())});`,
     );
     counts.slots = (counts.slots || 0) + 1;
   }
