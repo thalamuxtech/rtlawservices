@@ -3,6 +3,8 @@
 // plan instead. The API key is the Worker secret BREVO_API_KEY.
 
 export type Mail = {
+  /** Sender address; defaults to MAIL_FROM. Replies go back to it. */
+  from?: string;
   to: string | string[];
   toName?: string;
   cc?: string[];
@@ -35,11 +37,11 @@ export async function sendMail(env: Env, mail: Mail): Promise<MailResult> {
       method: "POST",
       headers: { "api-key": env.BREVO_API_KEY, "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        sender: { email: env.MAIL_FROM, name: env.MAIL_FROM_NAME },
+        sender: { email: mail.from || env.MAIL_FROM, name: env.MAIL_FROM_NAME },
         to: to.map((email, i) => ({ email, ...(i === 0 && mail.toName ? { name: mail.toName } : {}) })),
         ...(mail.cc?.length ? { cc: mail.cc.map((email) => ({ email })) } : {}),
         ...(mail.bcc?.length ? { bcc: mail.bcc.map((email) => ({ email })) } : {}),
-        replyTo: { email: mail.replyTo || env.MAIL_FROM },
+        replyTo: { email: mail.replyTo || mail.from || env.MAIL_FROM },
         subject: mail.subject,
         textContent: mail.text,
         htmlContent: mail.html || toHtml(mail.text),

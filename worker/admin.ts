@@ -2,7 +2,7 @@
 // requests and managing staff need an owner.
 
 import { createResetLink, emailResetLink, requireStaff, type Staff } from "./auth";
-import { BLANK_EMAIL, DEFAULT_BRAND, renderEmail, type EmailBrand, type EmailContent } from "../src/lib/email-template";
+import { BLANK_EMAIL, DEFAULT_BRAND, renderEmail, SENDERS, type EmailBrand, type EmailContent } from "../src/lib/email-template";
 import { body, deleteDoc, EMAIL_RE, getDoc, HttpError, json, limited, listDocs, mergeDoc, newId, putDoc, sha256Hex, str, ts, type Doc } from "./lib";
 import { sendMail } from "./mail";
 
@@ -148,6 +148,7 @@ async function emailClient(env: Env, staff: Staff, b: Doc) {
   const content = cleanContent(b.content);
   if (!content.body.trim() && !content.heading.trim()) throw new HttpError(400, "Write a message.");
 
+  const from = SENDERS.find((s) => s === b.from) ?? SENDERS[0];
   const col = typeof b.col === "string" && REQUESTS.has(b.col) ? b.col : null;
   const id = col && str(b.id, 1, 64) ? b.id : null;
   const request = col && id ? await getDoc(env.DB, col, id) : null;
@@ -159,7 +160,7 @@ async function emailClient(env: Env, staff: Staff, b: Doc) {
     const to = addresses(b.testTo, "Test address");
     if (!to.length) throw new HttpError(400, "Enter an email address for the test.");
     if (to.length > 3) throw new HttpError(400, "Send a test to three addresses at most.");
-    const result = await sendMail(env, { to, subject: `[Test] ${subject}`, html, text });
+    const result = await sendMail(env, { from, to, subject: `[Test] ${subject}`, html, text });
     if (!result.ok) throw new HttpError(502, result.error);
     return json({ ok: true, test: true });
   }
@@ -170,12 +171,13 @@ async function emailClient(env: Env, staff: Staff, b: Doc) {
   if (!to.length) throw new HttpError(400, "Add at least one recipient.");
   if (to.length + cc.length + bcc.length > MAX_RECIPIENTS) throw new HttpError(400, `Send to ${MAX_RECIPIENTS} addresses at most.`);
 
-  const result = await sendMail(env, { to, toName, cc, bcc, subject, html, text });
+  const result = await sendMail(env, { from, to, toName, cc, bcc, subject, html, text });
   if (!result.ok) throw new HttpError(502, result.error);
   const emailId = newId();
   await putDoc(env.DB, "emails", emailId, {
     requestCol: col ?? "",
     requestId: id ?? "",
+    from,
     toName,
     to,
     cc,

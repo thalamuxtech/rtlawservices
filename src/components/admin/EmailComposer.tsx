@@ -10,7 +10,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Bold, CopyPlus, FlaskConical, Link2, List, ListOrdered, Monitor, RotateCcw, Save, Send, Smartphone, Trash2, UserRound, X } from "lucide-react";
 import { useContent } from "@/content/LiveContent";
 import { adminPost, api, deleteDoc, listDocs, putDoc, type Row, type Timestamp } from "@/lib/api";
-import { DEFAULT_BRAND, renderEmail, type EmailContent } from "@/lib/email-template";
+import { DEFAULT_BRAND, renderEmail, SENDERS, type EmailContent } from "@/lib/email-template";
 import { cn } from "@/lib/utils";
 import { PRESETS, fromPreset, mergeTemplates, type Template } from "./email-presets";
 import { Btn, Toggle, useCollection, useToast } from "./kit";
@@ -19,7 +19,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export type ComposeTarget = { col?: "evaluations" | "bookings" | "messages"; row?: Row } | null;
 
-type Draft = { presetId: string; subject: string; to: string[]; cc: string[]; bcc: string[]; content: EmailContent };
+type Draft = { presetId: string; from: string; subject: string; to: string[]; cc: string[]; bcc: string[]; content: EmailContent };
 
 /** Consultation details from a booking, written for the client. */
 function bookingDetails(r: Row) {
@@ -42,7 +42,7 @@ function startDraft(target: ComposeTarget, signName: string, templates: Template
   const preset = templates.find((p) => p.id === want) ?? PRESETS.find((p) => p.id === want)!;
   const content = fromPreset(preset, signName);
   if (target?.col === "bookings" && row) content.details = bookingDetails(row) || content.details;
-  return { presetId: preset.id, subject: preset.subject, to: row?.email ? [String(row.email)] : [], cc: [], bcc: [], content };
+  return { presetId: preset.id, from: SENDERS[0], subject: preset.subject, to: row?.email ? [String(row.email)] : [], cc: [], bcc: [], content };
 }
 
 const draftKey = (target: ComposeTarget) => `rt-email-draft-${target?.row?.id ?? "new"}`;
@@ -215,7 +215,8 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
     });
   };
 
-  const payload = () => ({ col: target?.col, id: target?.row?.id, toName: name, subject: draft.subject, content: c });
+  const from = SENDERS.find((s) => s === draft.from) ?? SENDERS[0];
+  const payload = () => ({ col: target?.col, id: target?.row?.id, from, toName: name, subject: draft.subject, content: c });
 
   const sendTest = async () => {
     const list = testTo.split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean);
@@ -278,7 +279,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
         </button>
         <div className="min-w-0 flex-1">
           <p className="font-serif-display text-2xl leading-tight text-ink">{name ? `Email ${name}` : "New email"}</p>
-          <p className="truncate text-xs text-stone">From {brand.name} &lt;clientservice@rtlawservices.com&gt;. Replies arrive in the firm&apos;s inbox.</p>
+          <p className="truncate text-xs text-stone">From {brand.name} &lt;{from}&gt;. Replies come back to {from}.</p>
         </div>
         <div className="relative">
           <Btn variant="ghost" onClick={() => setTestOpen((v) => !v)} aria-expanded={testOpen}>
@@ -375,6 +376,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
             </Section>
 
             <Section title="Recipients">
+              <Choice label="From" value={from} onChange={(f) => set({ from: f })} options={SENDERS.map((s) => ({ value: s, label: s }))} />
               <Recipients label="To" value={draft.to} onChange={(to) => set({ to })} />
               <div className="flex gap-2">
                 {!showCc && (
@@ -502,7 +504,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
               <div className="border-b border-line px-5 py-4 text-sm">
                 <p className="font-bold text-ink">{draft.subject || "No subject"}</p>
                 <p className="mt-1 truncate text-stone">
-                  <span className="font-bold text-ink">{brand.name}</span> &lt;clientservice@rtlawservices.com&gt;
+                  <span className="font-bold text-ink">{brand.name}</span> &lt;{from}&gt;
                 </p>
                 <p className="truncate text-stone">
                   To {draft.to.join(", ") || "no recipient yet"}

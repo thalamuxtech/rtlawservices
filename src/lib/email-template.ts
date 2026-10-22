@@ -34,6 +34,9 @@ export type EmailBrand = { name: string; phone: string; email: string; website: 
 
 export type EmailVars = { name?: string; email?: string };
 
+/** Addresses staff can send from. Each must be a sender in Brevo; replies go back to it. */
+export const SENDERS = ["clientservice@rtlawservices.com", "info@rtlawservices.com"] as const;
+
 export const DEFAULT_BRAND: EmailBrand = {
   name: "RT Law Services",
   phone: "+1 (617) 642-6344",
