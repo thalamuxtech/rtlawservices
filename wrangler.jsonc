@@ -8,10 +8,8 @@
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
   // www.rtlawservices.com is served by workers/www-redirect, which sends it here.
-  // A route rather than a custom domain, because the zone keeps the proxied
-  // records moved over from the old host. The Worker answers every request,
-  // so the old server behind those records is never reached.
-  "routes": [{ "pattern": "rtlawservices.com/*", "zone_name": "rtlawservices.com" }],
+  // Cloudflare creates and manages the domain's DNS record for the Worker.
+  "routes": [{ "pattern": "rtlawservices.com", "custom_domain": true }],
   "assets": {
     "directory": "./out",
     "binding": "ASSETS",

@@ -5,5 +5,5 @@
   "main": "index.js",
   "compatibility_date": "2026-10-01",
   "workers_dev": false,
-  "routes": [{ "pattern": "www.rtlawservices.com/*", "zone_name": "rtlawservices.com" }]
+  "routes": [{ "pattern": "www.rtlawservices.com", "custom_domain": true }]
 }
