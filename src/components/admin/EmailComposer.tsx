@@ -10,7 +10,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Bold, CopyPlus, FlaskConical, Link2, List, ListOrdered, Monitor, Paperclip, RotateCcw, Save, Send, Smartphone, Trash2, UserRound, X } from "lucide-react";
 import { useContent } from "@/content/LiveContent";
 import { adminPost, api, deleteDoc, listDocs, putDoc, type Row, type Timestamp } from "@/lib/api";
-import { DEFAULT_BRAND, renderEmail, SENDERS, type EmailContent } from "@/lib/email-template";
+import { BLANK_EMAIL, DEFAULT_BRAND, renderEmail, SENDERS, type EmailContent } from "@/lib/email-template";
 import { cn } from "@/lib/utils";
 import { PRESETS, fromPreset, mergeTemplates, type Template } from "./email-presets";
 import { Btn, dialogIsOpen, Toggle, useCollection, useDialog, useToast } from "./kit";
@@ -153,7 +153,10 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
       try {
         kept = JSON.parse(localStorage.getItem(draftKey(target)) || "null");
       } catch {}
-      const d = kept?.content ? { ...kept, attachments: [] } : startDraft(target, s?.name ?? "", mergeTemplates(rows));
+      // A draft saved by an earlier version may lack newer fields, so fill them in.
+      const d: Draft = kept?.content
+        ? { ...kept, cc: kept.cc ?? [], bcc: kept.bcc ?? [], to: kept.to ?? [], attachments: [], content: { ...BLANK_EMAIL, ...kept.content } }
+        : startDraft(target, s?.name ?? "", mergeTemplates(rows));
       setDraft(d);
       setShowCc(d.cc.length > 0);
       setShowBcc(d.bcc.length > 0);
