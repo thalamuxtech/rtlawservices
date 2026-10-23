@@ -116,6 +116,9 @@ function startDraft(target: ComposeTarget, signName: string, templates: Template
   return { presetId: preset.id, from, replyTo: DEFAULT_REPLY_TO, subject, to, cc, bcc: [], content, quoted: !!content.quote, attachments: [] };
 }
 
+// Drafts saved on 23 October 2026 carry the reply-to address that was the default then; it is cleared.
+const OLD_DEFAULT_REPLY_TO = "clientservice@rtlawservices.com";
+
 const draftKey = (target: ComposeTarget) => `rt-email-draft-${target?.row?.id ?? "new"}${target?.mode && target.mode !== "reply" ? `-${target.mode}` : ""}`;
 
 export function EmailComposer({ target, onClose }: { target: ComposeTarget; onClose: () => void }) {
@@ -157,7 +160,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
       } catch {}
       // A draft saved by an earlier version may lack newer fields, so fill them in.
       const d: Draft = kept?.content
-        ? { ...kept, replyTo: kept.replyTo ?? DEFAULT_REPLY_TO, cc: kept.cc ?? [], bcc: kept.bcc ?? [], to: kept.to ?? [], attachments: [], content: { ...BLANK_EMAIL, ...kept.content } }
+        ? { ...kept, replyTo: kept.replyTo && kept.replyTo !== OLD_DEFAULT_REPLY_TO ? kept.replyTo : DEFAULT_REPLY_TO, cc: kept.cc ?? [], bcc: kept.bcc ?? [], to: kept.to ?? [], attachments: [], content: { ...BLANK_EMAIL, ...kept.content } }
         : startDraft(target, s?.name ?? "", mergeTemplates(rows));
       setDraft(d);
       setShowCc(d.cc.length > 0);
@@ -200,7 +203,8 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
   }, [onClose]);
 
   const name = String(target?.row?.name ?? "");
-  const brand = useMemo(() => ({ ...DEFAULT_BRAND, phone: SITE.phone, email: SITE.email, website: SITE.url }), [SITE]);
+  // The contact line at the foot of the email shows the sending address, as the server does.
+  const brand = useMemo(() => ({ ...DEFAULT_BRAND, phone: SITE.phone, email: SENDERS[0], website: SITE.url }), [SITE]);
   // The quoted original goes out only while it is switched on.
   const effective = useMemo(() => (draft ? (draft.quoted === false ? { ...draft.content, quote: "", quoteHeader: "" } : draft.content) : null), [draft]);
   const rendered = useMemo(() => (draft && effective ? renderEmail(effective, { name, email: draft.to[0] }, brand) : null), [draft, effective, name, brand]);
@@ -351,6 +355,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
     const list = testTo.split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean);
     if (!list.length || list.some((x) => !EMAIL_RE.test(x))) return toast("error", "Enter a valid email address for the test.");
     if (!draft.subject.trim()) return toast("error", "Write a subject first.");
+    if (!EMAIL_RE.test(replyTo)) return toast("error", replyTo ? "Enter a valid Reply-to address." : "Enter a Reply-to address first.");
     setBusy("test");
     try {
       await adminPost("email", { ...payload(), test: true, testTo: list });
@@ -366,7 +371,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
   const send = async () => {
     if (!draft.to.length) return toast("error", "Add at least one recipient.");
     if (!draft.subject.trim()) return toast("error", "Write a subject.");
-    if (!EMAIL_RE.test(replyTo)) return toast("error", "Enter a valid Reply-to address.");
+    if (!EMAIL_RE.test(replyTo)) return toast("error", replyTo ? "Enter a valid Reply-to address." : "Enter a Reply-to address.");
     const extra = draft.cc.length + draft.bcc.length;
     const ok = await dialog.confirm({
       title: "Send this email?",
@@ -524,7 +529,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
                   <p className="text-sm font-bold text-ink">From</p>
                   <p className="mt-1.5 flex min-h-11 items-center rounded-xl border border-line bg-mist/50 px-3.5 text-[0.95rem] text-ink">{from}</p>
                 </div>
-                <Field label="Reply-to" hint="Where the client's reply goes. Type any address." value={draft.replyTo ?? DEFAULT_REPLY_TO} onChange={(v) => set({ replyTo: v })} />
+                <Field label="Reply-to" hint="Where the client's reply goes. Type the address for this email." value={draft.replyTo ?? DEFAULT_REPLY_TO} onChange={(v) => set({ replyTo: v })} />
               </div>
               <Recipients label="To" value={draft.to} onChange={(to) => set({ to })} />
               <div className="flex gap-2">

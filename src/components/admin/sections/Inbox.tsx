@@ -222,7 +222,7 @@ export function Inbox({ rows, role, receiving = true }: { rows: Row[] | null; ro
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-serif-display text-4xl text-ink">Inbox</h1>
-          <p className="mt-1 text-stone">Email sent to clientservice@ and info@rtlawservices.com.</p>
+          <p className="mt-1 text-stone">Email received at the firm&apos;s addresses.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Search value={q} onChange={setQ} placeholder="Search sender, subject or text" />
@@ -240,7 +240,7 @@ export function Inbox({ rows, role, receiving = true }: { rows: Row[] | null; ro
           <div className="min-w-0 flex-1">
             <p className="font-bold text-ink">Receiving email here is paused for now</p>
             <p className="mt-0.5 text-sm leading-relaxed text-stone">
-              New mail to clientservice@ and info@rtlawservices.com arrives in the Hostinger mailboxes. Read and answer it in Hostinger
+              New mail to the firm&apos;s addresses arrives in the Hostinger mailboxes. Read and answer it in Hostinger
               webmail or your email app. Sending branded emails from this portal still works, and earlier messages stay below.
             </p>
           </div>
@@ -257,7 +257,7 @@ export function Inbox({ rows, role, receiving = true }: { rows: Row[] | null; ro
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex max-w-full overflow-x-auto rounded-full border border-line bg-white p-1" role="tablist" aria-label="Address">
-          {["all", ...MAILBOXES].map((m) => (
+          {["all", ...MAILBOXES.filter((m) => (rows ?? []).some((r) => r.mailbox === m))].map((m) => (
             <button
               key={m}
               type="button"
@@ -307,7 +307,7 @@ export function Inbox({ rows, role, receiving = true }: { rows: Row[] | null; ro
               <div>
                 <InboxIcon aria-hidden className="mx-auto size-10 text-line" />
                 <p className="mt-3 font-bold text-ink">{rows.length ? "Nothing here" : "No email yet"}</p>
-                <p className="mt-1 text-sm text-stone">{rows.length ? "Try another folder, address or search." : "Messages to clientservice@ and info@ appear here."}</p>
+                <p className="mt-1 text-sm text-stone">{rows.length ? "Try another folder, address or search." : "Received messages appear here."}</p>
               </div>
             </div>
           ) : (

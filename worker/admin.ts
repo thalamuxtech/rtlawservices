@@ -172,14 +172,16 @@ async function emailClient(env: Env, staff: Staff, b: Doc) {
   if (!content.body.trim() && !content.heading.trim()) throw new HttpError(400, "Write a message.");
 
   const from = SENDERS.find((s) => s === b.from) ?? SENDERS[0];
-  const replyTo = typeof b.replyTo === "string" && b.replyTo.trim() ? b.replyTo.trim().toLowerCase() : DEFAULT_REPLY_TO;
+  const replyTo = (typeof b.replyTo === "string" ? b.replyTo : DEFAULT_REPLY_TO).trim().toLowerCase();
+  if (!replyTo) throw new HttpError(400, "Enter a Reply-to address.");
   if (!EMAIL_RE.test(replyTo) || replyTo.length > 200) throw new HttpError(400, `Reply-to: "${replyTo}" is not a valid email address.`);
   const col = typeof b.col === "string" && TRACKED.has(b.col) ? b.col : null;
   const id = col && str(b.id, 1, 64) ? b.id : null;
   const request = col && id ? await getDoc(env.DB, col, id) : null;
   const toName = String(b.toName ?? request?.name ?? "").slice(0, 200);
   const vars = { name: toName, email: typeof request?.email === "string" ? request.email : undefined };
-  const { html, text } = renderEmail(content, vars, await emailBrand(env));
+  // The contact line at the foot of the email shows the address it was sent from.
+  const { html, text } = renderEmail(content, vars, { ...(await emailBrand(env)), email: from });
   const files = cleanAttachments(b.attachments);
   const attachments = files.map(({ name, content }) => ({ name, content }));
 
