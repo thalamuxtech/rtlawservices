@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Archive, ArchiveRestore, ArrowLeft, Download, Eye, File, FileArchive, FileImage, FileSpreadsheet, FileText, Forward, Inbox as InboxIcon, Mail,
-  MailOpen, Paperclip, Reply, ReplyAll, ShieldAlert, Trash2, X,
+  MailOpen, Paperclip, PenLine, Reply, ReplyAll, ShieldAlert, Trash2, X,
 } from "lucide-react";
 import { api, deleteDoc, patchDoc, type Timestamp } from "@/lib/api";
 import { SENDERS } from "@/lib/email-template";
@@ -224,7 +224,12 @@ export function Inbox({ rows, role, receiving = true }: { rows: Row[] | null; ro
           <h1 className="font-serif-display text-4xl text-ink">Inbox</h1>
           <p className="mt-1 text-stone">Email sent to clientservice@ and info@rtlawservices.com.</p>
         </div>
-        <Search value={q} onChange={setQ} placeholder="Search sender, subject or text" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Search value={q} onChange={setQ} placeholder="Search sender, subject or text" />
+          <Btn variant="gold" onClick={() => setCompose({})}>
+            <PenLine aria-hidden className="size-4" /> New email
+          </Btn>
+        </div>
       </div>
 
       {!receiving && (
