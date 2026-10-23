@@ -166,7 +166,7 @@ const FOLDERS = [
 
 /* ---------- the inbox ---------- */
 
-export function Inbox({ rows, role }: { rows: Row[] | null; role: string }) {
+export function Inbox({ rows, role, receiving = true }: { rows: Row[] | null; role: string; receiving?: boolean }) {
   const toast = useToast();
   const dialog = useDialog();
   const emails = useCollection("emails");
@@ -226,6 +226,29 @@ export function Inbox({ rows, role }: { rows: Row[] | null; role: string }) {
         </div>
         <Search value={q} onChange={setQ} placeholder="Search sender, subject or text" />
       </div>
+
+      {!receiving && (
+        <div role="status" className="flex flex-wrap items-start gap-4 rounded-2xl border border-brass/40 bg-brass-pale px-5 py-4">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-brass-ink">
+            <Mail aria-hidden className="size-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-ink">Receiving email here is paused for now</p>
+            <p className="mt-0.5 text-sm leading-relaxed text-stone">
+              New mail to clientservice@ and info@rtlawservices.com arrives in the Hostinger mailboxes. Read and answer it in Hostinger
+              webmail or your email app. Sending branded emails from this portal still works, and earlier messages stay below.
+            </p>
+          </div>
+          <a
+            href="https://mail.hostinger.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 items-center rounded-full bg-ink px-5 text-sm font-bold text-paper hover:bg-ink-raised"
+          >
+            Open Hostinger webmail
+          </a>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex max-w-full overflow-x-auto rounded-full border border-line bg-white p-1" role="tablist" aria-label="Address">
