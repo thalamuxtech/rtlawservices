@@ -3,7 +3,7 @@
 // back office reads and parses it in the browser, which keeps the work done
 // here small enough for the free plan's limit of 10 ms of processing.
 
-import { SENDERS } from "../src/lib/email-template";
+import { MAILBOXES } from "../src/lib/email-template";
 import { newId, putDoc, ts } from "./lib";
 
 const MAX_BYTES = 20 * 1024 * 1024;
@@ -34,7 +34,7 @@ function parseAddress(v: string) {
 
 export async function receiveEmail(message: ForwardableEmailMessage, env: Env) {
   const to = message.to.toLowerCase();
-  if (!SENDERS.some((s) => s === to)) return message.setReject("Unknown address.");
+  if (!MAILBOXES.some((s) => s === to)) return message.setReject("Unknown address.");
   if (message.rawSize > MAX_BYTES) return message.setReject("Message is larger than 20 MB.");
 
   const id = newId();

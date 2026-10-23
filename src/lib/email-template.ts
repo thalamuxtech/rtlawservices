@@ -37,8 +37,14 @@ export type EmailBrand = { name: string; phone: string; email: string; website: 
 
 export type EmailVars = { name?: string; email?: string };
 
-/** Addresses staff can send from. Each must be a sender in Brevo; replies go back to it. */
-export const SENDERS = ["clientservice@rtlawservices.com", "info@rtlawservices.com"] as const;
+/** The firm's addresses that can receive mail (the back-office inbox, when it is switched on). */
+export const MAILBOXES = ["clientservice@rtlawservices.com", "info@rtlawservices.com"] as const;
+
+/** Addresses staff can send from in the back office. Each must be a sender in Brevo. */
+export const SENDERS = ["info@rtlawservices.com"] as const;
+
+/** Where replies go unless staff type another address: a mailbox the firm reads in Hostinger. */
+export const DEFAULT_REPLY_TO = "clientservice@rtlawservices.com";
 
 export const DEFAULT_BRAND: EmailBrand = {
   name: "RT Law Services",

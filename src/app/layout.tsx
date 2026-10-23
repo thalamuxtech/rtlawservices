@@ -39,7 +39,6 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image", images: [OG_IMAGE.url] },
   formatDetection: { telephone: false },
-  icons: { apple: "/brand/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {

@@ -31,7 +31,7 @@
   "vars": {
     "SITE_URL": "https://rtlawservices.com",
     "GITHUB_REPO": "thalamuxtech/rtlawservices",
-    "MAIL_FROM": "clientservice@rtlawservices.com",
+    "MAIL_FROM": "info@rtlawservices.com",
     "MAIL_FROM_NAME": "RT Law Services",
     // Staff signing in for the first time are checked once against their old
     // Firebase password, then moved to a password stored here. Remove after

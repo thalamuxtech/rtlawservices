@@ -10,7 +10,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Bold, CopyPlus, FlaskConical, Link2, List, ListOrdered, Monitor, Paperclip, RotateCcw, Save, Send, Smartphone, Trash2, UserRound, X } from "lucide-react";
 import { useContent } from "@/content/LiveContent";
 import { adminPost, api, deleteDoc, listDocs, putDoc, type Row, type Timestamp } from "@/lib/api";
-import { BLANK_EMAIL, DEFAULT_BRAND, renderEmail, SENDERS, type EmailContent } from "@/lib/email-template";
+import { BLANK_EMAIL, DEFAULT_BRAND, DEFAULT_REPLY_TO, MAILBOXES, renderEmail, SENDERS, type EmailContent } from "@/lib/email-template";
 import { cn } from "@/lib/utils";
 import { PRESETS, fromPreset, mergeTemplates, type Template } from "./email-presets";
 import { Btn, dialogIsOpen, Toggle, useCollection, useDialog, useToast } from "./kit";
@@ -41,6 +41,8 @@ type Attachment = { name: string; type: string; size: number; content: string };
 type Draft = {
   presetId: string;
   from: string;
+  /** Where the client's reply goes. */
+  replyTo?: string;
   subject: string;
   to: string[];
   cc: string[];
@@ -103,15 +105,15 @@ function startDraft(target: ComposeTarget, signName: string, templates: Template
     } else subject = /^re:/i.test(base) ? base : `Re: ${base}`;
     if (mode === "replyAll" && orig) {
       const sender = String(row.email).toLowerCase();
-      cc = [...new Set([...orig.to, ...orig.cc].map((x) => x.toLowerCase()))].filter((x) => x !== sender && !SENDERS.some((s) => s === x));
+      cc = [...new Set([...orig.to, ...orig.cc].map((x) => x.toLowerCase()))].filter((x) => x !== sender && !MAILBOXES.some((s) => s === x));
     }
     if (orig) {
       content.quote = orig.text;
       content.quoteHeader = mode === "forward" ? orig.forwardHeader : orig.replyHeader;
     }
   }
-  const from = inbox ? (SENDERS.find((s) => s === row.mailbox) ?? SENDERS[0]) : SENDERS[0];
-  return { presetId: preset.id, from, subject, to, cc, bcc: [], content, quoted: !!content.quote, attachments: [] };
+  const from = SENDERS[0];
+  return { presetId: preset.id, from, replyTo: DEFAULT_REPLY_TO, subject, to, cc, bcc: [], content, quoted: !!content.quote, attachments: [] };
 }
 
 const draftKey = (target: ComposeTarget) => `rt-email-draft-${target?.row?.id ?? "new"}${target?.mode && target.mode !== "reply" ? `-${target.mode}` : ""}`;
@@ -155,7 +157,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
       } catch {}
       // A draft saved by an earlier version may lack newer fields, so fill them in.
       const d: Draft = kept?.content
-        ? { ...kept, cc: kept.cc ?? [], bcc: kept.bcc ?? [], to: kept.to ?? [], attachments: [], content: { ...BLANK_EMAIL, ...kept.content } }
+        ? { ...kept, replyTo: kept.replyTo ?? DEFAULT_REPLY_TO, cc: kept.cc ?? [], bcc: kept.bcc ?? [], to: kept.to ?? [], attachments: [], content: { ...BLANK_EMAIL, ...kept.content } }
         : startDraft(target, s?.name ?? "", mergeTemplates(rows));
       setDraft(d);
       setShowCc(d.cc.length > 0);
@@ -319,10 +321,12 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
   const from = SENDERS.find((s) => s === draft.from) ?? SENDERS[0];
   const files = draft.attachments ?? [];
   const totalSize = files.reduce((n, f) => n + f.size, 0);
+  const replyTo = (draft.replyTo ?? DEFAULT_REPLY_TO).trim();
   const payload = () => ({
     col: target?.col,
     id: target?.row?.id,
     from,
+    replyTo,
     toName: name,
     subject: draft.subject,
     content: effective,
@@ -362,6 +366,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
   const send = async () => {
     if (!draft.to.length) return toast("error", "Add at least one recipient.");
     if (!draft.subject.trim()) return toast("error", "Write a subject.");
+    if (!EMAIL_RE.test(replyTo)) return toast("error", "Enter a valid Reply-to address.");
     const extra = draft.cc.length + draft.bcc.length;
     const ok = await dialog.confirm({
       title: "Send this email?",
@@ -417,7 +422,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
         </button>
         <div className="min-w-0 flex-1">
           <p className="font-serif-display text-2xl leading-tight text-ink">{name ? `Email ${name}` : "New email"}</p>
-          <p className="truncate text-xs text-stone">From {brand.name} &lt;{from}&gt;. Replies come back to {from}.</p>
+          <p className="truncate text-xs text-stone">From {brand.name} &lt;{from}&gt;. Replies go to {replyTo || "no address yet"}.</p>
         </div>
         <div className="relative">
           <Btn variant="ghost" onClick={() => setTestOpen((v) => !v)} aria-expanded={testOpen}>
@@ -514,7 +519,13 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
             </Section>
 
             <Section title="Recipients">
-              <Choice label="From" value={from} onChange={(f) => set({ from: f })} options={SENDERS.map((s) => ({ value: s, label: s }))} />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-sm font-bold text-ink">From</p>
+                  <p className="mt-1.5 flex min-h-11 items-center rounded-xl border border-line bg-mist/50 px-3.5 text-[0.95rem] text-ink">{from}</p>
+                </div>
+                <Field label="Reply-to" hint="Where the client's reply goes. Type any address." value={draft.replyTo ?? DEFAULT_REPLY_TO} onChange={(v) => set({ replyTo: v })} />
+              </div>
               <Recipients label="To" value={draft.to} onChange={(to) => set({ to })} />
               <div className="flex gap-2">
                 {!showCc && (
@@ -685,6 +696,8 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
                 <p className="font-bold text-ink">{draft.subject || "No subject"}</p>
                 <p className="mt-1 truncate text-stone">
                   <span className="font-bold text-ink">{brand.name}</span> &lt;{from}&gt;
+                </p>
+                <p className="truncate text-stone">Reply-to {replyTo || "not set"}
                 </p>
                 <p className="truncate text-stone">
                   To {draft.to.join(", ") || "no recipient yet"}

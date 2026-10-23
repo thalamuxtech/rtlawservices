@@ -13,7 +13,7 @@ import {
   MailOpen, Paperclip, PenLine, Reply, ReplyAll, ShieldAlert, Trash2, X,
 } from "lucide-react";
 import { api, deleteDoc, patchDoc, type Timestamp } from "@/lib/api";
-import { SENDERS } from "@/lib/email-template";
+import { MAILBOXES } from "@/lib/email-template";
 import { cn } from "@/lib/utils";
 import { EmailComposer, EmailFrame, fileSize, type ComposeTarget, type Original } from "../EmailComposer";
 import { Btn, Chip, fmtTs, Loading, Search, useCollection, useDialog, useToast, type Row } from "../kit";
@@ -257,7 +257,7 @@ export function Inbox({ rows, role, receiving = true }: { rows: Row[] | null; ro
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex max-w-full overflow-x-auto rounded-full border border-line bg-white p-1" role="tablist" aria-label="Address">
-          {["all", ...SENDERS].map((m) => (
+          {["all", ...MAILBOXES].map((m) => (
             <button
               key={m}
               type="button"
@@ -418,7 +418,7 @@ function Reader({
   const from = row.fromName ? `${row.fromName} <${row.fromAddress}>` : String(row.fromAddress ?? row.email);
   const when = p?.date ?? (row.createdAt as Timestamp | undefined)?.toDate?.() ?? null;
   const whenText = when ? when.toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "";
-  const others = p ? [...p.to, ...p.cc].map((a) => (a.address ?? "").toLowerCase()).filter((a) => a && !SENDERS.some((s) => s === a)) : [];
+  const others = p ? [...p.to, ...p.cc].map((a) => (a.address ?? "").toLowerCase()).filter((a) => a && !MAILBOXES.some((s) => s === a)) : [];
 
   const original = (): Original => ({
     replyHeader: `On ${whenText}, ${from} wrote:`,

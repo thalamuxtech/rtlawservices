@@ -277,7 +277,7 @@ function SentEmails({ request, onCompose }: { request: Row; onCompose: () => voi
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="font-bold text-ink">Emails to {request.name || "the client"}</h3>
-          <p className="text-sm text-stone">{sent.length ? "Sent from clientservice@rtlawservices.com. Open one to see it as the client did." : "Nothing sent from the portal yet."}</p>
+          <p className="text-sm text-stone">{sent.length ? "Sent from info@rtlawservices.com. Open one to see it as the client did." : "Nothing sent from the portal yet."}</p>
         </div>
         <Btn variant="ghost" onClick={onCompose}>
           <PenLine aria-hidden className="size-4" /> Write an email
