@@ -13,8 +13,8 @@ export type { Row };
 const sortKey = (v: unknown) => (v instanceof Timestamp ? v.toMillis() : (v as string | number | undefined) ?? "");
 
 /** Rows of a collection, newest first, refreshed while the portal is open. */
-export function useCollection(name: string, order = "createdAt") {
-  const { rows, error } = useRows(name);
+export function useCollection(name: string, order = "createdAt", enabled = true) {
+  const { rows, error } = useRows(name, enabled);
   const sorted = useMemo(() => {
     if (!rows) return null;
     const asc = order === "order";

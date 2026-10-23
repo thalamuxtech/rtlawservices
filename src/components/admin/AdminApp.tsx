@@ -327,10 +327,16 @@ const SECTIONS = [
 
 type SectionId = (typeof SECTIONS)[number]["id"];
 
+// Mail to clientservice@ and info@ is received by Hostinger for now, so the
+// back office only sends. Set to true, and point Email Routing at the Worker
+// again (worker/inbox.ts), to bring the Inbox back.
+const RECEIVE_MAIL = false;
+const shown = (id: string) => RECEIVE_MAIL || id !== "inbox";
+
 const initialSection = (): SectionId => {
   if (typeof window === "undefined") return "overview";
   const h = window.location.hash.slice(1) as SectionId;
-  return SECTIONS.some((s) => s.id === h) ? h : "overview";
+  return SECTIONS.some((s) => s.id === h) && shown(h) ? h : "overview";
 };
 
 function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
@@ -356,7 +362,7 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
   const bookings = useCollection("bookings");
   const messages = useCollection("messages");
   const emails = useCollection("emails");
-  const inbox = useCollection("inbox");
+  const inbox = useCollection("inbox", "createdAt", RECEIVE_MAIL);
   const cases = useCollection("cases", "year");
   const reviews = useCollection("reviews", "date");
   const posts = useCollection("posts", "published");
@@ -387,7 +393,7 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
           <div key={g} className="mb-5">
             {compact ? <span aria-hidden className="mx-auto mb-2 block h-px w-8 bg-line-dark" /> : <p className="px-3 pb-2 text-xs font-bold text-stone-dark">{g}</p>}
             <ul className="grid gap-0.5">
-              {SECTIONS.filter((s) => s.group === g).map((s) => (
+              {SECTIONS.filter((s) => s.group === g && shown(s.id)).map((s) => (
                 <li key={s.id}>
                   <button
                     type="button"
@@ -505,7 +511,7 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
               {section === "bookings" && <Requests cfg={BOOKINGS} rows={bookings.rows} role={staff.role} />}
               {section === "messages" && <Requests cfg={MESSAGES} rows={messages.rows} role={staff.role} />}
               {section === "emails" && <Emails rows={emails.rows} />}
-              {section === "inbox" && <Inbox rows={inbox.rows} role={staff.role} />}
+              {section === "inbox" && RECEIVE_MAIL && <Inbox rows={inbox.rows} role={staff.role} />}
               {section === "cases" && <ContentManager kind="cases" rows={cases.rows} />}
               {section === "reviews" && <ContentManager kind="reviews" rows={reviews.rows} />}
               {section === "posts" && <ContentManager kind="posts" rows={posts.rows} />}

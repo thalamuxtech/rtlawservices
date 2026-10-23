@@ -90,8 +90,9 @@ export async function adminDelete(path: string) {
 }
 
 /** Re-runs `load` every 15 seconds, when the tab regains focus, and after every save. */
-function usePolling<T>(load: () => Promise<T>, onData: (v: T) => void, onError: (e: Error) => void) {
+function usePolling<T>(load: () => Promise<T>, onData: (v: T) => void, onError: (e: Error) => void, enabled = true) {
   useEffect(() => {
+    if (!enabled) return;
     let live = true;
     const run = () =>
       load()
@@ -107,7 +108,7 @@ function usePolling<T>(load: () => Promise<T>, onData: (v: T) => void, onError: 
       window.removeEventListener(CHANGED, run);
       window.removeEventListener("focus", run);
     };
-  }, [load, onData, onError]);
+  }, [load, onData, onError, enabled]);
 }
 
 /** One record, kept up to date. `undefined` while loading, `null` if it does not exist. */
@@ -119,7 +120,8 @@ export function useDoc(col: string, id: string) {
   return data;
 }
 
-export function useRows(col: string) {
+/** `enabled: false` skips loading, for a section that is switched off. */
+export function useRows(col: string, enabled = true) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState("");
   const load = useCallback(() => listDocs(col), [col]);
@@ -131,6 +133,6 @@ export function useRows(col: string) {
     setError(e.message);
     setRows((r) => r ?? []);
   }, []);
-  usePolling(load, onData, onError);
+  usePolling(load, onData, onError, enabled);
   return { rows, error };
 }
