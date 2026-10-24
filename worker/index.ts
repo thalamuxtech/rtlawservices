@@ -41,7 +41,11 @@ export default {
 
   // Every 15 minutes: lift delivery blocks Brevo has placed (see clearBlocks).
   async scheduled(_event, env) {
-    const lifted = await clearBlocks(env);
-    if (lifted.length) console.log("unblocked", lifted.join(", "));
+    try {
+      const lifted = await clearBlocks(env);
+      console.log(`delivery blocks: ${lifted.length ? `unblocked ${lifted.join(", ")}` : "none to lift"}`);
+    } catch (err) {
+      console.error(`delivery blocks: check failed, ${(err as Error).message}`);
+    }
   },
 } satisfies ExportedHandler<Env>;
