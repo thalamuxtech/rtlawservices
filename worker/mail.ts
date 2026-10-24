@@ -70,6 +70,19 @@ export async function blockedContacts(env: Env): Promise<Blocked[]> {
   }));
 }
 
+export type MailEvent = { email: string; event: string; date: string; reason?: string };
+
+/** What happened to one sent email, recipient by recipient: delivered, opened, bounced, blocked. */
+export async function mailEvents(env: Env, messageId: string): Promise<MailEvent[]> {
+  if (!env.BREVO_API_KEY || !messageId) return [];
+  const res = await fetch(`https://api.brevo.com/v3/smtp/statistics/events?limit=50&sort=desc&messageId=${encodeURIComponent(messageId)}`, {
+    headers: { "api-key": env.BREVO_API_KEY, Accept: "application/json" },
+  });
+  if (!res.ok) throw new Error(`Brevo answered ${res.status}`);
+  const data = (await res.json()) as { events?: MailEvent[] };
+  return (data.events ?? []).map(({ email, event, date, reason }) => ({ email, event, date, reason }));
+}
+
 /** Lets Brevo deliver to an address again. */
 export async function unblockContact(env: Env, email: string) {
   if (!env.BREVO_API_KEY) throw new Error("Email sending is not set up yet.");

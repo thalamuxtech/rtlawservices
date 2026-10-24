@@ -84,7 +84,10 @@ export function SentEmail({ row, onClose }: { row: Row | null; onClose: () => vo
             {row.cc?.length > 0 && <Line k="Cc" v={row.cc.join(", ")} />}
             {row.bcc?.length > 0 && <Line k="Bcc" v={row.bcc.join(", ")} />}
             <Line k="Sent" v={`${fmtTs(row.createdAt as Timestamp)} by ${row.sentByName}`} />
+            {row.from && <Line k="From" v={String(row.from)} />}
+            {row.attachments?.length > 0 && <Line k="Files" v={row.attachments.map((a: { name: string }) => a.name).join(", ")} />}
           </dl>
+          <DeliveryStatus id={row.id} />
           {html === null ? (
             <Loading />
           ) : html ? (
@@ -186,6 +189,84 @@ function DeliveryBlocks() {
           </ul>
         </div>
       </div>
+    </section>
+  );
+}
+
+type MailEvent = { email: string; event: string; date: string; reason?: string };
+
+// Brevo's event names, in plain words. Later events matter more, so each
+// recipient shows the most significant thing that happened to their copy.
+const EVENT_LABEL: Record<string, { label: string; tone: "ok" | "wait" | "bad"; rank: number }> = {
+  requests: { label: "Accepted for sending", tone: "wait", rank: 1 },
+  deferred: { label: "Delayed, retrying", tone: "wait", rank: 2 },
+  delivered: { label: "Delivered", tone: "ok", rank: 3 },
+  opened: { label: "Delivered and opened", tone: "ok", rank: 4 },
+  uniqueOpened: { label: "Delivered and opened", tone: "ok", rank: 4 },
+  loadedByProxy: { label: "Delivered and opened", tone: "ok", rank: 4 },
+  clicks: { label: "Delivered, link clicked", tone: "ok", rank: 5 },
+  softBounces: { label: "Not delivered (temporary bounce)", tone: "bad", rank: 6 },
+  hardBounces: { label: "Not delivered (address rejected it)", tone: "bad", rank: 7 },
+  invalid: { label: "Not delivered (invalid address)", tone: "bad", rank: 7 },
+  blocked: { label: "Not delivered (blocked by the email service)", tone: "bad", rank: 8 },
+  spam: { label: "Marked as spam", tone: "bad", rank: 8 },
+  unsubscribed: { label: "Unsubscribed", tone: "bad", rank: 8 },
+  error: { label: "Not delivered (error)", tone: "bad", rank: 8 },
+};
+
+/** Per recipient: what happened to this email after it left the portal, read live from Brevo. */
+function DeliveryStatus({ id }: { id: string }) {
+  const [events, setEvents] = useState<MailEvent[] | null>(null);
+  const [error, setError] = useState("");
+  const load = useCallback(() => {
+    api<{ events: MailEvent[] }>(`/api/admin/mail-status/${encodeURIComponent(id)}`)
+      .then((r) => {
+        setError("");
+        setEvents(r.events);
+      })
+      .catch((e: Error) => setError(e.message));
+  }, [id]);
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const byRecipient = new Map<string, MailEvent>();
+  for (const e of events ?? []) {
+    const cur = byRecipient.get(e.email);
+    if (!cur || (EVENT_LABEL[e.event]?.rank ?? 0) > (EVENT_LABEL[cur.event]?.rank ?? 0)) byRecipient.set(e.email, e);
+  }
+
+  return (
+    <section className="rounded-2xl border border-line bg-white p-4 text-sm">
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-bold text-ink">Delivery</p>
+        <button type="button" onClick={load} className="min-h-9 rounded-full px-3 text-sm font-bold text-brass-ink hover:bg-mist">
+          Check again
+        </button>
+      </div>
+      {error ? (
+        <p className="mt-2 text-stone">Delivery could not be checked: {error}</p>
+      ) : events === null ? (
+        <p className="mt-2 text-stone">Checking with the email service…</p>
+      ) : byRecipient.size === 0 ? (
+        <p className="mt-2 text-stone">No delivery report yet. Reports usually appear within a minute or two of sending.</p>
+      ) : (
+        <ul className="mt-2 grid gap-1.5">
+          {[...byRecipient.values()].map((e) => {
+            const info = EVENT_LABEL[e.event] ?? { label: e.event, tone: "wait" as const, rank: 0 };
+            return (
+              <li key={e.email} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className={info.tone === "ok" ? "size-2 rounded-full bg-success" : info.tone === "bad" ? "size-2 rounded-full bg-danger" : "size-2 rounded-full bg-brass"} />
+                <span className="font-bold text-ink">{e.email}</span>
+                <span className="text-stone">
+                  {info.label}
+                  {e.reason ? `: ${e.reason}` : ""}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
   );
 }

@@ -525,10 +525,8 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
             </Section>
 
             <Section title="Recipients">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Choice label="From" value={from} onChange={(f) => set({ from: f })} options={SENDERS.map((s) => ({ value: s, label: s }))} />
-                <Field label="Reply-to" hint="Where the client's reply goes. Type the address for this email." value={draft.replyTo ?? DEFAULT_REPLY_TO} onChange={(v) => set({ replyTo: v })} />
-              </div>
+              <Choice label="From" value={from} onChange={(f) => set({ from: f })} options={SENDERS.map((s) => ({ value: s, label: s }))} />
+              <Field label="Reply-to" hint="Where the client's reply goes. Type the address for this email." value={draft.replyTo ?? DEFAULT_REPLY_TO} onChange={(v) => set({ replyTo: v })} />
               <Recipients label="To" value={draft.to} onChange={(to) => set({ to })} />
               <div className="flex gap-2">
                 {!showCc && (

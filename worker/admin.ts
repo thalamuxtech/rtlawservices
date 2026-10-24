@@ -4,7 +4,7 @@
 import { createResetLink, emailResetLink, requireStaff, type Staff } from "./auth";
 import { BLANK_EMAIL, DEFAULT_BRAND, DEFAULT_REPLY_TO, renderEmail, SENDERS, type EmailBrand, type EmailContent } from "../src/lib/email-template";
 import { body, deleteDoc, EMAIL_RE, getDoc, HttpError, json, limited, listDocs, mergeDoc, newId, putDoc, sha256Hex, str, ts, type Doc } from "./lib";
-import { blockedContacts, clearBlocks, sendMail, unblockContact } from "./mail";
+import { blockedContacts, clearBlocks, mailEvents, sendMail, unblockContact } from "./mail";
 
 const REQUESTS = new Set(["evaluations", "bookings", "messages"]);
 const CONTENT = new Set(["attorneys", "cases", "reviews", "posts"]);
@@ -374,6 +374,17 @@ export async function adminRoutes(env: Env, req: Request, path: string, ctx: Exe
   }
 
   if (path === "/api/admin/email" && method === "POST") return emailClient(env, staff, await body(req));
+
+  // GET /api/admin/mail-status/{emailId}: delivery events for a sent email.
+  if (parts[0] === "mail-status" && parts.length === 2 && method === "GET") {
+    const sent = await getDoc(env.DB, "emails", parts[1]);
+    if (!sent) throw new HttpError(404, "That email could not be found.");
+    try {
+      return json({ events: await mailEvents(env, String(sent.messageId ?? "")) });
+    } catch (err) {
+      throw new HttpError(502, `Brevo could not be reached: ${(err as Error).message}`);
+    }
+  }
 
   // Addresses Brevo will not deliver to, and lifting a block.
   if (parts[0] === "mail-blocks") {
