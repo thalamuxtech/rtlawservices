@@ -4,7 +4,7 @@
 import { adminRoutes } from "./admin";
 import { authRoutes } from "./auth";
 import { receiveEmail } from "./inbox";
-import { clearBlocks, mailEvents } from "./mail";
+import { clearBlocks, mailEvents, type MailEvent } from "./mail";
 import { deleteDoc, getDoc, HttpError, json } from "./lib";
 import { publicRoutes } from "./public";
 
@@ -44,7 +44,7 @@ export default {
     // One-time delivery check for the email recorded in meta/deliveryWatch.
     const watch = await getDoc(env.DB, "meta", "deliveryWatch");
     if (watch) {
-      const events = await mailEvents(env, String(watch.messageId)).catch((err) => [{ email: "", event: `check failed: ${(err as Error).message}`, date: "" }]);
+      const events: MailEvent[] = await mailEvents(env, String(watch.messageId)).catch((err) => [{ email: "", event: `check failed: ${(err as Error).message}`, date: "" }]);
       console.log(`delivery report: ${events.map((e) => `${e.email} ${e.event}${e.reason ? ` (${e.reason})` : ""} ${e.date}`).join("; ") || "none yet"}`);
       if (events.some((e) => e.event !== "requests")) await deleteDoc(env.DB, "meta", "deliveryWatch");
     }
