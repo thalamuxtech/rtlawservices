@@ -10,7 +10,7 @@ import { Logo } from "@/components/brand/Logo";
 import { LoginArt } from "./LoginArt";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { ToastProvider, useCollection } from "./kit";
+import { ToastProvider, useCollection, useDialog, useToast } from "./kit";
 import { Overview } from "./sections/Overview";
 import { BOOKINGS, EVALUATIONS, MESSAGES, Requests } from "./sections/Requests";
 import { ContentManager } from "./sections/Content";
@@ -72,7 +72,7 @@ export function AdminApp() {
   if (!session.user) return session.email ? <NotStaff email={session.email} /> : <Login onSignedIn={refresh} />;
   return (
     <ToastProvider>
-      <Shell user={session.user} staff={session.staff} />
+      <Shell user={session.user} staff={session.staff} onProfileChange={refresh} />
     </ToastProvider>
   );
 }
@@ -339,7 +339,26 @@ const initialSection = (): SectionId => {
   return SECTIONS.some((s) => s.id === h) ? h : "overview";
 };
 
-function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
+function Shell({ user, staff, onProfileChange }: { user: User; staff: StaffDoc; onProfileChange: () => void }) {
+  const dialog = useDialog();
+  const toast = useToast();
+  // Staff choose the name shown here, as "sent by" on emails and as the default email sign-off.
+  const rename = async () => {
+    const name = await dialog.prompt({
+      title: "Your name",
+      message: "Shown in the portal, as the sender on emails you send, and as the default sign-off in the email composer.",
+      confirmLabel: "Save name",
+      input: { label: "Name", value: staff.name ?? "", required: "Enter a name." },
+    });
+    if (!name || name === staff.name) return;
+    try {
+      await api("/api/auth/profile", { method: "POST", json: { name } });
+      toast("ok", "Name saved");
+      onProfileChange();
+    } catch (e) {
+      toast("error", (e as Error).message);
+    }
+  };
   const [section, setSection] = useState<SectionId>(initialSection);
   const [nav, setNav] = useState(false);
   // The desktop sidebar can shrink to an icon rail. The choice is remembered per browser.
@@ -425,15 +444,23 @@ function Shell({ user, staff }: { user: User; staff: StaffDoc }) {
       </div>
       <div className={cn("border-t border-line-dark", compact ? "grid justify-items-center gap-1 px-2 py-4" : "p-4")}>
         <div className={cn("flex items-center rounded-xl", compact ? "flex-col gap-1" : "gap-3 px-2 py-2")}>
-          <span title={compact ? `${staff.name || "Staff"}, ${staff.role}` : undefined} className="grid size-9 place-items-center rounded-full bg-brass text-sm font-bold text-ink">
-            {(staff.name || user.email || "?").slice(0, 1).toUpperCase()}
-          </span>
-          {!compact && (
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-bold text-paper">{staff.name || "Staff"}</span>
-              <span className="block truncate text-xs capitalize text-stone-dark">{staff.role}</span>
+          <button
+            type="button"
+            onClick={rename}
+            title={compact ? `${staff.name || "Staff"}, ${staff.role}. Change your name` : "Change your name"}
+            aria-label={`${staff.name || "Staff"}, ${staff.role}. Change your name`}
+            className={cn("flex min-w-0 items-center gap-3 rounded-xl text-left transition-colors hover:bg-paper/10", compact ? "" : "flex-1 py-1 pr-2")}
+          >
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brass text-sm font-bold text-ink">
+              {(staff.name || user.email || "?").slice(0, 1).toUpperCase()}
             </span>
-          )}
+            {!compact && (
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-bold text-paper">{staff.name || "Staff"}</span>
+                <span className="block truncate text-xs capitalize text-stone-dark">{staff.role}</span>
+              </span>
+            )}
+          </button>
           <button type="button" onClick={signOut} aria-label="Sign out" title="Sign out" className="grid size-11 place-items-center rounded-full text-stone-dark transition-colors hover:bg-paper hover:text-ink">
             <LogOut aria-hidden className="size-4" />
           </button>

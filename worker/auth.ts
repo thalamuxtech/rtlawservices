@@ -1,6 +1,6 @@
 // Staff sign-in: passwords hashed with PBKDF2, sessions in an HttpOnly cookie.
 
-import { body, clientIp, EMAIL_RE, getDoc, HttpError, json, limited, sha256Hex, str } from "./lib";
+import { body, clientIp, EMAIL_RE, getDoc, HttpError, json, limited, mergeDoc, sha256Hex, str } from "./lib";
 import { BLANK_EMAIL, renderEmail } from "../src/lib/email-template";
 import { sendMail } from "./mail";
 
@@ -201,6 +201,16 @@ export async function authRoutes(env: Env, req: Request, path: string): Promise<
       env.DB.prepare("DELETE FROM sessions WHERE uid = ?").bind(row.uid),
     ]);
     return json({ ok: true }, 200, { "Set-Cookie": await startSession(env, row.uid) });
+  }
+
+  // The signed-in staff member's own display name: the portal, "sent by" and the default email sign-off.
+  if (path === "/api/auth/profile" && req.method === "POST") {
+    const staff = await requireStaff(env, req);
+    const { name } = await body<{ name?: string }>(req);
+    const clean = typeof name === "string" ? name.replace(/\s+/g, " ").trim() : "";
+    if (!str(clean, 1, 80)) throw new HttpError(400, "Enter a name of 80 characters or fewer.");
+    await mergeDoc(env.DB, "staff", staff.uid, { name: clean });
+    return json({ ok: true, name: clean });
   }
 
   if (path === "/api/auth/password" && req.method === "POST") {
