@@ -31,7 +31,24 @@ const toHtml = (text: string) =>
 
 const list = (v?: string | string[]) => (Array.isArray(v) ? v : v ? [v] : []);
 
-export type Blocked = { email: string; reason: string; blockedAt: string; senderEmail?: string };
+export type Blocked = { email: string; reason: string; code: string; blockedAt: string; senderEmail?: string };
+
+// Blocks that must stay: the person reported spam or asked to stop receiving
+// email. Sending again would break anti-spam law and risk the Brevo account.
+const KEEP = /spam|unsubscribed/i;
+
+/**
+ * Lifts every block that is safe to lift, or only those for `only` addresses.
+ * Brevo blocks an address after one hard bounce, which also catches mailboxes
+ * that were briefly unavailable. Returns the addresses unblocked.
+ */
+export async function clearBlocks(env: Env, only?: string[]) {
+  const wanted = only?.map((e) => e.toLowerCase());
+  const blocked = await blockedContacts(env);
+  const lift = blocked.filter((b) => !KEEP.test(b.code) && (!wanted || wanted.includes(b.email.toLowerCase())));
+  for (const b of lift) await unblockContact(env, b.email);
+  return lift.map((b) => b.email);
+}
 
 /**
  * Addresses Brevo has stopped delivering to, usually after a hard bounce.
@@ -48,6 +65,7 @@ export async function blockedContacts(env: Env): Promise<Blocked[]> {
     email: c.email,
     senderEmail: c.senderEmail,
     reason: c.reason?.message || c.reason?.code || "Blocked",
+    code: c.reason?.code ?? "",
     blockedAt: c.blockedAt ?? "",
   }));
 }

@@ -4,6 +4,7 @@
 import { adminRoutes } from "./admin";
 import { authRoutes } from "./auth";
 import { receiveEmail } from "./inbox";
+import { clearBlocks } from "./mail";
 import { HttpError, json } from "./lib";
 import { publicRoutes } from "./public";
 
@@ -36,5 +37,11 @@ export default {
   // Mail for clientservice@ and info@, delivered by Email Routing.
   async email(message, env) {
     await receiveEmail(message, env);
+  },
+
+  // Every 15 minutes: lift delivery blocks Brevo has placed (see clearBlocks).
+  async scheduled(_event, env) {
+    const lifted = await clearBlocks(env);
+    if (lifted.length) console.log("unblocked", lifted.join(", "));
   },
 } satisfies ExportedHandler<Env>;

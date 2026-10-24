@@ -4,7 +4,7 @@
 import { createResetLink, emailResetLink, requireStaff, type Staff } from "./auth";
 import { BLANK_EMAIL, DEFAULT_BRAND, DEFAULT_REPLY_TO, renderEmail, SENDERS, type EmailBrand, type EmailContent } from "../src/lib/email-template";
 import { body, deleteDoc, EMAIL_RE, getDoc, HttpError, json, limited, listDocs, mergeDoc, newId, putDoc, sha256Hex, str, ts, type Doc } from "./lib";
-import { blockedContacts, sendMail, unblockContact } from "./mail";
+import { blockedContacts, clearBlocks, sendMail, unblockContact } from "./mail";
 
 const REQUESTS = new Set(["evaluations", "bookings", "messages"]);
 const CONTENT = new Set(["attorneys", "cases", "reviews", "posts"]);
@@ -189,6 +189,7 @@ async function emailClient(env: Env, staff: Staff, b: Doc) {
     const to = addresses(b.testTo, "Test address");
     if (!to.length) throw new HttpError(400, "Enter an email address for the test.");
     if (to.length > 3) throw new HttpError(400, "Send a test to three addresses at most.");
+    await clearBlocks(env, to).catch(() => {});
     const result = await sendMail(env, { from, replyTo, to, subject: `[Test] ${subject}`, html, text, attachments });
     if (!result.ok) throw new HttpError(502, result.error);
     return json({ ok: true, test: true });
@@ -200,6 +201,8 @@ async function emailClient(env: Env, staff: Staff, b: Doc) {
   if (!to.length) throw new HttpError(400, "Add at least one recipient.");
   if (to.length + cc.length + bcc.length > MAX_RECIPIENTS) throw new HttpError(400, `Send to ${MAX_RECIPIENTS} addresses at most.`);
 
+  // A recipient Brevo blocked after an earlier bounce would silently get nothing, so lift that first.
+  await clearBlocks(env, [...to, ...cc, ...bcc]).catch(() => {});
   const result = await sendMail(env, { from, replyTo, to, toName, cc, bcc, subject, html, text, attachments });
   if (!result.ok) throw new HttpError(502, result.error);
   const emailId = newId();

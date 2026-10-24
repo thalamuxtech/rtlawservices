@@ -38,6 +38,8 @@
     // every staff member has signed in once.
     "FIREBASE_API_KEY": "AIzaSyDUwp_5XYzduoAyY9HEbiXT8ktKPPsSS4c"
   },
+  // Lifts email delivery blocks (worker/index.ts, scheduled).
+  "triggers": { "crons": ["*/15 * * * *"] },
   // Secrets, set with `wrangler secret put`: BREVO_API_KEY, GITHUB_TOKEN.
   "observability": { "enabled": true }
 }
