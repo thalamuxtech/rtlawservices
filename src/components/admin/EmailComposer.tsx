@@ -116,9 +116,6 @@ function startDraft(target: ComposeTarget, signName: string, templates: Template
   return { presetId: preset.id, from, replyTo: DEFAULT_REPLY_TO, subject, to, cc, bcc: [], content, quoted: !!content.quote, attachments: [] };
 }
 
-// Drafts saved on 23 October 2026 carry the reply-to address that was the default then; it is cleared.
-const OLD_DEFAULT_REPLY_TO = "clientservice@rtlawservices.com";
-
 const draftKey = (target: ComposeTarget) => `rt-email-draft-${target?.row?.id ?? "new"}${target?.mode && target.mode !== "reply" ? `-${target.mode}` : ""}`;
 
 export function EmailComposer({ target, onClose }: { target: ComposeTarget; onClose: () => void }) {
@@ -160,7 +157,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
       } catch {}
       // A draft saved by an earlier version may lack newer fields, so fill them in.
       const d: Draft = kept?.content
-        ? { ...kept, replyTo: kept.replyTo && kept.replyTo !== OLD_DEFAULT_REPLY_TO ? kept.replyTo : DEFAULT_REPLY_TO, cc: kept.cc ?? [], bcc: kept.bcc ?? [], to: kept.to ?? [], attachments: [], content: { ...BLANK_EMAIL, ...kept.content } }
+        ? { ...kept, replyTo: kept.replyTo || DEFAULT_REPLY_TO, cc: kept.cc ?? [], bcc: kept.bcc ?? [], to: kept.to ?? [], attachments: [], content: { ...BLANK_EMAIL, ...kept.content } }
         : startDraft(target, s?.name ?? "", mergeTemplates(rows));
       setDraft(d);
       setShowCc(d.cc.length > 0);
@@ -525,8 +522,15 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
             </Section>
 
             <Section title="Recipients">
-              <Choice label="From" value={from} onChange={(f) => set({ from: f })} options={SENDERS.map((s) => ({ value: s, label: s }))} />
-              <Field label="Reply-to" hint="Where the client's reply goes. Type the address for this email." value={draft.replyTo ?? DEFAULT_REPLY_TO} onChange={(v) => set({ replyTo: v })} />
+              {SENDERS.length > 1 ? (
+                <Choice label="From" value={from} onChange={(f) => set({ from: f })} options={SENDERS.map((s) => ({ value: s, label: s }))} />
+              ) : (
+                <div>
+                  <p className="text-sm font-bold text-ink">From</p>
+                  <p className="mt-1.5 flex min-h-11 items-center rounded-xl border border-line bg-mist/50 px-3.5 text-[0.95rem] text-ink">{from}</p>
+                </div>
+              )}
+              <Field label="Reply-to" hint="Where the client's reply goes. clientservice@ unless you change it." value={draft.replyTo ?? DEFAULT_REPLY_TO} onChange={(v) => set({ replyTo: v })} />
               <Recipients label="To" value={draft.to} onChange={(to) => set({ to })} />
               <div className="flex gap-2">
                 {!showCc && (

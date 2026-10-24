@@ -4,8 +4,8 @@
 import { adminRoutes } from "./admin";
 import { authRoutes } from "./auth";
 import { receiveEmail } from "./inbox";
-import { clearBlocks, mailEvents, type MailEvent } from "./mail";
-import { deleteDoc, getDoc, HttpError, json } from "./lib";
+import { clearBlocks } from "./mail";
+import { HttpError, json } from "./lib";
 import { publicRoutes } from "./public";
 
 /** Requests that change data must come from a page on the same site. */
@@ -41,13 +41,6 @@ export default {
 
   // Every 15 minutes: lift delivery blocks Brevo has placed (see clearBlocks).
   async scheduled(_event, env) {
-    // One-time delivery check for the email recorded in meta/deliveryWatch.
-    const watch = await getDoc(env.DB, "meta", "deliveryWatch");
-    if (watch) {
-      const events: MailEvent[] = await mailEvents(env, String(watch.messageId)).catch((err) => [{ email: "", event: `check failed: ${(err as Error).message}`, date: "" }]);
-      console.log(`delivery report: ${events.map((e) => `${e.email} ${e.event}${e.reason ? ` (${e.reason})` : ""} ${e.date}`).join("; ") || "none yet"}`);
-      if (events.some((e) => e.event !== "requests")) await deleteDoc(env.DB, "meta", "deliveryWatch");
-    }
     try {
       const lifted = await clearBlocks(env);
       console.log(`delivery blocks: ${lifted.length ? `unblocked ${lifted.join(", ")}` : "none to lift"}`);
