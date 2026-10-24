@@ -1,11 +1,11 @@
 // Entry point. Static pages come from the assets in out/; this code answers
 // only requests under /api/ (see run_worker_first in wrangler.jsonc).
 
-import { adminRoutes } from "./admin";
+import { adminRoutes, emailClient } from "./admin";
 import { authRoutes } from "./auth";
 import { receiveEmail } from "./inbox";
 import { clearBlocks } from "./mail";
-import { HttpError, json } from "./lib";
+import { deleteDoc, getDoc, HttpError, json } from "./lib";
 import { publicRoutes } from "./public";
 
 /** Requests that change data must come from a page on the same site. */
@@ -41,6 +41,15 @@ export default {
 
   // Every 15 minutes: lift delivery blocks Brevo has placed (see clearBlocks).
   async scheduled(_event, env) {
+    // One-time outbox: an email queued in meta/outbox by the developer, on the
+    // firm's request, sent through the normal send path. Removed before sending,
+    // so it can never go twice.
+    const job = await getDoc(env.DB, "meta", "outbox");
+    if (job) {
+      await deleteDoc(env.DB, "meta", "outbox");
+      const res = await emailClient(env, { uid: "outbox", email: "outbox", role: "system", name: "RT Law Services (queued on request)" }, job).catch((err) => json({ error: (err as Error).message }, 500));
+      console.log(`outbox: ${res.status} ${await res.text()}`);
+    }
     try {
       const lifted = await clearBlocks(env);
       console.log(`delivery blocks: ${lifted.length ? `unblocked ${lifted.join(", ")}` : "none to lift"}`);

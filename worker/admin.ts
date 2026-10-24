@@ -164,7 +164,7 @@ function cleanContent(v: unknown): EmailContent {
  * Sends a branded email composed in the back office. A test goes only to the
  * given test addresses, is marked [Test], and is not recorded.
  */
-async function emailClient(env: Env, staff: Staff, b: Doc) {
+export async function emailClient(env: Env, staff: Staff, b: Doc) {
   if (await limited(env.DB, `email:${staff.uid}`, 60, 3600)) throw new HttpError(429, "That is a lot of email in one hour. Wait a little and try again.");
   const subject = typeof b.subject === "string" ? b.subject.trim() : "";
   if (!str(subject, 1, 200)) throw new HttpError(400, "Write a subject.");
