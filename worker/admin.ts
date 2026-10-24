@@ -4,7 +4,7 @@
 import { createResetLink, emailResetLink, requireStaff, type Staff } from "./auth";
 import { BLANK_EMAIL, DEFAULT_BRAND, DEFAULT_REPLY_TO, renderEmail, SENDERS, type EmailBrand, type EmailContent } from "../src/lib/email-template";
 import { body, deleteDoc, EMAIL_RE, getDoc, HttpError, json, limited, listDocs, mergeDoc, newId, putDoc, sha256Hex, str, ts, type Doc } from "./lib";
-import { sendMail } from "./mail";
+import { blockedContacts, sendMail, unblockContact } from "./mail";
 
 const REQUESTS = new Set(["evaluations", "bookings", "messages"]);
 const CONTENT = new Set(["attorneys", "cases", "reviews", "posts"]);
@@ -371,6 +371,21 @@ export async function adminRoutes(env: Env, req: Request, path: string, ctx: Exe
   }
 
   if (path === "/api/admin/email" && method === "POST") return emailClient(env, staff, await body(req));
+
+  // Addresses Brevo will not deliver to, and lifting a block.
+  if (parts[0] === "mail-blocks") {
+    try {
+      if (parts.length === 1 && method === "GET") return json({ blocked: await blockedContacts(env) });
+      if (parts.length === 2 && method === "DELETE") {
+        if (!EMAIL_RE.test(parts[1])) throw new HttpError(400, "That is not an email address.");
+        await unblockContact(env, parts[1].toLowerCase());
+        return json({ ok: true });
+      }
+    } catch (err) {
+      if (err instanceof HttpError) throw err;
+      throw new HttpError(502, `Brevo could not be reached: ${(err as Error).message}`);
+    }
+  }
 
   if (path === "/api/admin/publish") {
     if (method === "GET") return json({ tokenSaved: !!env.GITHUB_TOKEN, mailReady: !!env.BREVO_API_KEY, run: await latestBuild(env) });

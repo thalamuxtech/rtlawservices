@@ -31,6 +31,40 @@ const toHtml = (text: string) =>
 
 const list = (v?: string | string[]) => (Array.isArray(v) ? v : v ? [v] : []);
 
+export type Blocked = { email: string; reason: string; blockedAt: string; senderEmail?: string };
+
+/**
+ * Addresses Brevo has stopped delivering to, usually after a hard bounce.
+ * Brevo still accepts emails to them, then drops them, so they need listing.
+ */
+export async function blockedContacts(env: Env): Promise<Blocked[]> {
+  if (!env.BREVO_API_KEY) return [];
+  const res = await fetch("https://api.brevo.com/v3/smtp/blockedContacts?limit=100&sort=desc", {
+    headers: { "api-key": env.BREVO_API_KEY, Accept: "application/json" },
+  });
+  if (!res.ok) throw new Error(`Brevo answered ${res.status}`);
+  const data = (await res.json()) as { contacts?: { email: string; senderEmail?: string; reason?: { code?: string; message?: string }; blockedAt?: string }[] };
+  return (data.contacts ?? []).map((c) => ({
+    email: c.email,
+    senderEmail: c.senderEmail,
+    reason: c.reason?.message || c.reason?.code || "Blocked",
+    blockedAt: c.blockedAt ?? "",
+  }));
+}
+
+/** Lets Brevo deliver to an address again. */
+export async function unblockContact(env: Env, email: string) {
+  if (!env.BREVO_API_KEY) throw new Error("Email sending is not set up yet.");
+  const res = await fetch(`https://api.brevo.com/v3/smtp/blockedContacts/${encodeURIComponent(email)}`, {
+    method: "DELETE",
+    headers: { "api-key": env.BREVO_API_KEY, Accept: "application/json" },
+  });
+  if (!res.ok && res.status !== 404) {
+    const data = (await res.json().catch(() => ({}))) as { message?: string };
+    throw new Error(data.message || `Brevo answered ${res.status}`);
+  }
+}
+
 export async function sendMail(env: Env, mail: Mail): Promise<MailResult> {
   if (!env.BREVO_API_KEY) return { ok: false, error: "Email sending is not set up yet." };
   const to = list(mail.to);
