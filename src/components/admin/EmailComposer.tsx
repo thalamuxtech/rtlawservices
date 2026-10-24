@@ -204,7 +204,8 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
 
   const name = String(target?.row?.name ?? "");
   // The contact line at the foot of the email shows the sending address, as the server does.
-  const brand = useMemo(() => ({ ...DEFAULT_BRAND, phone: SITE.phone, email: SENDERS[0], website: SITE.url }), [SITE]);
+  const sender = SENDERS.find((s) => s === draft?.from) ?? SENDERS[0];
+  const brand = useMemo(() => ({ ...DEFAULT_BRAND, phone: SITE.phone, email: sender, website: SITE.url }), [SITE, sender]);
   // The quoted original goes out only while it is switched on.
   const effective = useMemo(() => (draft ? (draft.quoted === false ? { ...draft.content, quote: "", quoteHeader: "" } : draft.content) : null), [draft]);
   const rendered = useMemo(() => (draft && effective ? renderEmail(effective, { name, email: draft.to[0] }, brand) : null), [draft, effective, name, brand]);
@@ -525,10 +526,7 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
 
             <Section title="Recipients">
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-sm font-bold text-ink">From</p>
-                  <p className="mt-1.5 flex min-h-11 items-center rounded-xl border border-line bg-mist/50 px-3.5 text-[0.95rem] text-ink">{from}</p>
-                </div>
+                <Choice label="From" value={from} onChange={(f) => set({ from: f })} options={SENDERS.map((s) => ({ value: s, label: s }))} />
                 <Field label="Reply-to" hint="Where the client's reply goes. Type the address for this email." value={draft.replyTo ?? DEFAULT_REPLY_TO} onChange={(v) => set({ replyTo: v })} />
               </div>
               <Recipients label="To" value={draft.to} onChange={(to) => set({ to })} />

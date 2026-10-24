@@ -41,7 +41,8 @@ export type EmailVars = { name?: string; email?: string };
 export const MAILBOXES = ["clientservice@rtlawservices.com", "info@rtlawservices.com"] as const;
 
 /** Addresses staff can send from in the back office. Each must be a sender in Brevo. */
-export const SENDERS = ["info@rtlawservices.com"] as const;
+// The first is the default.
+export const SENDERS = ["info@rtlawservices.com", "clientservice@rtlawservices.com"] as const;
 
 /** Staff type the reply-to address for each email; there is no default. */
 export const DEFAULT_REPLY_TO = "";
