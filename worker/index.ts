@@ -1,10 +1,10 @@
 // Entry point. Static pages come from the assets in out/; this code answers
 // only requests under /api/ (see run_worker_first in wrangler.jsonc).
 
-import { adminRoutes, emailClient } from "./admin";
+import { adminRoutes } from "./admin";
 import { authRoutes } from "./auth";
 import { receiveEmail } from "./inbox";
-import { clearBlocks } from "./mail";
+import { clearBlocks, mailEvents } from "./mail";
 import { deleteDoc, getDoc, HttpError, json } from "./lib";
 import { publicRoutes } from "./public";
 
@@ -41,14 +41,12 @@ export default {
 
   // Every 15 minutes: lift delivery blocks Brevo has placed (see clearBlocks).
   async scheduled(_event, env) {
-    // One-time outbox: an email queued in meta/outbox by the developer, on the
-    // firm's request, sent through the normal send path. Removed before sending,
-    // so it can never go twice.
-    const job = await getDoc(env.DB, "meta", "outbox");
-    if (job) {
-      await deleteDoc(env.DB, "meta", "outbox");
-      const res = await emailClient(env, { uid: "outbox", email: "outbox", role: "system", name: "RT Law Services (queued on request)" }, job).catch((err) => json({ error: (err as Error).message }, 500));
-      console.log(`outbox: ${res.status} ${await res.text()}`);
+    // One-time delivery check for the email recorded in meta/deliveryWatch.
+    const watch = await getDoc(env.DB, "meta", "deliveryWatch");
+    if (watch) {
+      const events = await mailEvents(env, String(watch.messageId)).catch((err) => [{ email: "", event: `check failed: ${(err as Error).message}`, date: "" }]);
+      console.log(`delivery report: ${events.map((e) => `${e.email} ${e.event}${e.reason ? ` (${e.reason})` : ""} ${e.date}`).join("; ") || "none yet"}`);
+      if (events.some((e) => e.event !== "requests")) await deleteDoc(env.DB, "meta", "deliveryWatch");
     }
     try {
       const lifted = await clearBlocks(env);
