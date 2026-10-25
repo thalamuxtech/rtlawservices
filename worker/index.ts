@@ -23,7 +23,7 @@ export default {
       if (!sameOrigin(req)) throw new HttpError(403, "This request must come from the website.");
       return (
         (await authRoutes(env, req, path)) ??
-        (await publicRoutes(env, req, path)) ??
+        (await publicRoutes(env, req, path, ctx)) ??
         (await adminRoutes(env, req, path, ctx)) ??
         json({ error: "Not found." }, 404)
       );

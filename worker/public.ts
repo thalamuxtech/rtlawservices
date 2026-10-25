@@ -3,6 +3,7 @@
 // Visitors can create requests but never read them back.
 
 import { body, clientIp, EMAIL_RE, getDoc, HttpError, json, limited, newId, plain, publishedDocs, putDocStmt, str, ts, type Doc } from "./lib";
+import { notifyBooking, notifyEvaluation } from "./notify";
 
 const INTERNAL = new Set(["status", "updatedAt", "updatedBy", "documentImage", "photo"]);
 const strip = (row: Doc) => plain(Object.fromEntries(Object.entries(row).filter(([k]) => !INTERNAL.has(k) && k !== "id"))) as Doc;
@@ -45,7 +46,7 @@ async function tooMany(env: Env, req: Request, form: string) {
   if (await limited(env.DB, `form:${form}:${clientIp(req)}`, 10, 3600)) throw new HttpError(429, "Too many submissions from this connection. Please call us instead.");
 }
 
-async function createBooking(env: Env, req: Request) {
+async function createBooking(env: Env, req: Request, ctx: ExecutionContext) {
   await tooMany(env, req, "booking");
   const b = await body(req);
   const start = inBookingWindow(b.start);
@@ -108,6 +109,8 @@ async function createBooking(env: Env, req: Request) {
     if (String(err).includes("UNIQUE")) throw new HttpError(409, "That time was just taken. Please choose another time.");
     throw err;
   }
+  // Runs after the reply, so the visitor never waits for it or sees it fail.
+  ctx.waitUntil(notifyBooking(env, booking, start).catch((e) => console.error("notify booking", e)));
   return json({ ok: true, id });
 }
 
@@ -132,7 +135,7 @@ async function createMessage(env: Env, req: Request) {
 
 const MAX_CV = 3 * 1024 * 1024;
 
-async function createEvaluation(env: Env, req: Request) {
+async function createEvaluation(env: Env, req: Request, ctx: ExecutionContext) {
   await tooMany(env, req, "evaluation");
   let form: FormData;
   try {
@@ -170,7 +173,7 @@ async function createEvaluation(env: Env, req: Request) {
     await env.FILES.put(`cv/${id}`, upload.stream(), { httpMetadata: { contentType: type } });
     file = { name: upload.name.slice(0, 160), type, size: upload.size };
   }
-  await putDocStmt(env.DB, "evaluations", id, {
+  const evaluation: Doc = {
     name: b.name,
     email: (b.email as string).toLowerCase(),
     phone: b.phone,
@@ -181,11 +184,13 @@ async function createEvaluation(env: Env, req: Request) {
     consents: { noRelationship: true, accurate: true },
     status: "new",
     createdAt: ts(),
-  }).run();
+  };
+  await putDocStmt(env.DB, "evaluations", id, evaluation).run();
+  ctx.waitUntil(notifyEvaluation(env, evaluation).catch((e) => console.error("notify evaluation", e)));
   return json({ ok: true, id });
 }
 
-export async function publicRoutes(env: Env, req: Request, path: string): Promise<Response | null> {
+export async function publicRoutes(env: Env, req: Request, path: string, ctx: ExecutionContext): Promise<Response | null> {
   if (path === "/api/content" && req.method === "GET") return json(await liveContent(env));
 
   if (path.startsWith("/api/media/") && req.method === "GET") {
@@ -229,9 +234,9 @@ export async function publicRoutes(env: Env, req: Request, path: string): Promis
     return out;
   }
 
-  if (path === "/api/bookings" && req.method === "POST") return createBooking(env, req);
+  if (path === "/api/bookings" && req.method === "POST") return createBooking(env, req, ctx);
   if (path === "/api/messages" && req.method === "POST") return createMessage(env, req);
-  if (path === "/api/evaluations" && req.method === "POST") return createEvaluation(env, req);
+  if (path === "/api/evaluations" && req.method === "POST") return createEvaluation(env, req, ctx);
 
   return null;
 }
