@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  BookOpen, CalendarClock, ClipboardCheck, ExternalLink, Eye, EyeOff, FileBadge, FileText, Gauge, Globe2, Inbox as InboxIcon, KeyRound, LayoutDashboard, Loader2, Lock, LogOut, Mail, Menu, MessagesSquare, PanelLeftClose, PanelLeftOpen, Rocket, Send, Settings, ShieldAlert, Star, Users, UserSquare2, X,
+  BookOpen, CalendarClock, ClipboardCheck, ExternalLink, Eye, EyeOff, FileBadge, FileText, FolderOpen, Gauge, Globe2, Inbox as InboxIcon, KeyRound, LayoutDashboard, Loader2, Lock, LogOut, Mail, Menu, MessagesSquare, PanelLeftClose, PanelLeftOpen, Rocket, Send, Settings, ShieldAlert, Star, Users, UserSquare2, X,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { LoginArt } from "./LoginArt";
@@ -18,6 +18,8 @@ import { Emails } from "./sections/Emails";
 import { Inbox } from "./sections/Inbox";
 import { Publishing, SiteSettings, Staff } from "./sections/Settings";
 import { PagesEditor } from "./sections/Pages";
+import { Documents } from "./sections/Documents";
+import { INBOX_MAILBOX } from "@/lib/email-template";
 
 type StaffDoc = { role: string; name?: string; email?: string };
 type User = { uid: string; email: string };
@@ -315,6 +317,7 @@ const SECTIONS = [
   { id: "bookings", label: "Consultations", icon: CalendarClock, group: "Requests" },
   { id: "messages", label: "Messages", icon: Mail, group: "Requests" },
   { id: "emails", label: "Emails", icon: Send, group: "Requests" },
+  { id: "documents", label: "Documents", icon: FolderOpen, group: "Requests" },
   { id: "cases", label: "Success stories", icon: FileBadge, group: "Website" },
   { id: "reviews", label: "Reviews", icon: Star, group: "Website" },
   { id: "posts", label: "Blog", icon: BookOpen, group: "Website" },
@@ -382,6 +385,7 @@ function Shell({ user, staff, onProfileChange }: { user: User; staff: StaffDoc; 
   const messages = useCollection("messages");
   const emails = useCollection("emails");
   const inbox = useCollection("inbox");
+  const infoInbox = inbox.rows ? inbox.rows.filter((r) => r.mailbox === INBOX_MAILBOX) : null;
   const cases = useCollection("cases", "year");
   const reviews = useCollection("reviews", "date");
   const posts = useCollection("posts", "published");
@@ -399,7 +403,7 @@ function Shell({ user, staff, onProfileChange }: { user: User; staff: StaffDoc; 
     evaluations: evaluations.rows?.filter((r) => r.status === "new").length,
     bookings: bookings.rows?.filter((r) => r.status === "new").length,
     messages: messages.rows?.filter((r) => r.status === "new").length,
-    inbox: inbox.rows?.filter((r) => r.status === "new").length,
+    inbox: infoInbox?.filter((r) => r.status === "new").length,
   };
 
   const sidebar = (compact: boolean) => (
@@ -538,7 +542,8 @@ function Shell({ user, staff, onProfileChange }: { user: User; staff: StaffDoc; 
               {section === "bookings" && <Requests cfg={BOOKINGS} rows={bookings.rows} role={staff.role} />}
               {section === "messages" && <Requests cfg={MESSAGES} rows={messages.rows} role={staff.role} />}
               {section === "emails" && <Emails rows={emails.rows} />}
-              {section === "inbox" && <Inbox rows={inbox.rows} role={staff.role} receiving={RECEIVE_MAIL} />}
+              {section === "documents" && <Documents />}
+              {section === "inbox" && <Inbox rows={infoInbox} role={staff.role} receiving={RECEIVE_MAIL} />}
               {section === "cases" && <ContentManager kind="cases" rows={cases.rows} />}
               {section === "reviews" && <ContentManager kind="reviews" rows={reviews.rows} />}
               {section === "posts" && <ContentManager kind="posts" rows={posts.rows} />}

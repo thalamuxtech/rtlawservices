@@ -39,6 +39,8 @@ export type EmailVars = { name?: string; email?: string };
 
 /** The firm's addresses that can receive mail (the back-office inbox, when it is switched on). */
 export const MAILBOXES = ["clientservice@rtlawservices.com", "info@rtlawservices.com"] as const;
+/** The one address the back office inbox shows. */
+export const INBOX_MAILBOX = "info@rtlawservices.com";
 
 /** Addresses staff can send from in the back office. Each must be a sender in Brevo. */
 export const SENDERS = ["info@rtlawservices.com"] as const;

@@ -13,7 +13,7 @@ import {
   MailOpen, Paperclip, PenLine, Reply, ReplyAll, ShieldAlert, Trash2, X,
 } from "lucide-react";
 import { api, deleteDoc, patchDoc, type Timestamp } from "@/lib/api";
-import { MAILBOXES } from "@/lib/email-template";
+import { INBOX_MAILBOX, MAILBOXES } from "@/lib/email-template";
 import { cn } from "@/lib/utils";
 import { EmailComposer, EmailFrame, fileSize, type ComposeTarget, type Original } from "../EmailComposer";
 import { Btn, Chip, fmtTs, Loading, Search, useCollection, useDialog, useToast, type Row } from "../kit";
@@ -170,7 +170,6 @@ export function Inbox({ rows, role, receiving = true }: { rows: Row[] | null; ro
   const toast = useToast();
   const dialog = useDialog();
   const emails = useCollection("emails");
-  const [mailbox, setMailbox] = useState("all");
   const [folder, setFolder] = useState<(typeof FOLDERS)[number]["id"]>("inbox");
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -180,7 +179,7 @@ export function Inbox({ rows, role, receiving = true }: { rows: Row[] | null; ro
   const [previews, setPreviews] = useState<Record<string, { preview: string; attachmentCount: number }>>({});
   const current = rows?.find((r) => r.id === openId) ?? null;
 
-  const inMailbox = useMemo(() => (rows ?? []).filter((r) => mailbox === "all" || r.mailbox === mailbox), [rows, mailbox]);
+  const inMailbox = useMemo(() => rows ?? [], [rows]);
   const shown = useMemo(() => {
     const t = q.trim().toLowerCase();
     const match = FOLDERS.find((f) => f.id === folder)!.match;
@@ -215,7 +214,7 @@ export function Inbox({ rows, role, receiving = true }: { rows: Row[] | null; ro
   };
 
   const count = (f: (typeof FOLDERS)[number]) => inMailbox.filter(f.match).length;
-  const unread = (m: string) => (rows ?? []).filter((r) => r.status === "new" && (m === "all" || r.mailbox === m)).length;
+  const unread = (rows ?? []).filter((r) => r.status === "new").length;
 
   return (
     <div className="grid gap-5">
@@ -256,27 +255,11 @@ export function Inbox({ rows, role, receiving = true }: { rows: Row[] | null; ro
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex max-w-full overflow-x-auto rounded-full border border-line bg-white p-1" role="tablist" aria-label="Address">
-          {["all", ...MAILBOXES.filter((m) => (rows ?? []).some((r) => r.mailbox === m))].map((m) => (
-            <button
-              key={m}
-              type="button"
-              role="tab"
-              aria-selected={mailbox === m}
-              onClick={() => setMailbox(m)}
-              className={cn("inline-flex min-h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 text-sm font-bold transition-colors sm:px-4", mailbox === m ? "bg-ink text-paper" : "text-stone hover:text-ink")}
-            >
-              {m === "all" ? (
-                <>
-                  All<span className="hidden sm:inline">&nbsp;addresses</span>
-                </>
-              ) : (
-                `${m.split("@")[0]}@`
-              )}
-              {unread(m) > 0 && <span className={cn("rounded-full px-1.5 text-xs", mailbox === m ? "bg-brass text-ink" : "bg-brass-pale text-brass-ink")}>{unread(m)}</span>}
-            </button>
-          ))}
-        </div>
+        <span className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-white px-4 text-sm font-bold text-ink">
+          <Mail aria-hidden className="size-4 text-brass-ink" />
+          {INBOX_MAILBOX}
+          {unread > 0 && <span className="rounded-full bg-brass px-1.5 text-xs text-ink">{unread}</span>}
+        </span>
         <div className="flex flex-wrap gap-1" role="tablist" aria-label="Folder">
           {FOLDERS.map((f) => (
             <button
@@ -339,7 +322,6 @@ export function Inbox({ rows, role, receiving = true }: { rows: Row[] | null; ro
                           {files > 0 && <Paperclip aria-label={`${files} attachments`} className="size-3.5 shrink-0" />}
                           <span className="truncate">{preview ?? " "}</span>
                         </span>
-                        {mailbox === "all" && <span className="mt-1.5 inline-block rounded-full bg-mist px-2 py-0.5 text-[0.7rem] font-bold text-stone">{String(r.mailbox).split("@")[0]}@</span>}
                       </span>
                       {isNew && <span aria-label="Unread" className="mt-2 size-2 shrink-0 rounded-full bg-brass" />}
                     </button>

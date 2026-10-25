@@ -7,10 +7,11 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Bold, CopyPlus, FlaskConical, Link2, List, ListOrdered, Monitor, Paperclip, RotateCcw, Save, Send, Smartphone, Trash2, UserRound, X } from "lucide-react";
+import { Bold, CopyPlus, FileText, FlaskConical, Link2, List, ListOrdered, Monitor, Paperclip, RotateCcw, Save, Send, Smartphone, Trash2, UserRound, X } from "lucide-react";
 import { useContent } from "@/content/LiveContent";
 import { adminPost, api, deleteDoc, listDocs, putDoc, type Row, type Timestamp } from "@/lib/api";
 import { BLANK_EMAIL, DEFAULT_BRAND, DEFAULT_REPLY_TO, MAILBOXES, renderEmail, SENDERS, type EmailContent } from "@/lib/email-template";
+import { FIRM_DOCUMENTS, firmDocumentFile } from "@/lib/firm-documents";
 import { cn } from "@/lib/utils";
 import { PRESETS, fromPreset, mergeTemplates, type Template } from "./email-presets";
 import { Btn, dialogIsOpen, Toggle, useCollection, useDialog, useToast } from "./kit";
@@ -34,6 +35,8 @@ export type ComposeTarget = {
   row?: Row;
   mode?: "reply" | "replyAll" | "forward";
   original?: Original;
+  /** Files to attach from the start, such as the letterhead. */
+  files?: File[];
 } | null;
 
 type Attachment = { name: string; type: string; size: number; content: string };
@@ -162,8 +165,8 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
       setDraft(d);
       setShowCc(d.cc.length > 0);
       setShowBcc(d.bcc.length > 0);
-      // A forward carries the original attachments.
-      const files = target?.mode === "forward" ? (target.original?.files ?? []) : [];
+      // A forward carries the original attachments; other emails may start with files.
+      const files = target?.mode === "forward" ? (target.original?.files ?? []) : (target?.files ?? []).map((f) => ({ name: f.name, type: f.type, blob: f as Blob }));
       if (files.length)
         Promise.all(files.slice(0, MAX_FILES).map(async (f) => ({ name: f.name, type: f.type, size: f.blob.size, content: await readBase64(f.blob) })))
           .then((attachments) => setDraft((cur) => (cur ? { ...cur, attachments } : cur)))
@@ -345,6 +348,15 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
       setDraft((cur) => (cur ? { ...cur, attachments: [...(cur.attachments ?? []), ...added] } : cur));
     } catch {
       toast("error", "A file could not be read. Try again.");
+    }
+  };
+  const attachFirmDocument = async (name: string) => {
+    const doc = FIRM_DOCUMENTS.find((d) => d.name === name);
+    if (!doc) return;
+    try {
+      await addFiles([await firmDocumentFile(doc)]);
+    } catch {
+      toast("error", "The document could not be loaded. Try again.");
     }
   };
   const removeFile = (i: number) => setDraft((cur) => (cur ? { ...cur, attachments: (cur.attachments ?? []).filter((_, j) => j !== i) } : cur));
@@ -600,6 +612,20 @@ function Composer({ target, onClose }: { target: ComposeTarget; onClose: () => v
                 <span className="text-xs text-stone">Drop files here or choose them. Up to {MAX_FILES} files, 7 MB in total.</span>
                 <input type="file" multiple className="sr-only" onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
               </label>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold text-stone">Firm documents:</span>
+                {FIRM_DOCUMENTS.map((d) => (
+                  <button
+                    key={d.name}
+                    type="button"
+                    onClick={() => attachFirmDocument(d.name)}
+                    disabled={files.some((f) => f.name === d.name)}
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-line bg-white px-3 text-xs font-bold text-ink hover:border-ink/40 disabled:opacity-40"
+                  >
+                    <FileText aria-hidden className="size-3.5 text-brass-ink" /> {d.label} ({d.kind})
+                  </button>
+                ))}
+              </div>
               {files.length > 0 && (
                 <ul className="grid gap-2">
                   {files.map((f, i) => (
