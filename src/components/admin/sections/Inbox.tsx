@@ -16,7 +16,7 @@ import { api, deleteDoc, patchDoc, type Timestamp } from "@/lib/api";
 import { INBOX_MAILBOX, MAILBOXES } from "@/lib/email-template";
 import { cn } from "@/lib/utils";
 import { EmailComposer, EmailFrame, fileSize, type ComposeTarget, type Original } from "../EmailComposer";
-import { Btn, Chip, fmtTs, Loading, Search, useCollection, useDialog, useToast, type Row } from "../kit";
+import { Btn, Chip, fmtTs, Loading, Search, TitleRule, useCollection, useDialog, useToast, type Row } from "../kit";
 import { SentEmail } from "./Emails";
 
 /* ---------- reading a message ---------- */
@@ -221,7 +221,8 @@ export function Inbox({ rows, role }: { rows: Row[] | null; role: string }) {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-serif-display text-4xl text-ink">Inbox</h1>
-          <p className="mt-1 text-stone">Email received at the firm&apos;s addresses.</p>
+          <TitleRule />
+          <p className="mt-3 text-stone">Email received at the firm&apos;s addresses.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Search value={q} onChange={setQ} placeholder="Search sender, subject or text" />

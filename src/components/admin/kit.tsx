@@ -242,12 +242,23 @@ function DialogBox({ d, close }: { d: Open; close: () => void }) {
 
 /* ---------- layout pieces ---------- */
 
+/** The gold rule with a diamond from the business card, under a page title. */
+export function TitleRule() {
+  return (
+    <span aria-hidden className="mt-3 flex items-center gap-1.5">
+      <span className="h-px w-14 bg-gradient-to-r from-brass to-brass/20" />
+      <span className="size-1.5 rotate-45 bg-brass" />
+    </span>
+  );
+}
+
 export function SectionHeader({ title, lede, action }: { title: string; lede?: string; action?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
         <h1 className="font-serif-display text-4xl text-ink">{title}</h1>
-        {lede && <p className="mt-2 max-w-2xl text-stone">{lede}</p>}
+        <TitleRule />
+        {lede && <p className="mt-3 max-w-2xl text-stone">{lede}</p>}
       </div>
       {action}
     </div>

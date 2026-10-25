@@ -7,6 +7,7 @@ import {
   BookOpen, CalendarClock, ClipboardCheck, ExternalLink, Eye, EyeOff, FileBadge, FileText, FolderOpen, Gauge, Globe2, Inbox as InboxIcon, KeyRound, LayoutDashboard, Loader2, Lock, LogOut, Mail, Menu, MessagesSquare, PanelLeftClose, PanelLeftOpen, Rocket, Send, Settings, ShieldAlert, Star, Users, UserSquare2, X,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { GuillocheRosette, GuillocheWeave } from "@/components/brand/Guilloche";
 import { LoginArt } from "./LoginArt";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -139,6 +140,10 @@ function Login({ onSignedIn }: { onSignedIn: () => void }) {
     <div className="grid min-h-dvh lg:grid-cols-[1.1fr_0.9fr]">
       <div className="on-dark relative hidden overflow-hidden bg-ink p-14 text-paper lg:flex lg:flex-col lg:items-center lg:justify-between lg:text-center">
         <div aria-hidden className="grain absolute inset-0" />
+        <GuillocheRosette className="pointer-events-none absolute -left-48 -top-48 size-[38rem] text-brass opacity-[0.13]" />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-40 text-brass [mask-image:linear-gradient(to_top,black,transparent)]">
+          <GuillocheWeave className="size-full opacity-60" />
+        </div>
         {[0, 1, 2].map((i) => (
           <motion.div
             key={i}
@@ -181,11 +186,16 @@ function Login({ onSignedIn }: { onSignedIn: () => void }) {
         </p>
       </div>
 
-      <div className="grid place-items-center bg-paper px-4 py-16">
-        <motion.form onSubmit={signIn} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
+      <div className="relative grid place-items-center overflow-hidden bg-paper px-4 py-16">
+        <GuillocheRosette className="pointer-events-none absolute -bottom-52 -right-52 size-[32rem] text-brass opacity-[0.1]" />
+        <motion.form onSubmit={signIn} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="relative w-full max-w-md">
           <Logo className="mb-10 w-56 lg:hidden" />
           <p className="text-sm font-bold text-brass-ink">Staff sign-in</p>
           <h1 className="font-serif-display mt-2 text-5xl text-ink">Welcome back</h1>
+          <span aria-hidden className="mt-4 flex items-center gap-1.5">
+            <span className="h-px w-14 bg-gradient-to-r from-brass to-brass/20" />
+            <span className="size-1.5 rotate-45 bg-brass" />
+          </span>
 
           <label htmlFor="a-email" className="mt-10 block text-sm font-bold text-ink">
             Email
@@ -401,8 +411,19 @@ function Shell({ user, staff, onProfileChange }: { user: User; staff: StaffDoc; 
     inbox: infoInbox?.filter((r) => r.status === "new").length,
   };
 
+  // The brand's engraved pattern behind the dark sidebar, with a gold edge.
+  const sidebarArt = (
+    <>
+      <GuillocheRosette className="pointer-events-none absolute -bottom-40 -left-44 size-[28rem] text-brass opacity-[0.11]" />
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-28 text-brass [mask-image:linear-gradient(to_bottom,black,transparent)]">
+        <GuillocheWeave className="size-full opacity-40" />
+      </div>
+      <span aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-brass/10 via-brass/60 to-brass/10" />
+    </>
+  );
+
   const sidebar = (compact: boolean) => (
-    <nav aria-label="Back office" className="flex h-full flex-col">
+    <nav aria-label="Back office" className="relative flex h-full flex-col">
       <div className={cn("pb-6 pt-7", compact ? "flex justify-center px-2" : "px-6")}>
         {compact ? <Logo tone="dark" variant="mark" className="w-11" /> : <Logo tone="dark" className="w-44" />}
       </div>
@@ -479,12 +500,16 @@ function Shell({ user, staff, onProfileChange }: { user: User; staff: StaffDoc; 
 
   return (
     <div className="min-h-dvh bg-mist">
-      <aside className={cn("on-dark fixed inset-y-0 left-0 z-40 hidden bg-ink transition-[width] duration-300 ease-out lg:block", collapsed ? "w-20" : "w-72")}>{sidebar(collapsed)}</aside>
+      <aside className={cn("on-dark fixed inset-y-0 left-0 z-40 hidden bg-ink transition-[width] duration-300 ease-out lg:block overflow-hidden", collapsed ? "w-20" : "w-72")}>
+        {sidebarArt}
+        {sidebar(collapsed)}
+      </aside>
       <AnimatePresence>
         {nav && (
           <div className="fixed inset-0 z-50 lg:hidden">
             <motion.button type="button" aria-label="Close menu" className="absolute inset-0 bg-ink/50" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setNav(false)} />
-            <motion.aside initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", stiffness: 300, damping: 34 }} className="on-dark absolute inset-y-0 left-0 w-72 bg-ink">
+            <motion.aside initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", stiffness: 300, damping: 34 }} className="on-dark absolute inset-y-0 left-0 w-72 overflow-hidden bg-ink">
+              {sidebarArt}
               {sidebar(false)}
             </motion.aside>
           </div>
@@ -492,7 +517,8 @@ function Shell({ user, staff, onProfileChange }: { user: User; staff: StaffDoc; 
       </AnimatePresence>
 
       <div className={cn("transition-[padding] duration-300 ease-out", collapsed ? "lg:pl-20" : "lg:pl-72")}>
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-paper/90 px-4 backdrop-blur-xl sm:px-8">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 bg-paper/90 px-4 backdrop-blur-xl sm:px-8">
+          <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-brass/0 via-brass/70 to-brass/0" />
           <button type="button" className="grid size-11 place-items-center rounded-full hover:bg-mist lg:hidden" aria-label="Open menu" onClick={() => setNav(true)}>
             {nav ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>

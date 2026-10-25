@@ -6,6 +6,7 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, Pol
 import { ArrowDownRight, ArrowUpRight, BookOpen, CalendarClock, ClipboardCheck, ExternalLink, FileText, Globe2, Mail, Minus, Sparkles, Trophy } from "lucide-react";
 import { useDoc, type Timestamp } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { GuillocheRosette, GuillocheWeave } from "@/components/brand/Guilloche";
 import { fmtTs, Toggle, type Row } from "../kit";
 
 type Content = { cases: Row[] | null; reviews: Row[] | null; posts: Row[] | null; attorneys: Row[] | null };
@@ -210,6 +211,10 @@ export function Overview({ evaluations, bookings, messages, content, name, go }:
       <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="on-dark relative overflow-hidden rounded-3xl bg-ink p-7 text-paper sm:p-9">
         <div aria-hidden className="grain absolute inset-0" />
         <div aria-hidden className="absolute -right-24 -top-24 size-80 rounded-full bg-[radial-gradient(circle,rgba(177,151,107,0.35),transparent_65%)]" />
+        <GuillocheRosette className="pointer-events-none absolute -right-32 -top-40 size-[30rem] text-brass opacity-[0.16]" />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-24 text-brass [mask-image:linear-gradient(to_top,black,transparent)]">
+          <GuillocheWeave className="size-full opacity-50" />
+        </div>
         <div className="relative flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="text-sm text-stone-dark">{new Intl.DateTimeFormat("en-US", { timeZone: TZ, dateStyle: "full" }).format(now)}</p>
