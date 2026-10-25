@@ -161,13 +161,7 @@ function Login({ onSignedIn }: { onSignedIn: () => void }) {
         </Link>
         <div className="relative flex flex-col items-center">
           <LoginArt />
-          <p className="mt-8 text-sm font-bold text-brass-light xl:mt-10">Staff portal</p>
-          <p className="font-serif-display mt-2 text-4xl leading-tight xl:text-5xl">Client matters, managed with care</p>
-          <p className="mt-4 max-w-lg text-lg leading-relaxed text-stone-dark">
-            Review free evaluations, confirm consultations and reply to client messages. Approve success stories, reviews and
-            articles before they appear on the website.
-          </p>
-          <ul className="mt-8 grid max-w-lg gap-3 text-left [@media(max-height:860px)]:hidden text-[0.97rem] text-paper/90">
+          <ul className="mt-10 grid max-w-lg gap-3 text-left [@media(max-height:860px)]:hidden text-[0.97rem] text-paper/90">
             {[
               { icon: ClipboardCheck, text: "Free evaluations and consultation requests" },
               { icon: MessagesSquare, text: "Client messages and follow-up" },
