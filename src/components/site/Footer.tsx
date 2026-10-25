@@ -4,6 +4,7 @@ import { CookieSettingsLink } from "@/components/site/CookieConsent";
 import Link from "next/link";
 import { Lock, Mail, Phone } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { GuillocheRosette, GuillocheWeave } from "@/components/brand/Guilloche";
 import { useContent } from "@/content/LiveContent";
 import { NO_RELATIONSHIP } from "@/content/site";
 
@@ -34,6 +35,10 @@ export function Footer() {
   return (
     <footer className="on-dark relative overflow-hidden bg-ink pb-24 text-stone-dark sm:pb-0">
       <div aria-hidden className="grain pointer-events-none absolute inset-0 opacity-60" />
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-32 text-brass [mask-image:linear-gradient(to_bottom,black,transparent)] sm:h-40">
+        <GuillocheWeave className="size-full opacity-75" />
+      </div>
+      <GuillocheRosette className="pointer-events-none absolute -bottom-40 -right-40 size-[34rem] text-brass opacity-[0.12]" />
       <div className="container-luxe relative">
         <div className="grid gap-12 border-b border-line-dark py-16 lg:grid-cols-[1.2fr_2fr]">
           <div>
