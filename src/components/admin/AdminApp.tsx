@@ -156,7 +156,9 @@ function Login({ onSignedIn }: { onSignedIn: () => void }) {
             <span className="absolute left-1/2 top-0 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brass" />
           </motion.div>
         ))}
-        <Logo tone="dark" className="relative w-64" />
+        <Link href="/" aria-label="RT Law Services home" className="relative rounded-lg transition-opacity hover:opacity-85">
+          <Logo tone="dark" className="w-64" />
+        </Link>
         <div className="relative flex flex-col items-center">
           <LoginArt />
           <p className="mt-8 text-sm font-bold text-brass-light xl:mt-10">Staff portal</p>
@@ -425,7 +427,9 @@ function Shell({ user, staff, onProfileChange }: { user: User; staff: StaffDoc; 
   const sidebar = (compact: boolean) => (
     <nav aria-label="Back office" className="relative flex h-full flex-col">
       <div className={cn("pb-6 pt-7", compact ? "flex justify-center px-2" : "px-6")}>
-        {compact ? <Logo tone="dark" variant="mark" className="w-11" /> : <Logo tone="dark" className="w-44" />}
+        <button type="button" onClick={() => go("overview")} aria-label="Back office home" title="Overview" className="rounded-lg transition-opacity hover:opacity-85">
+          {compact ? <Logo tone="dark" variant="mark" className="w-11" /> : <Logo tone="dark" className="w-44" />}
+        </button>
       </div>
       <div className={cn("flex-1 overflow-y-auto overflow-x-hidden", compact ? "px-2" : "px-3")}>
         {["Dashboard", "Requests", "Website", "System"].map((g) => (

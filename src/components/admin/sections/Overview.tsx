@@ -7,7 +7,7 @@ import { ArrowDownRight, ArrowUpRight, BookOpen, CalendarClock, ClipboardCheck, 
 import { useDoc, type Timestamp } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { GuillocheRosette, GuillocheWeave } from "@/components/brand/Guilloche";
-import { fmtTs, Toggle, type Row } from "../kit";
+import { fmtTs, type Row } from "../kit";
 
 type Content = { cases: Row[] | null; reviews: Row[] | null; posts: Row[] | null; attorneys: Row[] | null };
 
@@ -35,31 +35,7 @@ const RANGES: { id: Range; label: string; days: number }[] = [
 const ms = (r: Row) => (r.createdAt as Timestamp | undefined)?.toMillis?.() ?? 0;
 const ADVANCED = new Set(["evaluated", "consultation-booked", "confirmed", "held", "retained"]);
 
-/** Deterministic sample activity, used only when the preview toggle is on. Nothing is saved. */
-function sampleRows(now: number): { evaluations: Row[]; bookings: Row[]; messages: Row[] } {
-  const rnd = (seed: number) => Math.abs(Math.sin(seed * 12.9898) * 43758.5453) % 1;
-  const mk = (n: number, seed: number, extra: (i: number) => Partial<Row>): Row[] =>
-    Array.from({ length: n }, (_, i) => {
-      // Skew toward recent weeks and office hours so the charts read like real demand.
-      const age = Math.pow(rnd(seed * 100 + i), 1.6) * 360 * DAY;
-      const d = new Date(now - age);
-      d.setHours(8 + Math.floor(rnd(seed * 7 + i) * 11), Math.floor(rnd(i + seed) * 60));
-      const t = d.getTime();
-      return { id: `s${seed}-${i}`, createdAt: { toDate: () => new Date(t), toMillis: () => t } as unknown as Timestamp, ...extra(i) };
-    });
-  const ev = ["new", "reviewing", "evaluated", "consultation-booked", "retained", "not-a-fit", "evaluated", "reviewing"];
-  const bk = ["new", "confirmed", "held", "retained", "confirmed", "held", "not-a-fit"];
-  const matters = ["Family green cards", "Citizenship", "National Interest Waiver", "Extraordinary ability", "H-1B professionals", "Denied or delayed", "Employer sponsorship", "Family abroad"];
-  const countries = ["Nigeria", "India", "United States", "Ghana", "Brazil", "United Kingdom", "Kenya", "Mexico", "Philippines", "Canada"];
-  return {
-    evaluations: mk(132, 1, (i) => ({ name: `Sample applicant ${i + 1}`, track: i % 3 ? "professional" : "family", status: ev[i % ev.length], birthCountry: countries[Math.floor(rnd(i + 3) * 6)] })),
-    bookings: mk(96, 2, (i) => ({ name: `Sample client ${i + 1}`, matterLabel: matters[Math.floor(rnd(i + 9) * matters.length)], status: bk[i % bk.length], country: countries[Math.floor(rnd(i + 5) * countries.length)] })),
-    messages: mk(58, 3, (i) => ({ name: `Sample sender ${i + 1}`, topic: "A new matter", status: i % 3 ? "replied" : "new" })),
-  };
-}
-
 export function Overview({ evaluations, bookings, messages, content, name, go }: Props) {
-  const [sample, setSample] = useState(false);
   const [range, setRange] = useState<Range>("90d");
   const [series, setSeries] = useState({ Evaluations: true, Consultations: true, Messages: true });
   const meta = useDoc("meta", "content") as { updatedAt?: Timestamp } | null | undefined;
@@ -73,7 +49,7 @@ export function Overview({ evaluations, bookings, messages, content, name, go }:
       .catch(() => setBuild(null));
   }, []);
 
-  const data = useMemo(() => (sample ? sampleRows(now) : { evaluations: evaluations ?? [], bookings: bookings ?? [], messages: messages ?? [] }), [sample, now, evaluations, bookings, messages]);
+  const data = useMemo(() => ({ evaluations: evaluations ?? [], bookings: bookings ?? [], messages: messages ?? [] }), [evaluations, bookings, messages]);
   const days = RANGES.find((r) => r.id === range)!.days;
   const from = now - days * DAY;
   const prevFrom = from - days * DAY;
@@ -254,12 +230,9 @@ export function Overview({ evaluations, bookings, messages, content, name, go }:
         </div>
       </motion.section>
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-sm text-stone">
-          Figures cover the last {rangeLabel} and update live. Percentages compare with the {rangeLabel} before.
-        </p>
-        <Toggle label="Preview with sample activity" hint="Fills the charts with generated data. Nothing is saved." checked={sample} onChange={setSample} />
-      </div>
+      <p className="text-sm text-stone">
+        Figures cover the last {rangeLabel} and update live. Percentages compare with the {rangeLabel} before.
+      </p>
 
       {/* KPI cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -285,7 +258,7 @@ export function Overview({ evaluations, bookings, messages, content, name, go }:
                   {!k.prev && k.value ? "New" : `${Math.abs(delta)}%`}
                 </span>
               </span>
-              <motion.span key={`${k.value}-${sample}-${range}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="font-serif-display mt-4 block text-5xl leading-none text-ink">
+              <motion.span key={`${k.value}-${range}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="font-serif-display mt-4 block text-5xl leading-none text-ink">
                 {k.value}
               </motion.span>
               <span className="mt-1 block text-sm font-bold text-ink">{k.label}</span>
@@ -539,7 +512,7 @@ export function Overview({ evaluations, bookings, messages, content, name, go }:
                 const Icon = r.icon as typeof Mail;
                 return (
                   <motion.li key={`${r.kind}-${r.id}`} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
-                    <button type="button" onClick={() => !sample && go(r.section)} className="relative flex w-full items-center gap-4 rounded-xl py-2.5 pr-2 text-left transition-colors hover:bg-mist">
+                    <button type="button" onClick={() => go(r.section)} className="relative flex w-full items-center gap-4 rounded-xl py-2.5 pr-2 text-left transition-colors hover:bg-mist">
                       <span className="relative z-10 grid size-10 shrink-0 place-items-center rounded-full border border-line bg-white text-brass-ink">
                         <Icon aria-hidden className="size-4" />
                       </span>
@@ -644,5 +617,5 @@ function Card({ title, sub, children }: { title: string; sub?: string; children:
 }
 
 function EmptyChart() {
-  return <div className="grid h-64 place-items-center rounded-xl bg-mist/60 px-6 text-center text-sm text-stone">No data in this period yet. Turn on the sample activity preview to see how this chart works.</div>;
+  return <div className="grid h-64 place-items-center rounded-xl bg-mist/60 px-6 text-center text-sm text-stone">No data in this period yet.</div>;
 }
