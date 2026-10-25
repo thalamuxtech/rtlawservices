@@ -330,11 +330,6 @@ const SECTIONS = [
 
 type SectionId = (typeof SECTIONS)[number]["id"];
 
-// Mail to clientservice@ and info@ is received by Hostinger for now, so the
-// Inbox shows a notice and receives nothing new; sending still works. Set to
-// true, and point Email Routing at the Worker again (worker/inbox.ts), to
-// receive mail here once more.
-const RECEIVE_MAIL = false;
 
 const initialSection = (): SectionId => {
   if (typeof window === "undefined") return "overview";
@@ -543,7 +538,7 @@ function Shell({ user, staff, onProfileChange }: { user: User; staff: StaffDoc; 
               {section === "messages" && <Requests cfg={MESSAGES} rows={messages.rows} role={staff.role} />}
               {section === "emails" && <Emails rows={emails.rows} />}
               {section === "documents" && <Documents />}
-              {section === "inbox" && <Inbox rows={infoInbox} role={staff.role} receiving={RECEIVE_MAIL} />}
+              {section === "inbox" && <Inbox rows={infoInbox} role={staff.role} />}
               {section === "cases" && <ContentManager kind="cases" rows={cases.rows} />}
               {section === "reviews" && <ContentManager kind="reviews" rows={reviews.rows} />}
               {section === "posts" && <ContentManager kind="posts" rows={posts.rows} />}
