@@ -12,3 +12,6 @@
 
 /brand/letterhead/*
   X-Robots-Tag: noindex
+
+/brand/qr/*
+  X-Robots-Tag: noindex

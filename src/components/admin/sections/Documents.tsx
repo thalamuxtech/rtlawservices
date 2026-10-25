@@ -29,7 +29,7 @@ export function Documents() {
     <div className="grid max-w-4xl gap-6">
       <SectionHeader
         title="Documents"
-        lede="The firm's branded letterhead. Download the Word version to write a letter, or attach it to an email."
+        lede="The firm's branded letterhead and QR code. Download them, or attach them to an email."
       />
       <ul className="grid gap-3 sm:grid-cols-2">
         {FIRM_DOCUMENTS.map((d) => (
