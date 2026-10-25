@@ -6,13 +6,13 @@ import { Download, Eye, FileText, Maximize2, Minus, Plus, X } from "lucide-react
 import { FIRM_DOCUMENTS, type FirmDocument } from "@/lib/firm-documents";
 import { SectionHeader } from "../kit";
 
-/** The firm's letterhead and QR code, to view in the browser or download. */
+/** The firm's letterhead and business card, to view in the browser or download. */
 export function Documents() {
   const [viewing, setViewing] = useState<FirmDocument | null>(null);
 
   return (
     <div className="grid max-w-4xl gap-6">
-      <SectionHeader title="Documents" lede="The firm's branded letterhead and QR code. View them here or download them." />
+      <SectionHeader title="Documents" lede="The firm's branded letterhead and business card. View them here or download them." />
       <ul className="grid gap-3 sm:grid-cols-2">
         {FIRM_DOCUMENTS.map((d) => (
           <li key={d.name} className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white">
