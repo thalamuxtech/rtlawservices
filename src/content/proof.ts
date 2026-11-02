@@ -4,22 +4,29 @@
 
 import type { Attorney, CaseResult, Review } from "./types";
 
+/** Temitayo Tijani's biography. The first paragraph doubles as the summary on cards and in search results. */
+export const BIO_TIJANI = [
+  "Temitayo M. Tijani is the Managing Partner of RT Law Services. He leads the firm and oversees its work for clients, helping individuals and families move through complex legal processes with a clear understanding of each step.",
+  "As a leader, Temitayo works to make sure every client receives personal attention, open communication and advice suited to their own circumstances. His approach combines legal knowledge with practical problem-solving and an understanding of the challenges that immigrants, professionals, families and entrepreneurs often face when building a secure future in the United States.",
+  "Temitayo is a Nigerian-trained lawyer and a graduate of the Boston University School of Law, and he holds a Master of Business Administration (MBA) from Bentley University. Earlier in his career, he worked as a trust administrator and banking associate with investment banking firms in Nigeria. That fiduciary background shapes the firm's approach: careful documentation, long-term planning and close attention to families whose lives cross borders.",
+  "Under his leadership, the firm holds itself to standards of integrity, accountability and care. Temitayo believes that access to sound legal guidance can change what is possible for a client, because it helps people make informed decisions about opportunities that affect their lives and their communities. He continues to look for practical new ways to serve clients, and to keep professionalism and compassion at the centre of how the firm works.",
+];
+
 export const SEED_ATTORNEYS: Attorney[] = [
   {
-    // Real person. Facts below come from the published RT Fiduciary Services
-    // management team profile (2016). Bar admissions await confirmation (D15).
+    // Real person. Background facts come from the published RT Fiduciary
+    // Services management team profile (2016); the leadership text comes from
+    // the firm's own profile of its Managing Partner (2026). Bar admissions
+    // await confirmation (D15).
     slug: "temitayo-tijani",
     name: "Temitayo M. Tijani",
-    title: "Managing Attorney",
+    title: "Managing Partner",
     admissions: [],
-    education: ["Boston University School of Law", "Ethan Hathaway Financial Training Institute, London"],
-    languages: ["English"],
+    education: ["Bentley University (MBA)", "Boston University School of Law", "Ethan Hathaway Financial Training Institute, London"],
+    languages: ["English", "Yoruba"],
     memberships: ["Association of Investment Advisers and Portfolio Managers of Nigeria", "Nigerian Chartered Institute of Management (Associate Member)"],
     leads: ["family", "citizenship", "appeals-waivers", "consular-processing", "estates"],
-    bio: [
-      "Temitayo M. Tijani is a Nigerian-trained lawyer and a graduate of the Boston University School of Law. Earlier in their career, Temitayo worked as a trust administrator and banking associate with investment banking firms in Nigeria.",
-      "That fiduciary background shapes the firm's approach: careful documentation, long-term planning and close attention to families whose lives cross borders.",
-    ],
+    bio: BIO_TIJANI,
     initials: "TT",
     order: 1,
     demo: false,

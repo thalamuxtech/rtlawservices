@@ -4,11 +4,14 @@ import { PageHero } from "@/components/site/PageHero";
 import { BookingBand, Pillars } from "@/components/home/Sections";
 import { ButtonLink, Container } from "@/components/ui/primitives";
 import { Logo } from "@/components/brand/Logo";
+import { AttorneyPortrait } from "@/components/site/cards";
 import { useContent } from "@/content/LiveContent";
 
 export function AboutView() {
-  const { PAGES } = useContent();
+  const { PAGES, ATTORNEYS } = useContent();
   const { about } = PAGES;
+  // The firm's leader, shown when a published profile carries the title.
+  const lead = ATTORNEYS.find((a) => !a.demo && /managing partner/i.test(a.title));
   return (
     <>
       <PageHero
@@ -63,6 +66,31 @@ export function AboutView() {
         </Container>
       </section>
       <Pillars />
+      {lead && (
+        <section className="py-20 sm:py-24">
+          <Container>
+            <p className="eyebrow text-brass-ink">Leadership</p>
+            <div className="group mt-6 overflow-hidden rounded-3xl border border-line bg-white shadow-[0_40px_80px_-50px_rgba(20,24,31,0.5)] lg:grid lg:grid-cols-[0.75fr_1.25fr]">
+              <AttorneyPortrait a={lead} className="aspect-[4/3] lg:aspect-auto lg:min-h-full" />
+              <div className="p-8 sm:p-12">
+                <p className="text-sm font-bold text-brass-ink">{lead.title}</p>
+                <h2 className="font-serif-display mt-1 text-4xl text-ink sm:text-5xl">{lead.name}</h2>
+                <span aria-hidden className="mt-5 flex items-center gap-1.5">
+                  <span className="h-px w-14 bg-gradient-to-r from-brass to-brass/20" />
+                  <span className="size-1.5 rotate-45 bg-brass" />
+                </span>
+                {[lead.bio[0], lead.bio.length > 2 ? lead.bio[lead.bio.length - 1] : lead.bio[1]].filter(Boolean).map((p) => (
+                  <p key={p} className="mt-5 text-lg leading-relaxed text-stone">{p}</p>
+                ))}
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <ButtonLink href={`/attorneys/${lead.slug}/`}>Read the full profile</ButtonLink>
+                  <ButtonLink href={`/book/?attorney=${lead.slug}`} variant="outline">Book with {lead.name.split(" ")[0]}</ButtonLink>
+                </div>
+              </div>
+            </div>
+          </Container>
+        </section>
+      )}
       <section className="py-20">
         <Container className="flex flex-wrap items-center justify-between gap-6">
           <h2 className="font-serif-display text-3xl text-ink sm:text-4xl">Meet the people behind the work</h2>
