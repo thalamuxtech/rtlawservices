@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Stars } from "@/components/ui/primitives";
 import { DocumentPreview } from "@/components/proof/ApprovalDocument";
 import type { Attorney, CaseResult, Review } from "@/content/types";
+import { GuillocheRosette, GuillocheWeave } from "@/components/brand/Guilloche";
 import { cn } from "@/lib/utils";
 
 /**
@@ -68,14 +69,50 @@ export function AttorneyPortrait({ a, className }: { a: Attorney; className?: st
         // eslint-disable-next-line @next/next/no-img-element
         <img src={a.photoUrl} alt={`Portrait of ${a.name}`} className="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
       ) : (
-        <>
-          <div aria-hidden className="grain absolute inset-0" />
-          <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(177,151,107,0.4),transparent_60%)]" />
-          <span aria-hidden className="absolute aspect-square w-[58%] max-w-64 rounded-full border border-brass/30" />
-          <span aria-hidden className="absolute aspect-square w-[78%] max-w-80 rounded-full border border-brass/15" />
-          <span className="font-serif-display relative text-7xl text-brass-light">{a.initials}</span>
-        </>
+        <AttorneyEmblem a={a} />
       )}
+    </div>
+  );
+}
+
+/**
+ * Stands in for a portrait: an engraved emblem in the style of the firm's
+ * business card, with the attorney's monogram in a gold medallion. Sizes
+ * follow the box (container units), so it works on cards and full heroes.
+ */
+const CORNERS = [
+  "left-[3.6cqmin] top-[3.6cqmin] border-l-2 border-t-2",
+  "right-[3.6cqmin] top-[3.6cqmin] border-r-2 border-t-2",
+  "bottom-[3.6cqmin] left-[3.6cqmin] border-b-2 border-l-2",
+  "bottom-[3.6cqmin] right-[3.6cqmin] border-b-2 border-r-2",
+];
+
+function AttorneyEmblem({ a }: { a: Attorney }) {
+  return (
+    <div className="absolute inset-0 grid place-items-center [container-type:size]">
+      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_42%,#222a36_0%,#14181f_58%,#0b0e13_100%)]" />
+      <div aria-hidden className="grain absolute inset-0 opacity-70" />
+      <div aria-hidden className="absolute inset-x-0 bottom-0 h-[38%] text-brass [mask-image:linear-gradient(to_top,black,transparent)]">
+        <GuillocheWeave className="size-full opacity-60" />
+      </div>
+      <GuillocheRosette className="absolute size-[118cqmin] text-brass opacity-[0.22]" />
+      {/* Gold frame with heavier corners, as on the card. */}
+      <span aria-hidden className="absolute inset-[5cqmin] border border-brass/45" />
+      {CORNERS.map((c) => (
+        <span key={c} aria-hidden className={cn("absolute size-[7cqmin] border-[#c7a767]", c)} />
+      ))}
+      <div className="relative flex flex-col items-center">
+        <span className="relative grid size-[50cqmin] place-items-center rounded-full bg-[radial-gradient(circle_at_50%_35%,#262e3b,#10141a_70%)] shadow-[0_0_0_1px_rgba(199,167,103,0.7),0_0_0_1.4cqmin_rgba(20,24,31,1),0_0_0_calc(1.4cqmin+1px)_rgba(199,167,103,0.45),0_2.5cqmin_6cqmin_rgba(0,0,0,0.55)]">
+          <span aria-hidden className="absolute inset-[3cqmin] rounded-full border border-dashed border-brass/30" />
+          <span className="font-serif-display bg-gradient-to-b from-[#f4e7c4] via-[#c7a767] to-[#8e7440] bg-clip-text text-[22cqmin] leading-none tracking-[0.02em] text-transparent">{a.initials}</span>
+        </span>
+        <span aria-hidden className="mt-[4.5cqmin] flex items-center gap-[1.4cqmin]">
+          <span className="h-px w-[9cqmin] bg-gradient-to-r from-brass/0 to-brass" />
+          <span className="size-[1.5cqmin] min-h-1 min-w-1 rotate-45 bg-[#e6d3a3]" />
+          <span className="h-px w-[9cqmin] bg-gradient-to-l from-brass/0 to-brass" />
+        </span>
+        <span className="mt-[2.8cqmin] text-[max(10px,3.3cqmin)] font-bold uppercase tracking-[0.3em] text-[#d9c59b]">{a.title}</span>
+      </div>
     </div>
   );
 }

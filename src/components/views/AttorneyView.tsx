@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { PageHero } from "@/components/site/PageHero";
-import { admissionsOf, CaseCard } from "@/components/site/cards";
+import { admissionsOf, AttorneyPortrait, CaseCard } from "@/components/site/cards";
 import { BookingBand } from "@/components/home/Sections";
 import { ButtonLink, Container } from "@/components/ui/primitives";
 import { Missing } from "@/components/views/Missing";
@@ -30,17 +30,7 @@ export function AttorneyView({ slug }: { slug: string }) {
         eyebrow={a.title}
         title={a.name}
         crumbs={[{ label: "Attorneys", href: "/attorneys/" }, { label: a.name }]}
-        aside={
-          <div className="relative grid aspect-square place-items-center overflow-hidden rounded-3xl border border-line-dark bg-ink-raised">
-            <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_50%_110%,rgba(177,151,107,0.4),transparent_60%)]" />
-            {a.photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={a.photoUrl} alt={`Portrait of ${a.name}`} className="absolute inset-0 size-full object-cover" />
-            ) : (
-              <span className="font-serif-display relative text-8xl text-brass-light">{a.initials}</span>
-            )}
-          </div>
-        }
+        aside={<AttorneyPortrait a={a} className="aspect-square rounded-3xl border border-line-dark" />}
       >
         <ButtonLink href={`/book/?attorney=${a.slug}`}>Book with {a.name.split(" ")[0]}</ButtonLink>
       </PageHero>
