@@ -171,7 +171,8 @@ export function Requests({ cfg, rows, role }: { cfg: Config; rows: Row[] | null;
                 </span>
                 <span className="flex items-center gap-3">
                   {r.file && <span className="rounded-full bg-mist px-2.5 py-1 text-xs font-bold text-stone">CV</span>}
-                  <Chip status={r.status} />
+                  {/* A new free evaluation shows when it arrived (Eastern Time) instead of "New". */}
+                  <Chip status={r.status} label={cfg.col === "evaluations" && r.status === "new" && r.createdAt ? `${fmtTs(r.createdAt as Timestamp)} ET` : undefined} />
                 </span>
               </button>
             </motion.li>

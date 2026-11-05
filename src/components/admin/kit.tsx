@@ -355,10 +355,11 @@ export const STATUS_STYLE: Record<string, string> = {
   draft: "bg-mist text-stone",
 };
 
-export function Chip({ status }: { status?: string }) {
+/** A status badge; `label` replaces the status text, keeping the status colour. */
+export function Chip({ status, label }: { status?: string; label?: string }) {
   return (
-    <span className={cn("inline-flex h-fit w-fit rounded-full px-3 py-1 text-xs font-bold capitalize", STATUS_STYLE[status ?? ""] ?? "bg-mist text-stone")}>
-      {(status ?? "unknown").replace(/-/g, " ")}
+    <span className={cn("inline-flex h-fit w-fit whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold", !label && "capitalize", STATUS_STYLE[status ?? ""] ?? "bg-mist text-stone")}>
+      {label ?? (status ?? "unknown").replace(/-/g, " ")}
     </span>
   );
 }
