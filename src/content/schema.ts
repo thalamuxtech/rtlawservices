@@ -40,7 +40,9 @@ function openingHours(hours: Site["hours"]) {
 }
 
 /** The firm and its website, included on every public page. */
-export function firmGraph(site: Site, expertise: Pick<Expertise, "slug" | "title">[], attorneys: Pick<Attorney, "slug">[]) {
+export function firmGraph(site: Site, expertise: Pick<Expertise, "slug" | "title">[], attorneys: Pick<Attorney, "slug" | "languages">[]) {
+  // Languages a client can consult in: English, plus any an attorney speaks.
+  const languages = [...new Set(["English", ...attorneys.flatMap((a) => a.languages ?? [])])];
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -48,7 +50,7 @@ export function firmGraph(site: Site, expertise: Pick<Expertise, "slug" | "title
         "@type": ["LegalService", "Organization"],
         "@id": ids.firm(site),
         name: site.name,
-        alternateName: ["RT Immigration Law Services", "RT Law"],
+        alternateName: ["RT Immigration Law Services", "RT Law", "RTLaw"],
         url: `${site.url}/`,
         description: site.description,
         slogan: site.tagline,
@@ -57,7 +59,7 @@ export function firmGraph(site: Site, expertise: Pick<Expertise, "slug" | "title
         telephone: site.phone,
         email: site.email,
         areaServed: US,
-        availableLanguage: ["English"],
+        availableLanguage: languages,
         knowsAbout: ["Immigration law", ...expertise.map((e) => e.title)],
         contactPoint: {
           "@type": "ContactPoint",
@@ -65,7 +67,7 @@ export function firmGraph(site: Site, expertise: Pick<Expertise, "slug" | "title
           telephone: site.phone,
           email: site.email,
           areaServed: "US",
-          availableLanguage: ["English"],
+          availableLanguage: languages,
         },
         openingHoursSpecification: openingHours(site.hours),
         hasOfferCatalog: {
@@ -90,7 +92,7 @@ export function firmGraph(site: Site, expertise: Pick<Expertise, "slug" | "title
 }
 
 /** A practice area as a service the firm provides. */
-export function serviceLd(site: Site, e: Pick<Expertise, "slug" | "title" | "summary" | "codes">) {
+export function serviceLd(site: Site, e: Pick<Expertise, "slug" | "title" | "summary" | "codes">, leadSlug?: string) {
   return {
     "@context": "https://schema.org",
     "@type": "Service",
@@ -99,15 +101,34 @@ export function serviceLd(site: Site, e: Pick<Expertise, "slug" | "title" | "sum
     serviceType: e.title,
     description: e.summary,
     url: `${site.url}/expertise/${e.slug}/`,
-    provider: { "@id": ids.firm(site) },
+    provider: leadSlug ? [{ "@id": ids.firm(site) }, { "@id": ids.person(site, leadSlug) }] : { "@id": ids.firm(site) },
     areaServed: US,
     ...(e.codes ? { alternateName: e.codes } : {}),
   };
 }
 
+/** "Bentley University (MBA)" becomes the school's name; a bare degree such as "J.D." is not a school. */
+const school = (entry: string) => entry.replace(/\s*\([^)]*\)\s*$/, "").trim();
+const isSchool = (entry: string) => /universit|college|school|institut|academy/i.test(entry);
+
+/** An attorney profile: a ProfilePage whose main entity is the attorney. */
 export function personLd(site: Site, a: Attorney, practice: string[]) {
+  const url = `${site.url}/attorneys/${a.slug}/`;
+  const schools = (a.education ?? []).filter(isSchool).map(school);
+  const groups = a.memberships ?? [];
   return {
     "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "@id": `${url}#page`,
+    url,
+    name: `${a.name}, ${a.title}`,
+    isPartOf: { "@id": ids.website(site) },
+    mainEntity: personNode(site, a, practice, schools, groups),
+  };
+}
+
+function personNode(site: Site, a: Attorney, practice: string[], schools: string[], groups: string[]) {
+  return {
     "@type": "Person",
     "@id": ids.person(site, a.slug),
     name: a.name,
@@ -118,6 +139,21 @@ export function personLd(site: Site, a: Attorney, practice: string[]) {
     ...(a.photoUrl ? { image: a.photoUrl.startsWith("http") ? a.photoUrl : `${site.url}${a.photoUrl}` } : {}),
     ...(a.languages.length ? { knowsLanguage: a.languages } : {}),
     ...(practice.length ? { knowsAbout: practice } : {}),
+    ...(schools.length ? { alumniOf: schools.map((name) => ({ "@type": "EducationalOrganization", name })) } : {}),
+    ...(groups.length ? { memberOf: groups.map((name) => ({ "@type": "Organization", name })) } : {}),
+  };
+}
+
+/** About and contact pages, tied to the firm. */
+export function pageLd(site: Site, type: "AboutPage" | "ContactPage", path: string, name: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": type,
+    "@id": `${site.url}${path}#page`,
+    url: `${site.url}${path}`,
+    name,
+    isPartOf: { "@id": ids.website(site) },
+    about: { "@id": ids.firm(site) },
   };
 }
 

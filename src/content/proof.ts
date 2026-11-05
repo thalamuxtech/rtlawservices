@@ -23,7 +23,7 @@ export const SEED_ATTORNEYS: Attorney[] = [
     title: "Managing Partner",
     admissions: [],
     education: ["Bentley University (MBA)", "Boston University School of Law", "Ethan Hathaway Financial Training Institute, London"],
-    languages: ["English", "Yoruba"],
+    languages: ["English"],
     memberships: ["Association of Investment Advisers and Portfolio Managers of Nigeria", "Nigerian Chartered Institute of Management (Associate Member)"],
     leads: ["family", "citizenship", "appeals-waivers", "consular-processing", "estates"],
     bio: BIO_TIJANI,

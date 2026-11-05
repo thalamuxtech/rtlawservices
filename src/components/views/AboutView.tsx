@@ -6,9 +6,10 @@ import { ButtonLink, Container } from "@/components/ui/primitives";
 import { Logo } from "@/components/brand/Logo";
 import { AttorneyPortrait } from "@/components/site/cards";
 import { useContent } from "@/content/LiveContent";
+import { pageLd } from "@/content/schema";
 
 export function AboutView() {
-  const { PAGES, ATTORNEYS } = useContent();
+  const { PAGES, ATTORNEYS, SITE } = useContent();
   const { about } = PAGES;
   // The firm's leader, shown when a published profile carries the title.
   const lead = ATTORNEYS.find((a) => !a.demo && /managing partner/i.test(a.title));
@@ -98,6 +99,7 @@ export function AboutView() {
         </Container>
       </section>
       <BookingBand />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageLd(SITE, "AboutPage", "/about/", `About ${SITE.name}`)) }} />
     </>
   );
 }

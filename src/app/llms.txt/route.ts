@@ -5,6 +5,7 @@
 
 import { EXPERTISE, TRACK_LABELS, type Track } from "@/content/expertise";
 import { ATTORNEYS, POSTS } from "@/content/live";
+import { GENERAL_FAQS } from "@/content/general";
 import { SITE } from "@/content/site";
 
 export const dynamic = "force-static";
@@ -12,6 +13,20 @@ export const dynamic = "force-static";
 export function GET() {
   const u = (path: string) => `${SITE.url}${path}`;
   const tracks = [...new Set(EXPERTISE.map((e) => e.track))] as Track[];
+  const languages = [...new Set(["English", ...ATTORNEYS.flatMap((a) => a.languages ?? [])])];
+  const leaders = ATTORNEYS.map((a) => {
+    const lead = EXPERTISE.filter((e) => a.leads.includes(e.slug)).map((e) => e.title);
+    return [
+      `### ${a.name}, ${a.title}`,
+      "",
+      ...a.bio.map((p) => `${p}`).flatMap((p) => [p, ""]),
+      `- Profile: ${u(`/attorneys/${a.slug}/`)}`,
+      ...(a.education?.length ? [`- Education: ${a.education.join("; ")}`] : []),
+      ...(a.languages?.length ? [`- Languages: ${a.languages.join(", ")}`] : []),
+      ...(lead.length ? [`- Leads matters in: ${lead.join(", ")}`] : []),
+      "",
+    ];
+  });
   const lines = [
     `# ${SITE.name}`,
     "",
@@ -19,11 +34,13 @@ export function GET() {
     "",
     `${SITE.name} is an immigration-led U.S. law practice. It represents clients across the United States and abroad, because U.S. immigration law is federal. Consultations take place by video or phone; the firm does not hold in-person office meetings. Estate planning work is limited to Maryland law.`,
     "",
+    `- Motto: ${SITE.tagline}`,
     `- Website: ${u("/")}`,
     `- Telephone: ${SITE.phone}`,
     `- Email: ${SITE.email}`,
     `- Book a consultation: ${u("/book/")}`,
     `- Free evaluation questionnaire: ${u("/free-evaluation/")}`,
+    `- Consultation languages: ${languages.join(", ")}; an interpreter can be arranged for other languages`,
     ...(ATTORNEYS.length ? [`- Attorneys: ${ATTORNEYS.map((a) => `${a.name}, ${a.title}`).join("; ")}`] : []),
     "",
     "Information on this website is general and is not legal advice for any individual case. Visiting the website or sending a message does not create an attorney-client relationship.",
@@ -48,6 +65,10 @@ export function GET() {
     ...(POSTS.length
       ? ["## Articles", "", ...POSTS.map((p) => `- [${p.title}](${u(`/blog/${p.slug}/`)}): ${p.dek} (updated ${p.updated || p.published})`), ""]
       : []),
+    ...(leaders.length ? ["## People", "", ...leaders.flat()] : []),
+    "## Common questions",
+    "",
+    ...GENERAL_FAQS.flatMap((g) => g.items.flatMap((f) => [`Q: ${f.q}`, `A: ${f.a}`, ""])),
     "## The firm",
     "",
     `- [About](${u("/about/")})`,

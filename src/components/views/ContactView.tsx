@@ -5,6 +5,7 @@ import { PageHero } from "@/components/site/PageHero";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { ButtonLink, Container } from "@/components/ui/primitives";
 import { useContent } from "@/content/LiveContent";
+import { pageLd } from "@/content/schema";
 import { HEADINGS } from "@/content/headings";
 
 export function ContactView() {
@@ -65,6 +66,7 @@ export function ContactView() {
           <ContactForm />
         </Container>
       </section>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageLd(SITE, "ContactPage", "/contact/", `Contact ${SITE.name}`)) }} />
     </>
   );
 }
