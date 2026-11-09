@@ -3,7 +3,7 @@
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { BUSINESSES, DISCLAIMER, SITE, TEAM } from "./content.mjs";
+import { BUSINESSES, DISCLAIMER, SITE } from "./content.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DIST = join(ROOT, "dist");
@@ -15,6 +15,9 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 const inline = (f) => readFileSync(join(ROOT, "static", f), "utf8").replace(/<\?xml[^>]*>/, "").replace(/\s(width|height)="[^"]*"/g, "");
 const LOGO_DARK = inline("brand/logo-dark.svg").replace("<svg ", '<svg class="logo" role="img" aria-label="RT Law Services" ');
 const year = new Date().getFullYear();
+// The firm's RT mark (gold letters and white dot) cut from the full logo.
+const logoPaths = [...readFileSync(join(ROOT, "static/brand/logo-dark.svg"), "utf8").matchAll(/<path[^>]*>/g)].map((m) => m[0]);
+const MARK = `<svg class="mark" viewBox="274 175 462 318" aria-hidden="true">${logoPaths[0]}${logoPaths[logoPaths.length - 1]}</svg>`;
 
 /* ---------- engraved patterns (the business card's guilloche) ---------- */
 
@@ -108,7 +111,6 @@ function header(current = "") {
     <a class="brand" href="/" aria-label="RT Law Services, home of the group">${LOGO_DARK}</a>
     <nav class="nav" aria-label="Main">
       ${link("/#businesses", "Businesses")}
-      ${link("/#leadership", "Leadership")}
       ${link("/#contact", "Contact")}
     </nav>
     <a class="btn btn-gold btn-sm magnetic" href="${SITE.firmUrl}/">RT Law Services ${ARROW}</a>
@@ -135,7 +137,6 @@ function footer() {
         <li><a href="${SITE.phoneHref}">${SITE.phone}</a></li>
         <li><a href="mailto:${SITE.email}">${SITE.email}</a></li>
         <li><a href="${SITE.firmUrl}/book/">Book a consultation</a></li>
-        <li><a href="${SITE.firmUrl}/team/">Our team</a></li>
       </ul>
     </div>
   </div>
@@ -238,35 +239,24 @@ ${header()}
         <h2 class="display">One firm. Four disciplines. One standard of trust.</h2>
       </div>
       <div class="orbit-wrap reveal">
-        <div class="orbit" data-orbit aria-hidden="true">
-          <div class="orbit-ring r1"></div><div class="orbit-ring r2"></div><div class="orbit-ring r3"></div>
-          <div class="orbit-core">${rosette()}<span>RT</span></div>
-          ${BUSINESSES.map((b, i) => `<span class="orbit-node" style="--a:${i * 90 - 135}deg" data-node="${i}">${icon(b.icon)}</span>`).join("")}
+        <div class="orbit" data-orbit>
+          <svg class="orbit-lines" viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="49.6" class="ring-outer"/>
+            <circle cx="50" cy="50" r="36" class="ring-dash"/>
+            ${BUSINESSES.map((_, i) => { const a = ((i * 90 - 135) * Math.PI) / 180; return `<line x1="50" y1="50" x2="${(50 + 50 * Math.cos(a)).toFixed(2)}" y2="${(50 + 50 * Math.sin(a)).toFixed(2)}" data-spoke="${i}"/>`; }).join("")}
+          </svg>
+          <span class="orbit-traveller" aria-hidden="true"><i></i></span>
+          <div class="orbit-core" aria-hidden="true">${rosette()}${MARK}</div>
+          ${BUSINESSES.map((b, i) => `<a class="orbit-node" style="--a:${i * 90 - 135}deg" href="${href(b)}"${ext(b)} data-node="${i}" aria-label="${b.number} ${esc(b.name)}">
+            <span class="orbit-badge">${b.number}</span>${icon(b.icon)}
+            <span class="orbit-label">${esc(b.name)}</span>
+          </a>`).join("")}
         </div>
         <ol class="orbit-list">
           ${BUSINESSES.map((b, i) => `<li><a href="${href(b)}"${ext(b)} data-node-link="${i}"><span class="num">${b.number}</span><span><strong>${esc(b.name)}</strong><em>${esc(b.tagline)}</em></span>${ARROW}</a></li>`).join("")}
         </ol>
       </div>
       <div class="biz-grid">${BUSINESSES.map(card).join("")}</div>
-    </div>
-  </section>
-
-  <section class="section dark" id="leadership">
-    ${rosette()}
-    <div class="wrap">
-      <div class="section-head reveal">
-        <p class="eyebrow">Leadership</p>
-        <h2 class="display">Led by people who work across borders</h2>
-      </div>
-      <div class="team-grid">
-        ${TEAM.map((m, i) => `<a class="person reveal" style="--d:${i * 90}ms" href="${SITE.firmUrl}/team/#${m.slug}">
-          <span class="medal" aria-hidden="true"><span>${m.initials}</span></span>
-          <span class="person-role">${esc(m.role)}</span>
-          <span class="person-name">${esc(m.name)}</span>
-          <span class="person-text">${esc(m.summary)}</span>
-          <span class="biz-go">Full biography ${ARROW}</span>
-        </a>`).join("")}
-      </div>
     </div>
   </section>
 

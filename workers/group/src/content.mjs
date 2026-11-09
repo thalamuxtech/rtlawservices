@@ -65,41 +65,5 @@ export const BUSINESSES = [
   },
 ];
 
-/** Leadership and advisors, summarized here with full biographies on the firm's team page. */
-export const TEAM = [
-  {
-    slug: "temitayo-tijani",
-    name: "Temitayo M. Tijani",
-    role: "Managing Partner",
-    initials: "TT",
-    summary:
-      "Temitayo M. Tijani is the Managing Partner of RT Law Services, where he provides strategic leadership and oversees the firm's commitment to client-focused legal support.",
-  },
-  {
-    slug: "bettina-carroll",
-    name: "Dr. Bettina Carroll",
-    role: "Director of Practice & People",
-    initials: "BC",
-    summary:
-      "Dr. Bettina Carroll brings extensive experience in criminal justice, public administration, mediation, counseling, and legal services to her role as Director of Practice & People at RT Law Services.",
-  },
-  {
-    slug: "olayiwola-obayan",
-    name: "Olayiwola Obayan",
-    role: "Director of Government Relations & Counsel",
-    initials: "OO",
-    summary:
-      "Mr. Olayiwola Obayan serves as Director of Government Relations and Counsel at RT Law Services, bringing extensive experience in government affairs, international law, regulatory strategy, and cross-border legal practice.",
-  },
-  {
-    slug: "rabiat-akande",
-    name: "Dr. Rabiat Akande",
-    role: "Advisor",
-    initials: "RA",
-    summary:
-      "An internationally recognized legal scholar, thought leader, and authority on international law, legal history, comparative constitutional law, law and religion, and African legal systems.",
-  },
-];
-
 export const DISCLAIMER =
   "Attorney advertising. The information on this website is general information, not legal advice for any individual case. Using this website or contacting us does not create an attorney-client relationship. Prior results do not guarantee a similar outcome.";

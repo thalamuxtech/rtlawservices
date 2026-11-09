@@ -113,8 +113,8 @@ export function AboutView() {
                   href={`/team/#${m.slug}`}
                   className="group flex h-full items-center gap-4 rounded-2xl border border-line bg-white p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ink/30 hover:shadow-[0_24px_50px_-30px_rgba(20,24,31,0.45)]"
                 >
-                  <span className="font-serif-display grid size-14 shrink-0 place-items-center rounded-full bg-ink text-xl text-brass-light shadow-[0_0_0_1px_rgba(199,167,103,0.6),0_0_0_4px_#fff,0_0_0_5px_rgba(199,167,103,0.35)]">
-                    {m.initials}
+                  <span aria-hidden className="grid size-14 shrink-0 place-items-center rounded-full bg-ink shadow-[0_0_0_1px_rgba(199,167,103,0.6),0_0_0_4px_#fff,0_0_0_5px_rgba(199,167,103,0.35)]">
+                    <Logo tone="dark" variant="mark" className="w-7" />
                   </span>
                   <span className="min-w-0">
                     <span className="block font-bold text-ink group-hover:underline">{m.name}</span>

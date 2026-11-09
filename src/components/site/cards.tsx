@@ -3,6 +3,7 @@ import { Stars } from "@/components/ui/primitives";
 import { DocumentPreview } from "@/components/proof/ApprovalDocument";
 import type { Attorney, CaseResult, Review } from "@/content/types";
 import { GuillocheRosette, GuillocheWeave } from "@/components/brand/Guilloche";
+import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 
 /**
@@ -88,11 +89,11 @@ const CORNERS = [
 ];
 
 function AttorneyEmblem({ a }: { a: Attorney }) {
-  return <Emblem initials={a.initials} title={a.title} />;
+  return <Emblem title={a.title} />;
 }
 
-/** The engraved emblem with any monogram and title, for people without a photo. */
-export function Emblem({ initials, title }: { initials: string; title: string }) {
+/** The engraved emblem with the firm's RT mark and a title, for people without a photo. */
+export function Emblem({ title }: { title: string }) {
   return (
     <div className="absolute inset-0 grid place-items-center [container-type:size]">
       <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_42%,#222a36_0%,#14181f_58%,#0b0e13_100%)]" />
@@ -109,7 +110,7 @@ export function Emblem({ initials, title }: { initials: string; title: string })
       <div className="relative flex flex-col items-center">
         <span className="relative grid size-[50cqmin] place-items-center rounded-full bg-[radial-gradient(circle_at_50%_35%,#262e3b,#10141a_70%)] shadow-[0_0_0_1px_rgba(199,167,103,0.7),0_0_0_1.4cqmin_rgba(20,24,31,1),0_0_0_calc(1.4cqmin+1px)_rgba(199,167,103,0.45),0_2.5cqmin_6cqmin_rgba(0,0,0,0.55)]">
           <span aria-hidden className="absolute inset-[3cqmin] rounded-full border border-dashed border-brass/30" />
-          <span className="font-serif-display bg-gradient-to-b from-[#f4e7c4] via-[#c7a767] to-[#8e7440] bg-clip-text text-[22cqmin] leading-none tracking-[0.02em] text-transparent">{initials}</span>
+          <Logo tone="dark" variant="mark" className="w-[27cqmin]" />
         </span>
         <span aria-hidden className="mt-[4.5cqmin] flex items-center gap-[1.4cqmin]">
           <span className="h-px w-[9cqmin] bg-gradient-to-r from-brass/0 to-brass" />

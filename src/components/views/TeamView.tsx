@@ -67,7 +67,7 @@ function MemberCard({ m }: { m: TeamMember }) {
     <article id={m.slug} className="group flex h-full scroll-mt-28 flex-col overflow-hidden rounded-3xl border border-line bg-white shadow-[0_40px_80px_-60px_rgba(20,24,31,0.55)] transition-shadow duration-500 hover:shadow-[0_40px_90px_-50px_rgba(20,24,31,0.6)]">
       <div className="on-dark relative aspect-[4/3] overflow-hidden bg-ink">
         <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.03]">
-          <Emblem initials={m.initials} title={m.role} />
+          <Emblem title={m.role} />
         </div>
       </div>
       <div className="flex flex-1 flex-col p-7 sm:p-8">
@@ -129,7 +129,7 @@ function AdvisorFeature({ m }: { m: TeamMember }) {
       className="grid scroll-mt-28 overflow-hidden rounded-3xl border border-line-dark bg-ink-raised lg:grid-cols-[0.7fr_1.3fr]"
     >
       <div className="relative aspect-[4/3] lg:aspect-auto lg:min-h-full">
-        <Emblem initials={m.initials} title={m.role} />
+        <Emblem title={m.role} />
       </div>
       <div className="p-8 sm:p-12">
         <p className="text-sm font-bold text-brass-light">{m.role}</p>

@@ -69,13 +69,16 @@
     b.addEventListener("pointerleave", () => (b.style.transform = ""));
   });
 
-  // Orbit: hovering a business in the list lights its node.
+  // Orbit: a business lights up in the diagram and the list together.
   const nodes = document.querySelectorAll("[data-node]");
-  document.querySelectorAll("[data-node-link]").forEach((a) => {
-    const n = nodes[Number(a.dataset.nodeLink)];
-    a.addEventListener("pointerenter", () => n && n.classList.add("on"));
-    a.addEventListener("pointerleave", () => n && n.classList.remove("on"));
-    a.addEventListener("focus", () => n && n.classList.add("on"));
-    a.addEventListener("blur", () => n && n.classList.remove("on"));
+  const spokes = document.querySelectorAll("[data-spoke]");
+  const links = document.querySelectorAll("[data-node-link]");
+  const light = (i, on) => [nodes[i], spokes[i], links[i]].forEach((el) => el && el.classList.toggle("on", on));
+  [...nodes, ...links].forEach((el) => {
+    const i = Number(el.dataset.node ?? el.dataset.nodeLink);
+    el.addEventListener("pointerenter", () => light(i, true));
+    el.addEventListener("pointerleave", () => light(i, false));
+    el.addEventListener("focus", () => light(i, true));
+    el.addEventListener("blur", () => light(i, false));
   });
 })();
