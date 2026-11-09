@@ -7,6 +7,8 @@ import { Logo } from "@/components/brand/Logo";
 import { AttorneyPortrait } from "@/components/site/cards";
 import { useContent } from "@/content/LiveContent";
 import { pageLd } from "@/content/schema";
+import { TEAM } from "@/content/team";
+import Link from "next/link";
 
 export function AboutView() {
   const { PAGES, ATTORNEYS, SITE } = useContent();
@@ -92,10 +94,36 @@ export function AboutView() {
           </Container>
         </section>
       )}
-      <section className="py-20">
-        <Container className="flex flex-wrap items-center justify-between gap-6">
-          <h2 className="font-serif-display text-3xl text-ink sm:text-4xl">Meet the people behind the work</h2>
-          <ButtonLink href="/attorneys/" variant="outline">Our attorneys</ButtonLink>
+      <section className="border-t border-line bg-mist py-20">
+        <Container>
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <p className="eyebrow text-brass-ink">Our team</p>
+              <h2 className="font-serif-display mt-3 text-3xl text-ink sm:text-4xl">Meet the people behind the work</h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <ButtonLink href="/team/">Leadership and advisors</ButtonLink>
+              <ButtonLink href="/attorneys/" variant="outline">Our attorneys</ButtonLink>
+            </div>
+          </div>
+          <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {TEAM.map((m) => (
+              <li key={m.slug}>
+                <Link
+                  href={`/team/#${m.slug}`}
+                  className="group flex h-full items-center gap-4 rounded-2xl border border-line bg-white p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ink/30 hover:shadow-[0_24px_50px_-30px_rgba(20,24,31,0.45)]"
+                >
+                  <span className="font-serif-display grid size-14 shrink-0 place-items-center rounded-full bg-ink text-xl text-brass-light shadow-[0_0_0_1px_rgba(199,167,103,0.6),0_0_0_4px_#fff,0_0_0_5px_rgba(199,167,103,0.35)]">
+                    {m.initials}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block font-bold text-ink group-hover:underline">{m.name}</span>
+                    <span className="mt-0.5 block text-sm text-stone">{m.role}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </Container>
       </section>
       <BookingBand />

@@ -9,7 +9,7 @@ export const dynamic = "force-static";
 // posts carry the date they were last updated, so crawlers revisit them when
 // they change. Legal pages are listed but rarely change.
 const STATIC = [
-  "", "start-here", "expertise", "case-results", "attorneys", "reviews", "about", "how-we-work", "diaspora", "faq",
+  "", "start-here", "expertise", "case-results", "team", "attorneys", "reviews", "about", "how-we-work", "diaspora", "faq",
   "resources", "resources/filing-fees", "resources/processing-times", "resources/visa-bulletin", "resources/case-status",
   "case-status-tracker", "book", "contact", "blog", "knowledge", "free-evaluation", "check-eligibility",
   "legal/disclaimer", "legal/privacy", "legal/terms", "accessibility",

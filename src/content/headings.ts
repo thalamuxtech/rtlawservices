@@ -6,6 +6,12 @@ export type Heading = { path: string; label: string; title: string; lede?: strin
 
 export const HEADING_LIST: Heading[] = [
   {
+    path: "/team/",
+    label: "Our team",
+    title: "Leadership and advisors",
+    lede: "The people who lead RT Law Services and the advisors who guide it, with backgrounds in law, government, public administration and international scholarship.",
+  },
+  {
     path: "/attorneys/",
     label: "Attorneys",
     title: "The people who will handle your case",

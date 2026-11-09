@@ -19,6 +19,7 @@ export function Footer() {
       title: "Firm",
       links: [
         { label: "About", href: "/about/" },
+        { label: "Our team", href: "/team/" },
         { label: "Attorneys", href: "/attorneys/" },
         ...(CASES.length ? [{ label: "Success stories", href: "/case-results/" }] : []),
         { label: "Free evaluation", href: "/free-evaluation/" },

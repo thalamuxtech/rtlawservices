@@ -88,6 +88,11 @@ const CORNERS = [
 ];
 
 function AttorneyEmblem({ a }: { a: Attorney }) {
+  return <Emblem initials={a.initials} title={a.title} />;
+}
+
+/** The engraved emblem with any monogram and title, for people without a photo. */
+export function Emblem({ initials, title }: { initials: string; title: string }) {
   return (
     <div className="absolute inset-0 grid place-items-center [container-type:size]">
       <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_42%,#222a36_0%,#14181f_58%,#0b0e13_100%)]" />
@@ -104,14 +109,14 @@ function AttorneyEmblem({ a }: { a: Attorney }) {
       <div className="relative flex flex-col items-center">
         <span className="relative grid size-[50cqmin] place-items-center rounded-full bg-[radial-gradient(circle_at_50%_35%,#262e3b,#10141a_70%)] shadow-[0_0_0_1px_rgba(199,167,103,0.7),0_0_0_1.4cqmin_rgba(20,24,31,1),0_0_0_calc(1.4cqmin+1px)_rgba(199,167,103,0.45),0_2.5cqmin_6cqmin_rgba(0,0,0,0.55)]">
           <span aria-hidden className="absolute inset-[3cqmin] rounded-full border border-dashed border-brass/30" />
-          <span className="font-serif-display bg-gradient-to-b from-[#f4e7c4] via-[#c7a767] to-[#8e7440] bg-clip-text text-[22cqmin] leading-none tracking-[0.02em] text-transparent">{a.initials}</span>
+          <span className="font-serif-display bg-gradient-to-b from-[#f4e7c4] via-[#c7a767] to-[#8e7440] bg-clip-text text-[22cqmin] leading-none tracking-[0.02em] text-transparent">{initials}</span>
         </span>
         <span aria-hidden className="mt-[4.5cqmin] flex items-center gap-[1.4cqmin]">
           <span className="h-px w-[9cqmin] bg-gradient-to-r from-brass/0 to-brass" />
           <span className="size-[1.5cqmin] min-h-1 min-w-1 rotate-45 bg-[#e6d3a3]" />
           <span className="h-px w-[9cqmin] bg-gradient-to-l from-brass/0 to-brass" />
         </span>
-        <span className="mt-[2.8cqmin] text-[max(10px,3.3cqmin)] font-bold uppercase tracking-[0.3em] text-[#d9c59b]">{a.title}</span>
+        <span className="mt-[2.8cqmin] max-w-[82cqmin] text-balance text-center text-[max(10px,3.3cqmin)] font-bold uppercase leading-snug tracking-[0.26em] text-[#d9c59b]">{title}</span>
       </div>
     </div>
   );

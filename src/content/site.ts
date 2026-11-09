@@ -77,6 +77,7 @@ export function deriveSite(LIVE_SITE: Partial<SiteSettings>, ATTORNEYS: Attorney
       label: "The firm",
       links: [
         { label: "About", href: "/about/", description: "Our story and how we practise" },
+        { label: "Our team", href: "/team/", description: "Leadership and advisors" },
         { label: "Attorneys", href: "/attorneys/", description: "Admissions, languages and focus" },
         { label: "How we work", href: "/how-we-work/", description: "Five stages, from first call to decision" },
         { label: "Start here", href: "/start-here/", description: "U.S. immigration in plain words" },

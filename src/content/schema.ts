@@ -144,6 +144,36 @@ function personNode(site: Site, a: Attorney, practice: string[], schools: string
   };
 }
 
+/** The team page: each leader works for the firm; advisors are affiliated with it. */
+export function teamLd(site: Site, team: { slug: string; name: string; role: string; group: string; bio: string[]; profile?: string }[]) {
+  const url = `${site.url}/team/`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "@id": `${url}#page`,
+    url,
+    name: `Leadership and advisors of ${site.name}`,
+    isPartOf: { "@id": ids.website(site) },
+    about: { "@id": ids.firm(site) },
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: team.map((m, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        item: {
+          "@type": "Person",
+          "@id": m.profile ? `${site.url}${m.profile}#person` : `${url}#${m.slug}`,
+          name: m.name,
+          jobTitle: m.role,
+          description: m.bio[0],
+          url: m.profile ? `${site.url}${m.profile}` : `${url}#${m.slug}`,
+          ...(m.group === "Advisors" ? { affiliation: { "@id": ids.firm(site) } } : { worksFor: { "@id": ids.firm(site) } }),
+        },
+      })),
+    },
+  };
+}
+
 /** About and contact pages, tied to the firm. */
 export function pageLd(site: Site, type: "AboutPage" | "ContactPage", path: string, name: string) {
   return {
