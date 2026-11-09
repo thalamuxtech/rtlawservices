@@ -53,15 +53,59 @@ function weave(w = 1600, h = 140) {
 
 /* ---------- line icons for the businesses ---------- */
 
+// Detailed line illustrations, drawn on a 64-unit grid. "t" marks soft gold
+// fills (tint) and "f" fine detail lines; both follow the icon colour.
 const ICONS = {
-  // Two continents joined by an arc.
-  bridge: `<circle cx="32" cy="32" r="22"/><path d="M10 32h44"/><path d="M32 10c7 6 10 14 10 22s-3 16-10 22c-7-6-10-14-10-22s3-16 10-22z"/><path d="M6 46c8-10 18-14 26-14s18 4 26 14"/>`,
-  // A shield with a key line.
-  shield: `<path d="M32 6l20 8v16c0 13-8 22-20 28C20 52 12 43 12 30V14z"/><circle cx="32" cy="27" r="6"/><path d="M32 33v12M32 39h5M32 43h4"/>`,
-  // A path rising to a horizon.
-  path: `<path d="M8 50h48"/><path d="M20 50c4-10 8-18 12-30 4 12 8 20 12 30"/><path d="M32 20v-8M27 14l5-5 5 5"/><circle cx="48" cy="18" r="5"/>`,
-  // A compass rose.
-  compass: `<circle cx="32" cy="32" r="22"/><circle cx="32" cy="32" r="3"/><path d="M32 8v6M32 50v6M8 32h6M50 32h6"/><path d="M40 24l-5 11-11 5 5-11z"/>`,
+  // A globe with the Americas and Africa, joined by a route between two pins.
+  bridge: `
+    <circle cx="32" cy="32" r="23"/>
+    <ellipse cx="32" cy="32" rx="10" ry="23" class="f"/>
+    <path class="f" d="M9 32h46"/>
+    <path class="t" d="M16.5 17.5c2.5-2.2 6-2.6 8.4-1.4 1.8.9 1.2 2.8-.3 3.6-1.6.8-1.7 2.2-.6 3.3 1.3 1.4 3.5 1.4 4.1 3.3.5 1.7-1.2 2.7-2.8 2.9-2.2.3-2.8 2.2-2.4 4.2.5 2.6-.2 5.4-1.9 7.6-.9-2.4-1.1-5-2.6-7-1.5-2-3.3-3.5-3.2-6.1.1-2.4-1.4-3.9-1.5-6.1 0-1.8 1-3.3 2.8-4.3z"/>
+    <path class="t" d="M36.4 21.6c2.7-1.2 6.2-1.3 8.6-.2 1.4.6 1.9 2 3.3 2.6 1.6.7 1.7 2.4.7 3.8-1.3 1.7-2.9 2.9-3.4 5.1-.6 2.7-.4 5.7-2.6 7.7-1 .9-2.2 1.5-2.5 2.9-1.2-1.5-1.3-3.6-1.9-5.4-.6-1.9-2.4-3.1-2.7-5.1-.3-2.1 1.2-3.5.6-5.5-.4-1.6-2.1-2.5-1.6-4 .3-.9.9-1.5 1.5-1.9z"/>
+    <path d="M22.5 21.5C27 15 37 14.5 41.5 25.5" stroke-dasharray="2 2.2"/>
+    <circle cx="22.5" cy="21.5" r="1.7" class="dot"/><circle cx="22.5" cy="21.5" r="3.4" class="f"/>
+    <circle cx="41.5" cy="25.5" r="1.7" class="dot"/><circle cx="41.5" cy="25.5" r="3.4" class="f"/>
+  `,
+  // A bank vault door: dial, three-spoke handle, hinges and bolts.
+  shield: `
+    <rect x="8" y="9" width="48" height="44" rx="4"/>
+    <rect x="12" y="13" width="40" height="36" rx="2.5" class="t"/>
+    <path d="M14 53v3h6v-3M44 53v3h6v-3"/>
+    <rect x="5.5" y="17" width="3" height="7" rx="1"/><rect x="5.5" y="38" width="3" height="7" rx="1"/>
+    <circle cx="32" cy="31" r="12"/>
+    <circle cx="32" cy="31" r="8.5" class="f"/>
+    <path class="f" d="M32 19.6v2.2M32 40.2v2.2M20.6 31h2.2M41.2 31h2.2M24 23l1.5 1.5M38.5 37.5L40 39M40 23l-1.5 1.5M25.5 37.5L24 39"/>
+    <circle cx="32" cy="31" r="2.6"/>
+    <path d="M32 28.4V24M34.3 32.3l3.8 2.2M29.7 32.3l-3.8 2.2"/>
+    <circle cx="32" cy="23.6" r="1.1" class="dot"/><circle cx="38.4" cy="34.7" r="1.1" class="dot"/><circle cx="25.6" cy="34.7" r="1.1" class="dot"/>
+    <path class="f" d="M48 17v4M48 41v4"/>
+  `,
+  // A passport with a globe emblem, and an entry stamp.
+  path: `
+    <rect x="13" y="7" width="32" height="46" rx="3"/>
+    <rect x="16.5" y="10.5" width="25" height="39" rx="1.5" class="t"/>
+    <circle cx="29" cy="25" r="7.5"/>
+    <ellipse cx="29" cy="25" rx="3.2" ry="7.5" class="f"/>
+    <path class="f" d="M21.5 25h15M22.6 21h12.8M22.6 29h12.8"/>
+    <path d="M22 38h14M24 42h10" class="f"/>
+    <path d="M22 14.5h14" class="f"/>
+    <circle cx="47" cy="44" r="9" stroke-dasharray="2 1.8"/>
+    <circle cx="47" cy="44" r="6.2" class="f"/>
+    <path d="M43.2 44.6l3 2.6 5-5.6"/>
+  `,
+  // A risk gauge: low, medium and high zones, a needle and its hub.
+  compass: `
+    <path d="M8 42a24 24 0 0 1 48 0"/>
+    <path d="M13.5 42a18.5 18.5 0 0 1 5.4-13.1" class="zone z1"/>
+    <path d="M21.2 26.9a18.5 18.5 0 0 1 21.6 0" class="zone z2"/>
+    <path d="M45.1 28.9a18.5 18.5 0 0 1 5.4 13.1" class="zone z3"/>
+    <path class="f" d="M8.8 35.8l2.4.7M12.3 26.6l2.1 1.4M18.7 19.8l1.5 2M27 16.3l.4 2.4M37 16.3l-.4 2.4M45.3 19.8l-1.5 2M51.7 26.6l-2.1 1.4M55.2 35.8l-2.4.7"/>
+    <path d="M32 42l-9.5-11.5" stroke-width="2.2"/>
+    <circle cx="32" cy="42" r="3.6" class="t"/><circle cx="32" cy="42" r="3.6"/>
+    <path d="M10 49h44" />
+    <path class="f" d="M16 53h32"/>
+  `,
 };
 const icon = (k, cls = "icon") => `<svg class="${cls}" viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[k]}</svg>`;
 
