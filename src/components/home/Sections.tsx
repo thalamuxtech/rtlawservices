@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
 import { ButtonLink, Container, SectionHeading } from "@/components/ui/primitives";
-import { admissionsOf, AttorneyCard, AttorneyPortrait, CaseCard, LanguageChips } from "@/components/site/cards";
+import { CaseCard } from "@/components/site/cards";
 import { useContent } from "@/content/LiveContent";
-import type { Attorney } from "@/content/types";
 import { ReviewsMarquee } from "@/components/proof/ReviewsMarquee";
 import { CTA, RESULTS_CAVEAT } from "@/content/site";
 
@@ -74,92 +73,6 @@ export function FeaturedResults() {
         <p className="mt-12 text-sm text-stone-dark">{RESULTS_CAVEAT}</p>
       </Container>
     </section>
-  );
-}
-
-export function AttorneysPreview() {
-  const { ATTORNEYS } = useContent();
-  if (!ATTORNEYS.length) return null;
-  return (
-    <section className="py-24 sm:py-32">
-      <Container className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-        <div>
-          <SectionHeading
-            title="You will know who is handling your case"
-            lede="Your matter is led by a named attorney from the first consultation. You speak with the person responsible for your filing, and you can book time with them directly."
-          />
-          <ul className="mt-8 grid gap-3 text-ink-soft">
-            {["One attorney accountable for your case from start to finish", `Consultations in ${listOr([...new Set(ATTORNEYS.flatMap((a) => a.languages))])}`, "Updates at each milestone, in plain language"].map((t) => (
-              <li key={t} className="flex gap-3">
-                <span aria-hidden className="mt-2.5 h-px w-5 shrink-0 bg-brass" />
-                {t}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-10 flex flex-wrap gap-3">
-            <ButtonLink href="/attorneys/" variant="outline">
-              Meet the attorneys
-            </ButtonLink>
-          </div>
-        </div>
-        {ATTORNEYS.length === 1 ? (
-          <FeaturedAttorney a={ATTORNEYS[0]} />
-        ) : (
-          <div className="grid gap-5 sm:grid-cols-2">
-            {ATTORNEYS.map((a, i) => (
-              <div key={a.slug} data-reveal style={{ ["--reveal-delay" as string]: `${i * 110}ms` }}>
-                <AttorneyCard a={a} />
-              </div>
-            ))}
-          </div>
-        )}
-      </Container>
-    </section>
-  );
-}
-
-const listOr = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} or ${xs[xs.length - 1]}`);
-
-/** A single attorney shown as a full profile card instead of half an empty grid. */
-function FeaturedAttorney({ a }: { a: Attorney }) {
-  const { getExpertise } = useContent();
-  const focus = a.leads.map((s) => getExpertise(s)?.title).filter(Boolean).slice(0, 5) as string[];
-  const admitted = admissionsOf(a);
-  return (
-    <article data-reveal className="group overflow-hidden rounded-3xl border border-line bg-white shadow-[0_40px_80px_-50px_rgba(20,24,31,0.5)] sm:grid sm:grid-cols-[0.85fr_1.15fr]">
-      <AttorneyPortrait a={a} className="aspect-[4/3] sm:aspect-auto sm:min-h-full" />
-      <div className="p-7 sm:p-9">
-        <p className="text-sm font-bold text-brass-ink">{a.title}</p>
-        <h3 className="font-serif-display mt-1 text-4xl text-ink">{a.name}</h3>
-        {a.bio[0] && <p className="mt-4 leading-relaxed text-stone">{a.bio[0]}</p>}
-        <dl className="mt-6 grid gap-4 text-sm">
-          {admitted.length > 0 && (
-            <div>
-              <dt className="font-bold text-ink">Admitted in</dt>
-              <dd className="mt-1 text-stone">{admitted.join(", ")}</dd>
-            </div>
-          )}
-          <div>
-            <dt className="font-bold text-ink">Languages</dt>
-            <dd className="mt-2">
-              <LanguageChips languages={a.languages} />
-            </dd>
-          </div>
-          {focus.length > 0 && (
-            <div>
-              <dt className="font-bold text-ink">Leads matters in</dt>
-              <dd className="mt-1 text-stone">{focus.join(", ")}</dd>
-            </div>
-          )}
-        </dl>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <ButtonLink href={`/book/?attorney=${a.slug}`}>Book with {a.name.split(" ")[0]}</ButtonLink>
-          <ButtonLink href={`/attorneys/${a.slug}/`} variant="outline">
-            Full profile
-          </ButtonLink>
-        </div>
-      </div>
-    </article>
   );
 }
 

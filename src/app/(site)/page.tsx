@@ -7,7 +7,6 @@ import { Hero } from "@/components/home/Hero";
 import { ExpertiseTabs } from "@/components/home/ExpertiseTabs";
 import { StatsBand } from "@/components/home/StatsBand";
 import {
-  AttorneysPreview,
   BookingBand,
   FeaturedResults,
   Pillars,
@@ -78,7 +77,6 @@ export default function HomePage() {
       </section>
       <FeaturedResults />
       <ReviewsPreview />
-      <AttorneysPreview />
       <ProcessRibbon />
       <Pillars />
       <ResourcesPreview />
