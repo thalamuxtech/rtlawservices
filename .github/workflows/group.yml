@@ -1,0 +1,33 @@
+name: Deploy group site
+
+# group.rtlawservices.com: rebuilt and deployed whenever its folder changes.
+on:
+  push:
+    branches: [main]
+    paths: ["workers/group/**", ".github/workflows/group.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-group
+  cancel-in-progress: false
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers/group
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: node src/build.mjs
+      - run: npx --yes wrangler@4 deploy
