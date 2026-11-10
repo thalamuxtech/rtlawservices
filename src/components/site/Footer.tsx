@@ -20,7 +20,7 @@ export function Footer() {
       links: [
         { label: "About", href: "/about/" },
         { label: "Our team", href: "/team/" },
-        { label: "Our businesses", href: "https://group.rtlawservices.com/" },
+        { label: "The group", href: "https://group.rtlawservices.com/" },
         { label: "Attorneys", href: "/attorneys/" },
         ...(CASES.length ? [{ label: "Success stories", href: "/case-results/" }] : []),
         { label: "Free evaluation", href: "/free-evaluation/" },

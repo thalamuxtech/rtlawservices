@@ -78,7 +78,7 @@ export function deriveSite(LIVE_SITE: Partial<SiteSettings>, ATTORNEYS: Attorney
       links: [
         { label: "About", href: "/about/", description: "Our story and how we practise" },
         { label: "Our team", href: "/team/", description: "Leadership and advisors" },
-        { label: "Our businesses", href: "https://group.rtlawservices.com/", description: "The four businesses of RT Law Services" },
+        { label: "The group", href: "https://group.rtlawservices.com/", description: "We are one of the group's four businesses" },
         { label: "Attorneys", href: "/attorneys/", description: "Admissions, languages and focus" },
         { label: "How we work", href: "/how-we-work/", description: "Five stages, from first call to decision" },
         { label: "Start here", href: "/start-here/", description: "U.S. immigration in plain words" },
