@@ -28,6 +28,7 @@ export const SEED_ATTORNEYS: Attorney[] = [
     leads: ["family", "citizenship", "appeals-waivers", "consular-processing", "estates"],
     bio: BIO_TIJANI,
     initials: "TT",
+    photoUrl: "/images/team/temitayo-tijani.webp",
     order: 1,
     demo: false,
   },

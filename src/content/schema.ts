@@ -145,7 +145,7 @@ function personNode(site: Site, a: Attorney, practice: string[], schools: string
 }
 
 /** The team page: each leader works for the firm; advisors are affiliated with it. */
-export function teamLd(site: Site, team: { slug: string; name: string; role: string; group: string; bio: string[]; profile?: string }[]) {
+export function teamLd(site: Site, team: { slug: string; name: string; role: string; group: string; bio: string[]; profile?: string; photo?: string }[]) {
   const url = `${site.url}/team/`;
   return {
     "@context": "https://schema.org",
@@ -166,6 +166,7 @@ export function teamLd(site: Site, team: { slug: string; name: string; role: str
           name: m.name,
           jobTitle: m.role,
           description: m.bio[0],
+          ...(m.photo ? { image: `${site.url}${m.photo}` } : {}),
           url: m.profile ? `${site.url}${m.profile}` : `${url}#${m.slug}`,
           ...(m.group === "Advisors" ? { affiliation: { "@id": ids.firm(site) } } : { worksFor: { "@id": ids.firm(site) } }),
         },

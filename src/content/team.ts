@@ -13,6 +13,10 @@ export type TeamMember = {
   role: string;
   group: "Leadership" | "Advisors";
   initials: string;
+  /** Portrait under /public. Without one, the card shows the firm's emblem. */
+  photo?: string;
+  /** CSS object-position for the portrait, so the face stays in a cropped frame. */
+  photoPosition?: string;
   bio: string[];
   /** A full profile elsewhere on the site, when there is one. */
   profile?: string;
@@ -25,6 +29,7 @@ export const TEAM: TeamMember[] = [
     role: "Managing Partner",
     group: "Leadership",
     initials: "TT",
+    photo: "/images/team/temitayo-tijani.webp",
     bio: [BIO_TIJANI[0], BIO_TIJANI[1]],
     profile: "/attorneys/temitayo-tijani/",
   },
@@ -35,6 +40,7 @@ export const TEAM: TeamMember[] = [
     role: "Director of Practice & People",
     group: "Leadership",
     initials: "BC",
+    photo: "/images/team/bettina-carroll.webp",
     bio: [
       "Dr. Bettina Carroll brings extensive experience in criminal justice, public administration, mediation, counseling, and legal services to her role as Director of Practice & People at RT Law Services. Holding a Doctorate in Criminal Justice, a Master of Science in Criminal Justice, a Master of Public Administration, and professional certifications in Mediation and Paralegal Studies, Dr. Carroll is dedicated to fostering excellence in client service, professional development, and organizational culture. Her career reflects a longstanding commitment to advocacy, conflict resolution, and empowering individuals through compassionate, results-driven support.",
     ],
@@ -45,6 +51,9 @@ export const TEAM: TeamMember[] = [
     role: "Director of Government Relations & Counsel",
     group: "Leadership",
     initials: "OO",
+    photo: "/images/team/olayiwola-obayan.webp",
+    // A tall photo with the face in the upper third.
+    photoPosition: "50% 22%",
     bio: [
       "Mr. Olayiwola Obayan serves as Director of Government Relations and Counsel at RT Law Services, bringing extensive experience in government affairs, international law, regulatory strategy, and cross-border legal practice. His distinguished career spans public service, international legal advisory, immigration law, trade and investment, and strategic engagement with governmental and institutional stakeholders.",
       "As a seasoned legal professional, Mr. Obayan provides invaluable insight into the intersection of law, public policy, and international business. His experience includes advising on complex cross-border transactions, international agreements, regulatory compliance, investment frameworks, and immigration matters affecting individuals, businesses, and institutions operating across multiple jurisdictions.",

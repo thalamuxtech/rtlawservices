@@ -31,8 +31,11 @@ export function deriveLive(live: LiveData) {
 
   // The firm does not offer consultations in Yoruba (decided 17 October 2026), so
   // the language is left off profiles even where an older record still lists it.
+  // The back office has no photo field yet, so a database record without a
+  // photo takes the one from the seed record with the same slug.
+  const seedPhoto = (slug: string) => SEED_ATTORNEYS.find((s) => s.slug === slug)?.photoUrl;
   const ATTORNEYS: Attorney[] = visible(pick(live.attorneys, SEED_ATTORNEYS))
-    .map((a) => ({ ...a, languages: (a.languages ?? []).filter((l) => !/yoruba/i.test(l)) }))
+    .map((a) => ({ ...a, photoUrl: a.photoUrl || seedPhoto(a.slug), languages: (a.languages ?? []).filter((l) => !/yoruba/i.test(l)) }))
     .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
   const CASES: CaseResult[] = visible(pick(live.cases, SEED_CASES));
   const REVIEWS: Review[] = pick(live.reviews, SEED_REVIEWS).sort((a, b) => b.date.localeCompare(a.date));

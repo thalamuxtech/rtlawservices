@@ -59,7 +59,22 @@ export function TeamView() {
   );
 }
 
-/** A leader's card: emblem, name and role, the first paragraph, and the rest on request. */
+/** The member's photo, or the firm's emblem when there is none. */
+function MemberPortrait({ m }: { m: TeamMember }) {
+  if (!m.photo) return <Emblem title={m.role} />;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={m.photo}
+      alt={`Portrait of ${m.name}`}
+      loading="lazy"
+      className="absolute inset-0 size-full object-cover"
+      style={{ objectPosition: m.photoPosition ?? "50% 25%" }}
+    />
+  );
+}
+
+/** A leader's card: photo or emblem, name and role, the first paragraph, and the rest on request. */
 function MemberCard({ m }: { m: TeamMember }) {
   const [open, setOpen] = useState(false);
   const more = m.bio.length > 1 || (m.bio[0]?.length ?? 0) > 360;
@@ -67,7 +82,7 @@ function MemberCard({ m }: { m: TeamMember }) {
     <article id={m.slug} className="group flex h-full scroll-mt-28 flex-col overflow-hidden rounded-3xl border border-line bg-white shadow-[0_40px_80px_-60px_rgba(20,24,31,0.55)] transition-shadow duration-500 hover:shadow-[0_40px_90px_-50px_rgba(20,24,31,0.6)]">
       <div className="on-dark relative aspect-[4/3] overflow-hidden bg-ink">
         <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.03]">
-          <Emblem title={m.role} />
+          <MemberPortrait m={m} />
         </div>
       </div>
       <div className="flex flex-1 flex-col p-7 sm:p-8">
@@ -129,7 +144,7 @@ function AdvisorFeature({ m }: { m: TeamMember }) {
       className="grid scroll-mt-28 overflow-hidden rounded-3xl border border-line-dark bg-ink-raised lg:grid-cols-[0.7fr_1.3fr]"
     >
       <div className="relative aspect-[4/3] lg:aspect-auto lg:min-h-full">
-        <Emblem title={m.role} />
+        <MemberPortrait m={m} />
       </div>
       <div className="p-8 sm:p-12">
         <p className="text-sm font-bold text-brass-light">{m.role}</p>
