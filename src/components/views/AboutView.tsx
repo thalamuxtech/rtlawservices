@@ -8,6 +8,7 @@ import { AttorneyPortrait } from "@/components/site/cards";
 import { useContent } from "@/content/LiveContent";
 import { pageLd } from "@/content/schema";
 import { TEAM } from "@/content/team";
+import { SHOW_ATTORNEYS_PAGE } from "@/content/site";
 import Link from "next/link";
 
 export function AboutView() {
@@ -103,7 +104,7 @@ export function AboutView() {
             </div>
             <div className="flex flex-wrap gap-3">
               <ButtonLink href="/team/">Leadership and advisors</ButtonLink>
-              <ButtonLink href="/attorneys/" variant="outline">Our attorneys</ButtonLink>
+              {SHOW_ATTORNEYS_PAGE && <ButtonLink href="/attorneys/" variant="outline">Our attorneys</ButtonLink>}
             </div>
           </div>
           <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

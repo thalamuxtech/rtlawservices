@@ -8,13 +8,14 @@ import { ButtonLink, Container } from "@/components/ui/primitives";
 import { Missing } from "@/components/views/Missing";
 import { useContent, useContentFresh, useLiveTitle } from "@/content/LiveContent";
 import { personLd } from "@/content/schema";
+import { SHOW_ATTORNEYS_PAGE } from "@/content/site";
 
 export function AttorneyView({ slug }: { slug: string }) {
   const { SITE, casesByAttorney, getAttorney, getExpertise } = useContent();
   const fresh = useContentFresh();
   const a = getAttorney(slug);
   useLiveTitle(a && `${a.name}, ${a.title}`);
-  if (!a) return fresh ? <Missing what="profile" back={{ label: "All attorneys", href: "/attorneys/" }} /> : null;
+  if (!a) return fresh ? <Missing what="profile" back={SHOW_ATTORNEYS_PAGE ? { label: "All attorneys", href: "/attorneys/" } : { label: "Our team", href: "/team/" }} /> : null;
   const results = casesByAttorney(a.slug);
   const ld = personLd(SITE, a, a.leads.map((l) => getExpertise(l)?.title).filter((t): t is string => !!t));
   const panels = [
@@ -29,7 +30,7 @@ export function AttorneyView({ slug }: { slug: string }) {
       <PageHero
         eyebrow={a.title}
         title={a.name}
-        crumbs={[{ label: "Attorneys", href: "/attorneys/" }, { label: a.name }]}
+        crumbs={[SHOW_ATTORNEYS_PAGE ? { label: "Attorneys", href: "/attorneys/" } : { label: "Our team", href: "/team/" }, { label: a.name }]}
         aside={<AttorneyPortrait a={a} className="aspect-square rounded-3xl border border-line-dark" />}
       >
         <ButtonLink href={`/book/?attorney=${a.slug}`}>Book with {a.name.split(" ")[0]}</ButtonLink>

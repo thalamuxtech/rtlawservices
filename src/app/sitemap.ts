@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { EXPERTISE } from "@/content/expertise";
 import { ATTORNEYS, CASES, POSTS } from "@/content/live";
-import { SITE } from "@/content/site";
+import { SHOW_ATTORNEYS_PAGE, SITE } from "@/content/site";
 
 export const dynamic = "force-static";
 
@@ -19,7 +19,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const built = new Date();
   const url = (path: string) => `${SITE.url}/${path}${path ? "/" : ""}`;
   return [
-    ...STATIC.map((p) => ({ url: url(p), lastModified: built })),
+    ...STATIC.filter((p) => p !== "attorneys" || SHOW_ATTORNEYS_PAGE).map((p) => ({ url: url(p), lastModified: built })),
     ...EXPERTISE.map((e) => ({ url: url(`expertise/${e.slug}`), lastModified: built })),
     ...CASES.map((c) => ({ url: url(`case-results/${c.slug}`), lastModified: built })),
     ...ATTORNEYS.map((a) => ({ url: url(`attorneys/${a.slug}`), lastModified: built })),

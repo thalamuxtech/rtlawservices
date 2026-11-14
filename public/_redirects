@@ -1,3 +1,8 @@
+# The attorneys list is hidden for now (SHOW_ATTORNEYS_PAGE in src/content/site.ts).
+# Remove these two rules when it comes back.
+/attorneys /team/ 302
+/attorneys/ /team/ 302
+
 # Addresses from the firm's previous website.
 /practice-area /expertise/ 301
 /practice-area/* /expertise/ 301

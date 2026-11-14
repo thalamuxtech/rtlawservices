@@ -68,7 +68,7 @@ export function AttorneyPortrait({ a, className }: { a: Attorney; className?: st
     <div className={cn("on-dark relative grid place-items-center overflow-hidden bg-ink", className)}>
       {a.photoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={a.photoUrl} alt={`Portrait of ${a.name}`} className="absolute inset-0 size-full object-cover object-[50%_25%] transition-transform duration-700 group-hover:scale-[1.03]" />
+        <img src={a.photoUrl} alt={`Portrait of ${a.name}`} className="absolute inset-0 size-full object-cover object-top transition-transform duration-700 group-hover:scale-[1.03]" />
       ) : (
         <AttorneyEmblem a={a} />
       )}

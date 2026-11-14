@@ -69,7 +69,7 @@ function MemberPortrait({ m }: { m: TeamMember }) {
       alt={`Portrait of ${m.name}`}
       loading="lazy"
       className="absolute inset-0 size-full object-cover"
-      style={{ objectPosition: m.photoPosition ?? "50% 25%" }}
+      style={{ objectPosition: m.photoPosition ?? "50% 0%" }}
     />
   );
 }
@@ -81,7 +81,7 @@ function MemberCard({ m }: { m: TeamMember }) {
   return (
     <article id={m.slug} className="group flex h-full scroll-mt-28 flex-col overflow-hidden rounded-3xl border border-line bg-white shadow-[0_40px_80px_-60px_rgba(20,24,31,0.55)] transition-shadow duration-500 hover:shadow-[0_40px_90px_-50px_rgba(20,24,31,0.6)]">
       <div className="on-dark relative aspect-[4/3] overflow-hidden bg-ink">
-        <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.03]">
+        <div className="absolute inset-0 origin-bottom transition-transform duration-700 group-hover:scale-[1.03]">
           <MemberPortrait m={m} />
         </div>
       </div>

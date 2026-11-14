@@ -6,7 +6,7 @@ import { Lock, Mail, Phone } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GuillocheRosette, GuillocheWeave } from "@/components/brand/Guilloche";
 import { useContent } from "@/content/LiveContent";
-import { NO_RELATIONSHIP } from "@/content/site";
+import { NO_RELATIONSHIP, SHOW_ATTORNEYS_PAGE } from "@/content/site";
 
 export function Footer() {
   const { SITE, CASES, byTrack } = useContent();
@@ -21,7 +21,7 @@ export function Footer() {
         { label: "About", href: "/about/" },
         { label: "Our team", href: "/team/" },
         { label: "The group", href: "https://group.rtlawservices.com/" },
-        { label: "Attorneys", href: "/attorneys/" },
+        ...(SHOW_ATTORNEYS_PAGE ? [{ label: "Attorneys", href: "/attorneys/" }] : []),
         ...(CASES.length ? [{ label: "Success stories", href: "/case-results/" }] : []),
         { label: "Free evaluation", href: "/free-evaluation/" },
         { label: "Check eligibility", href: "/check-eligibility/" },

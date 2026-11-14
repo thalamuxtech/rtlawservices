@@ -6,7 +6,7 @@
 import { EXPERTISE, TRACK_LABELS, type Track } from "@/content/expertise";
 import { ATTORNEYS, POSTS } from "@/content/live";
 import { GENERAL_FAQS } from "@/content/general";
-import { SITE } from "@/content/site";
+import { SHOW_ATTORNEYS_PAGE, SITE } from "@/content/site";
 
 export const dynamic = "force-static";
 
@@ -73,7 +73,7 @@ export function GET() {
     "",
     `- [About](${u("/about/")})`,
     `- [How we work](${u("/how-we-work/")})`,
-    `- [Attorneys](${u("/attorneys/")})`,
+    ...(SHOW_ATTORNEYS_PAGE ? [`- [Attorneys](${u("/attorneys/")})`] : [`- [Our team](${u("/team/")})`]),
     `- [Contact](${u("/contact/")})`,
     `- [Legal disclaimer](${u("/legal/disclaimer/")})`,
     "",

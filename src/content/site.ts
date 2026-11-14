@@ -79,7 +79,7 @@ export function deriveSite(LIVE_SITE: Partial<SiteSettings>, ATTORNEYS: Attorney
         { label: "About", href: "/about/", description: "Our story and how we practise" },
         { label: "Our team", href: "/team/", description: "Leadership and advisors" },
         { label: "The group", href: "https://group.rtlawservices.com/", description: "We are one of the group's four businesses" },
-        { label: "Attorneys", href: "/attorneys/", description: "Admissions, languages and focus" },
+        ...(SHOW_ATTORNEYS_PAGE ? [{ label: "Attorneys", href: "/attorneys/", description: "Admissions, languages and focus" }] : []),
         { label: "How we work", href: "/how-we-work/", description: "Five stages, from first call to decision" },
         { label: "Start here", href: "/start-here/", description: "U.S. immigration in plain words" },
         { label: "Clients abroad", href: "/diaspora/", description: "Consultations in your time zone" },
@@ -100,6 +100,14 @@ export const CTA = {
   evaluation: { label: "Free evaluation", href: "/free-evaluation/" },
   consultation: { label: "Consultation", href: "/book/" },
 };
+
+/**
+ * The /attorneys/ list is hidden while the firm has few attorneys: no links
+ * point to it, it is left out of the sitemap, and public/_redirects sends the
+ * address to /team/. Individual profiles stay up. To bring the list back, set
+ * this to true and remove the /attorneys rules from public/_redirects.
+ */
+export const SHOW_ATTORNEYS_PAGE = false;
 
 export const RESULTS_CAVEAT =
   "No guarantee of results. Prior results do not guarantee a similar outcome, and each case depends on its own facts.";
